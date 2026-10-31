@@ -4,8 +4,8 @@
 
 ## สถานะตอนนี้
 
-- **เสร็จแล้ว:** Phase 0 — เอกสารและกติกา
-- **งานถัดไป:** Phase 1 — สร้างโปรเจกต์ Flutter
+- **เสร็จแล้ว:** Phase 0 — เอกสารและกติกา, Phase 1 (เหลือเพิ่ม package), theme ของ Phase 2
+- **งานถัดไป:** เพิ่ม package ของ Phase 1 แล้วทำ Phase 2 ต่อ (`AppStatus`, ภาษา, route)
 
 ---
 
@@ -19,13 +19,13 @@
 
 ## Phase 1 — ตั้งค่าโปรเจกต์
 
-- [ ] `flutter create --platforms web --project-name costbook .`
+- [x] `flutter create --platforms web --project-name costbook .`
 - [ ] เพิ่ม package (flutter_bloc, equatable, go_router, http, intl, pdf, printing, bloc_test, mocktail)
-- [ ] สร้างโฟลเดอร์ตาม `docs/ARCHITECTURE.md`
+- [x] สร้างโฟลเดอร์ตาม `docs/ARCHITECTURE.md` (โฟลเดอร์ว่างมี `.gitkeep` ลบได้เมื่อมีไฟล์จริง)
 
 ## Phase 2 — Core
 
-- [ ] theme: `AppColors`, `AppSizes`, `AppTheme`
+- [x] theme: `AppColors`, `AppSizes`, `AppTheme` + ฟอนต์ LINESeedSansTH
 - [ ] `AppStatus`
 - [ ] ภาษา: `AppLang` + `.tr` + `th.json` / `en.json` + `LanguageBloc`
 - [ ] route: `AppRoutes` + `appRouter` (ShellRoute)
@@ -74,6 +74,7 @@
 
 | วันที่ | ทำอะไร | หมายเหตุ |
 |---|---|---|
+| 2026-10-31 | `flutter create` + สร้างโฟลเดอร์ตาม `docs/ARCHITECTURE.md`, เพิ่มฟอนต์ LINESeedSansTH (5 น้ำหนัก) และ theme ใน `lib/core/theme/` (`AppColors`, `AppSizes`, `AppTheme`) + test | ย้าย `app_colors` / `app_sizes` จาก `constants/` ไป `theme/`, ลบ test counter ของ flutter create, analyze / test / build web ผ่าน |
 | 2026-10-31 | เพิ่มวิธีต่อ API ใน `docs/ARCHITECTURE.md` (baseUrl หัวข้อ 1, error code → `.tr` หัวข้อ 10) | ตามกติกาของ `../api-Costbook` |
 | 2026-10-31 | เพิ่มกฎ "หน้าโค้ดเยอะ → แยกส่วนย่อยเป็น extension ในไฟล์ `<ชื่อหน้า>_ext.dart`" ใน skill `simple-code` และ `docs/ARCHITECTURE.md` (หัวข้อ 3, 8, 13) | แก้แค่เอกสาร ทดลองแบบ `part` + extension ในโปรเจกต์ชั่วคราวแล้ว analyze ผ่าน |
 | 2026-10-31 | เพิ่มกฎ "โค้ดที่ใช้ตั้งแต่ 2 จุด → แยกเป็นฟังก์ชันกลาง" ใน skill `simple-code` และ `docs/ARCHITECTURE.md` หัวข้อ 9 | แก้แค่เอกสาร ไม่มีโค้ด Dart |

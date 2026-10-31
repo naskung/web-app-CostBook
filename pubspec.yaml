@@ -1,0 +1,35 @@
+name: costbook
+description: "CostBook — คำนวณต้นทุน ใบกำกับภาษี รายรับ-รายจ่าย และ stock"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.0-323.0.dev
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  # ฟอนต์หลักของแอป ตั้งค่าใช้งานที่ lib/core/theme/app_theme.dart
+  fonts:
+    - family: LINESeedSansTH
+      fonts:
+        - asset: assets/fonts/LINESeedSansTH_A_Th.ttf
+          weight: 100
+        - asset: assets/fonts/LINESeedSansTH_A_Rg.ttf
+          weight: 400
+        - asset: assets/fonts/LINESeedSansTH_A_Bd.ttf
+          weight: 700
+        - asset: assets/fonts/LINESeedSansTH_A_XBd.ttf
+          weight: 800
+        - asset: assets/fonts/LINESeedSansTH_A_He.ttf
+          weight: 900

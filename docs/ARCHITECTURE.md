@@ -56,17 +56,17 @@ flutter pub add dev:bloc_test dev:mocktail
 web-app-CostBook/
 ├── assets/
 │   ├── lang/              th.json, en.json
-│   ├── fonts/             ฟอนต์ไทย (เช่น Sarabun) สำหรับ PDF
+│   ├── fonts/             LINESeedSansTH (ฟอนต์หลักของแอป ลงทะเบียนใน pubspec.yaml)
 │   └── images/
 ├── lib/
 │   ├── main.dart          จุดเริ่มแอป: โหลดภาษา แล้ว runApp
 │   ├── app.dart           MaterialApp.router + theme + bloc ที่ใช้ทั้งแอป
 │   ├── core/
-│   │   ├── constants/     app_colors.dart, app_sizes.dart, app_status.dart, api_constants.dart
+│   │   ├── constants/     app_status.dart, api_constants.dart
 │   │   ├── lang/          app_lang.dart (.tr), language_bloc.dart
 │   │   ├── network/       api_client.dart
 │   │   ├── routes/        app_routes.dart (ชื่อ route), app_router.dart (GoRouter)
-│   │   ├── theme/         app_theme.dart
+│   │   ├── theme/         app_colors.dart (สี), app_sizes.dart (ขนาดตัวอักษร / ระยะห่าง), app_theme.dart (ฟอนต์ + รวมเป็น ThemeData)
 │   │   ├── utils/         money_util.dart, tax_util.dart, cost_util.dart, date_util.dart, validator_util.dart
 │   │   └── helpers/       dialog_helper.dart, snackbar_helper.dart, pdf_helper.dart
 │   ├── shared/
@@ -98,6 +98,7 @@ web-app-CostBook/
 |---|---|
 | คำนวณ / แปลงค่า ไม่ใช้ UI เลย | `core/utils/` |
 | ต้องใช้ `BuildContext` หรือ plugin (dialog, snackbar, pdf) | `core/helpers/` |
+| สี / ขนาดตัวอักษร / ระยะห่าง / ฟอนต์ | `core/theme/` |
 | widget ที่ใช้มากกว่า 1 feature | `shared/widgets/` |
 | widget ที่ใช้แค่ feature เดียว | `features/<ชื่อ>/widgets/` |
 | เรียก API | `features/<ชื่อ>/repository/` |
@@ -378,7 +379,7 @@ context.pop(); // ย้อนกลับ
 
 1. ชื่อขึ้นต้นด้วย `App` ถ้าเป็นตัวแทน widget ของ Flutter (เช่น `AppButton` แทน `ElevatedButton`)
 2. **ไม่รู้จัก bloc** — รับข้อมูลผ่าน constructor และส่งเหตุการณ์ออกผ่าน callback (`onPressed`, `onChanged`)
-3. สี / ขนาด ใช้จาก `AppColors`, `AppSizes` ห้าม hardcode
+3. สี / ขนาด ใช้จาก `AppColors`, `AppSizes` ห้าม hardcode — ตัวอักษรใช้ `Theme.of(context).textTheme.xxx` ห้ามใส่ `fontSize` / `fontFamily` เอง
 4. ข้อความรับเข้ามาจากข้างนอก (คนเรียกใช้ใส่ `.tr` เอง)
 5. หน้าจอต้องใช้ widget กลางก่อนเสมอ ถ้าไม่มี → สร้างเพิ่มใน shared ถ้าใช้ ≥ 2 feature
 6. `PageLayout` ทำ responsive แบบง่าย: จอกว้าง < 800 ให้เมนูข้างเป็น Drawer
@@ -706,7 +707,7 @@ error จาก API มาเป็น code เช่น `{"error": "product_nam
 
 หมายเหตุ:
 - เลขที่ใบกำกับควรให้ API รันให้ (กันเลขซ้ำ)
-- PDF ต้องฝังฟอนต์ไทย (เช่น Sarabun ใน `assets/fonts/`) และทดสอบสระ / วรรณยุกต์ให้แสดงถูกตั้งแต่แรก
+- PDF ต้องฝังฟอนต์ไทย (ลอง LINESeedSansTH ใน `assets/fonts/` ก่อน) และทดสอบสระ / วรรณยุกต์ให้แสดงถูกตั้งแต่แรก
 - ให้นักบัญชีตรวจรูปแบบใบกำกับอีกครั้งก่อนใช้งานจริง
 - e-Tax Invoice ยังไม่อยู่ในขอบเขตตอนนี้
 

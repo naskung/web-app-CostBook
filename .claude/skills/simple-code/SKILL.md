@@ -162,6 +162,6 @@ ProductBloc → ProductRepository → ApiClient
 - [ ] มีโค้ดซ้ำตั้งแต่ 2 จุดไหม → แยกเป็นฟังก์ชันกลาง
 - [ ] หน้าไหนโค้ดเยอะ (`build()` > ~60 บรรทัด หรือไฟล์ > ~150 บรรทัด) → แยกเป็น extension ในไฟล์ `_ext.dart`
 - [ ] ไฟล์อยู่ถูกโฟลเดอร์ตาม `docs/ARCHITECTURE.md`
-- [ ] ไม่มีข้อความ hardcode (ใช้ `.tr`), ไม่มีสี / ขนาด hardcode (ใช้ `AppColors` / `AppSizes`)
+- [ ] ไม่มีข้อความ hardcode (ใช้ `.tr`), ไม่มีสี / ขนาด hardcode (ใช้ `AppColors` / `AppSizes`), ตัวอักษรใช้ `Theme.of(context).textTheme` ไม่ใส่ `fontSize` เอง
 - [ ] รัน skill `unit-test-check` แล้วผ่าน
 - [ ] อัปเดต `PROGRESS.md` แล้ว
