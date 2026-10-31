@@ -10,8 +10,6 @@ import 'package:costbook/core/routes/app_shell.dart';
 import 'package:costbook/core/theme/app_theme.dart';
 import 'package:costbook/features/auth/bloc/auth_bloc.dart';
 import 'package:costbook/features/auth/repository/auth_repository.dart';
-import 'package:costbook/features/dashboard/pages/dashboard_page.dart';
-import 'package:costbook/features/product/pages/product_list_page.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 
@@ -46,8 +44,8 @@ void main() {
             child: AppShell(currentPath: state.uri.path, child: child),
           ),
           routes: [
-            GoRoute(path: AppRoutes.dashboard, builder: (context, state) => const DashboardPage()),
-            GoRoute(path: AppRoutes.products, builder: (context, state) => const ProductListPage()),
+            GoRoute(path: AppRoutes.dashboard, builder: (context, state) => const Text('dashboard-page')),
+            GoRoute(path: AppRoutes.products, builder: (context, state) => const Text('products-page')),
           ],
         ),
       ],
@@ -59,14 +57,14 @@ void main() {
   testWidgets('เปิดหน้าแรก หัวข้อด้านบนเป็นชื่อเมนูภาพรวม', (tester) async {
     await pumpShell(tester);
     expect(find.widgetWithText(AppBar, 'menu.dashboard'.tr), findsOneWidget);
-    expect(find.text('dashboard.welcome'.tr), findsOneWidget);
+    expect(find.text('dashboard-page'), findsOneWidget);
   });
 
   testWidgets('กดเมนูสินค้า ไปหน้าสินค้า และหัวข้อเปลี่ยนตาม', (tester) async {
     await pumpShell(tester);
     await tester.tap(find.text('menu.products'.tr));
     await tester.pumpAndSettle();
-    expect(find.text('product.description'.tr), findsOneWidget);
+    expect(find.text('products-page'), findsOneWidget);
     expect(find.widgetWithText(AppBar, 'menu.products'.tr), findsOneWidget);
   });
 

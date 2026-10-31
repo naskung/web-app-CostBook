@@ -11,6 +11,7 @@ import 'package:costbook/core/network/api_exception.dart';
 void main() {
   tearDown(() {
     ApiClient.token = '';
+    ApiClient.onUnauthorized = null;
   });
 
   ApiClient clientThatReplies(int statusCode, String body) {
@@ -97,6 +98,65 @@ void main() {
         client: MockClient((request) async => throw http.ClientException('connection refused')),
       );
       expect(await errorCodeOf(api.post('/auth/login', {})), 'network_error');
+    });
+  });
+
+  group('ApiClient get / put / delete', () {
+    late http.Request sentRequest;
+
+    ApiClient recordingClient(int statusCode, String body) {
+      return ApiClient(
+        client: MockClient((request) async {
+          sentRequest = request;
+          return http.Response.bytes(utf8.encode(body), statusCode);
+        }),
+      );
+    }
+
+    test('get ส่ง method GET และอ่านภาษาไทยใน JSON ได้ถูก', () async {
+      final api = recordingClient(200, '[{"name":"กาแฟ"}]');
+      final data = await api.get('/products');
+      expect(sentRequest.method, 'GET');
+      expect(sentRequest.url.toString(), '${ApiConstants.baseUrl}/products');
+      expect(data, [
+        {'name': 'กาแฟ'},
+      ]);
+    });
+
+    test('put ส่ง method PUT พร้อม JSON', () async {
+      final api = recordingClient(200, '{}');
+      await api.put('/products/1', {'name': 'ชา'});
+      expect(sentRequest.method, 'PUT');
+      expect(jsonDecode(sentRequest.body), {'name': 'ชา'});
+    });
+
+    test('delete ได้ 204 ไม่มี body คืน null ไม่ error', () async {
+      final api = recordingClient(204, '');
+      expect(await api.delete('/products/1'), isNull);
+      expect(sentRequest.method, 'DELETE');
+    });
+
+    test('ได้ 409 stock_not_enough ได้ ApiException code นั้น', () async {
+      final api = recordingClient(409, '{"error":"stock_not_enough"}');
+      expect(await errorCodeOf(api.get('/stock')), 'stock_not_enough');
+    });
+  });
+
+  group('ApiClient token หมดอายุ', () {
+    test('ได้ 401 unauthorized เรียก onUnauthorized', () async {
+      var called = false;
+      ApiClient.onUnauthorized = () => called = true;
+      final api = clientThatReplies(401, '{"error":"unauthorized"}');
+      expect(await errorCodeOf(api.get('/products')), 'unauthorized');
+      expect(called, true);
+    });
+
+    test('login ไม่ผ่าน (invalid_credentials) ไม่เรียก onUnauthorized', () async {
+      var called = false;
+      ApiClient.onUnauthorized = () => called = true;
+      final api = clientThatReplies(401, '{"error":"invalid_credentials"}');
+      await errorCodeOf(api.post('/auth/login', {}));
+      expect(called, false);
     });
   });
 }

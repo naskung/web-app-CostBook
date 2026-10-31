@@ -4,8 +4,8 @@
 
 ## สถานะตอนนี้
 
-- **เสร็จแล้ว:** Phase 0, Phase 1 (เหลือ package intl / pdf / printing), theme + responsive + ภาษา ของ Phase 2, **login ต่อ API จริงแล้ว** (route `/login` ↔ `/`, จดจำการเข้าสู่ระบบ, ปุ่มออกจากระบบ), โลโก้ร้านจาก API ในหน้า login + favicon
-- **งานถัดไป:** รอผู้ใช้สั่ง — เช่น ทำหน้าจริงของแต่ละเมนู (ตอนนี้เป็นหน้า "กำลังพัฒนา"), จัดการ 401 `unauthorized` (token หมดอายุ)
+- **เสร็จแล้ว:** Phase 0–3, **ทุกเมนูต่อ API จริงแล้ว** (ภาพรวม, สินค้า, คำนวณต้นทุน, สต็อก, รายรับ-รายจ่าย, ใบกำกับภาษี + พิมพ์ / PDF, ตั้งค่า + เปลี่ยนภาษา), token หมดอายุ → กลับหน้า login
+- **งานถัดไป:** รอผู้ใช้สั่ง — เช่น อัปโหลดโลโก้จากหน้าตั้งค่า (ต้องเพิ่ม package เลือกไฟล์), ปฏิทินเลือกวันที่เป็นภาษาไทย, ใบกำกับหลายหน้า, deploy
 
 ---
 
@@ -21,7 +21,7 @@
 
 - [x] `flutter create --platforms web --project-name costbook .`
 - [x] เพิ่ม package สำหรับ login: flutter_bloc, equatable, http, go_router, shared_preferences, bloc_test, mocktail
-- [ ] เพิ่ม package ที่เหลือ: intl, pdf, printing (เพิ่มตอนทำ feature ที่ใช้)
+- [x] เพิ่ม package ที่เหลือ: intl, pdf, printing (+ `dependency_overrides: image: 4.5.4` ให้ pdf compile ได้)
 - [x] สร้างโฟลเดอร์ตาม `docs/ARCHITECTURE.md` (โฟลเดอร์ว่างมี `.gitkeep` ลบได้เมื่อมีไฟล์จริง)
 
 ## Phase 2 — Core
@@ -30,24 +30,24 @@
 - [x] รองรับทุกขนาดจอ: `ScreenType`, `ResponsiveUtil` + test, `ResponsiveHelper`, `ScreenScaler` (จอใหญ่ขยายทั้งแอป) + test
 - [x] `AppStatus`
 - [x] ภาษา: `AppLang` + `.tr` + `th.json` / `en.json`
-- [ ] `LanguageBloc`
+- [x] `LanguageBloc` (เปลี่ยนภาษาในหน้าตั้งค่า + จำไว้ในเครื่อง)
 - [x] route: `AppRoutes` + `appRouter` (`/login`, `/` + redirect ตาม token)
 - [x] route: ShellRoute + `AppShell` + `PageLayout` + เมนู 7 หน้า (`AppMenu`) + แอนิเมชันซูม (`AppPageTransition`)
-- [x] `ApiClient` (`post` + แนบ token ให้เอง + `ApiException`) + test — `get` / `put` / `delete` เพิ่มตอนมี feature ที่ใช้
+- [x] `ApiClient` (`get` / `post` / `put` / `delete` + แนบ token ให้เอง + `ApiException` + 401 → `onUnauthorized`) + test
 - [x] utils + test: `ValidatorUtil` (required, email)
-- [ ] utils + test: `MoneyUtil`, `TaxUtil`, `CostUtil`, `DateUtil`
-- [ ] helpers: `DialogHelper`, `SnackbarHelper`
+- [x] utils + test: `MoneyUtil`, `TaxUtil`, `CostUtil`, `DateUtil`, `ErrorUtil`, `ValidatorUtil` (เพิ่ม taxId, ตัวเลข)
+- [x] helpers: `DialogHelper`, `SnackbarHelper`, `PdfHelper`
 - [x] test เช็ค key ภาษา th / en ตรงกัน
 
 ## Phase 3 — Widget กลาง
 
 - [x] atoms: `AppButton` (มี `isLoading`), `AppTextField` (มีปุ่มแสดง / ซ่อนรหัสผ่าน)
-- [ ] atoms: `AppDropdown`, `AppLoading`, `AppBadge`, `MoneyText`
-- [ ] molecules: `SearchField`, `StatCard`, `AmountRow`, `EmptyView`, `ErrorView`
+- [x] atoms: `AppDropdown`, `AppLoading`, `AppBadge`, `MoneyText`
+- [x] molecules: `SearchField`, `StatCard`, `EmptyView`, `ErrorView`, `MonthSwitcher`, `SectionCard`, `NoticeBanner` (`AmountRow` ไม่ได้ใช้ ไม่ได้ทำ)
 - [x] atoms: `ShopLogo` (โลโก้ร้านจาก API ใช้ทั้งหน้า login และเมนู)
-- [x] molecules: `ComingSoonView` (หน้าที่ยังไม่ได้ทำ)
+- [x] ~~molecules: `ComingSoonView`~~ ลบแล้ว (ทุกหน้ามีของจริงแล้ว)
 - [x] organisms: `PageLayout`, `AppSideMenu` (แถบบนใช้ `AppBar` + `appBarTheme` แทน `AppTopBar`)
-- [ ] organisms: `AppDataTable`, `FormCard`
+- [x] organisms: `AppDataTable` (จอคอม = ตาราง / มือถือ = การ์ด), `FormDialog`, `PageContent`, `PageToolbar`, `StatGrid`
 
 ## Phase 4 — Features
 
@@ -55,21 +55,23 @@
 
 - [x] auth — login: UI + `AuthBloc` + `AuthRepository` + ต่อ API `POST /auth/login` + route `/login` + จดจำ token (`shared_preferences`) + logout + test
 - [x] auth — หน้า login แสดงโลโก้ร้านจาก `GET /company/logo` (โหลดไม่ได้ → ไอคอน CostBook) + favicon ใช้โลโก้ร้าน
-- [ ] auth — ได้ 401 `unauthorized` → ลบ token แล้วไปหน้า login (ทำตอนมี API ที่ต้อง login)
-- [ ] product — จัดการสินค้า
-- [ ] cost — คำนวณต้นทุน / ราคาขาย
-- [ ] stock — รับเข้า / เบิกออก / ใกล้หมด
-- [ ] transaction — รายรับ-รายจ่าย + สรุปรายเดือน
-- [ ] invoice — ใบกำกับภาษี + VAT 7% + PDF (ฟอนต์ไทย)
-- [ ] dashboard — สรุปภาพรวม (ตอนนี้เป็นหน้าต้อนรับ ปุ่มออกจากระบบย้ายไปอยู่ในเมนูแล้ว)
+- [x] auth — ได้ 401 `unauthorized` → ลบ token แล้วไปหน้า login
+- [x] product — รายการ / ค้นหา / เพิ่ม / แก้ / ลบ (ป้ายใกล้หมด) + test
+- [x] cost — ใบต้นทุน 3 ประเภท + จำนวนผลิตต่อรอบ + markup → ราคาขาย + บันทึกทั้งใบ + test
+- [x] stock — คงเหลือ / เฉพาะใกล้หมด / ประวัติ / รับเข้า / เบิกออก + test
+- [x] transaction — รายรับ-รายจ่ายรายเดือน + สรุป + หมวด + รายการจากใบกำกับล็อกไว้ + test
+- [x] invoice — รายการรายเดือน / ออกใบ (VAT 7% ทั้งใบ) / ดูใบ A4 / พิมพ์ / ดาวน์โหลด PDF (ภาษาไทยถูก) / ยกเลิก + test
+- [ ] invoice — ใบที่ยาวเกิน 1 หน้า A4 (ตอนนี้ย่อให้อยู่หน้าเดียว), ตัวหนังสือจำนวนเงิน (บาทถ้วน)
+- [x] dashboard — รายรับ / รายจ่าย / กำไร / ใบกำกับ / สินค้า / ใกล้หมด ของเดือน + ทางลัด + test
 - [x] ทุกเมนูมีหน้าแล้ว (product / cost / stock / transaction / invoice / settings เป็นหน้า "กำลังพัฒนา" + บอกว่าจะทำอะไร)
-- [ ] settings — ข้อมูลบริษัท + โลโก้ร้าน (แต่ละร้านต่างกัน ไม่ฝังในแอป) + เปลี่ยนภาษา
+- [x] settings — ข้อมูลร้าน (เลขผู้เสียภาษี 13 หลัก) + แสดงโลโก้ + เปลี่ยนภาษา + test
+- [ ] settings — อัปโหลด / ลบโลโก้จากหน้าเว็บ (API มีแล้ว ต้องเพิ่ม package เลือกไฟล์ เช่น file_picker)
 
 ## Phase 5 — ส่งงาน
 
-- [ ] ต่อ API จริง (`../api-Costbook`) แทนข้อมูลตัวอย่าง
-- [ ] `flutter analyze` และ `flutter test` ผ่านทั้งหมด
-- [ ] `flutter build web`
+- [x] ต่อ API จริง (`../api-Costbook`) แทนข้อมูลตัวอย่าง
+- [x] `flutter analyze` และ `flutter test` ผ่านทั้งหมด
+- [x] `flutter build web`
 - [ ] deploy
 
 ---
@@ -79,8 +81,8 @@
 - [ ] deploy ที่ไหน (Firebase Hosting / Vercel / server เอง)
 - [x] ต้องมี login ไหม → มี (อีเมล + รหัสผ่าน ตาม API)
 - [ ] มีผู้ใช้หลายคน / แบ่งสิทธิ์ไหม
-- [ ] ออกใบกำกับแล้วให้ตัด stock และบันทึกรายรับอัตโนมัติไหม (แนะนำให้ API ทำ)
-- [ ] รูปแบบเลขที่ใบกำกับ (แนะนำให้ API รันเลข)
+- [x] ออกใบกำกับแล้วตัด stock + บันทึกรายรับอัตโนมัติ → API ทำ (ตัดสินใจ 2026-10-31)
+- [x] รูปแบบเลขที่ใบกำกับ → API รันเลข `INV-2026-0001` รันใหม่ทุกปี (ตัดสินใจ 2026-10-31)
 
 ---
 
@@ -88,6 +90,9 @@
 
 | วันที่ | ทำอะไร | หมายเหตุ |
 |---|---|---|
+| 2026-10-31 | ข้อความ "ยังไม่มีข้อมูล" / กำลังโหลด / error อยู่กลางพื้นที่ที่เหลือของจอ (เดิมชิดบนใต้แถบเครื่องมือ): `PageContent` เปลี่ยนจาก `ListView` เป็น `CustomScrollView` + `centerChild` (`SliverFillRemaining`), `EmptyView` / `ErrorView` จัดตัวเองไว้กลาง, หน้า สินค้า / สต็อก / รายรับ-รายจ่าย / ใบกำกับ / ภาพรวม แยก `_stateView` ออกมาส่งเข้า `centerChild` + test `page_content_test` (3) | analyze ผ่าน, test 278 ผ่าน, ดูภาพจริงใน Chrome 1280 / 375 กับ DB `costbook` (ยังไม่มีสินค้า) แล้ว |
+| 2026-10-31 | **ทำหน้าจริงทุกเมนู + ต่อ API**: package intl / pdf / printing, `ApiClient` get / put / delete + 401, utils (Money / Tax / Cost / Date / Error), helpers (Dialog / Snackbar / Pdf), widget กลาง 13 ตัว, `LanguageBloc`, feature dashboard / product / cost / stock / transaction / invoice (list / form / detail + กระดาษใบกำกับ A4) / settings แต่ละตัวมี model + repository + bloc + หน้า + test, route `/invoices/create` และ `/invoices/:id`, key ภาษา th / en 272 คำ, ลบ `ComingSoonView` | analyze ผ่าน, test 275 ผ่าน (util / model / bloc ครบทุกไฟล์), build web ผ่าน — ลองกับ API จริง (DB ทดสอบ `costbook_e2e`) ใน Chrome ทุกหน้าที่ 1280 และบางหน้าที่ 375 แล้ว ไม่มี error ใน console, กดดาวน์โหลด PDF ได้ไฟล์ A4 ภาษาไทยถูก — package `pdf` วางวรรณยุกต์ไทยผิด ("ที่อยู่" → "ทีอยู่") จึงสร้าง PDF จากรูปของหน้าจอแทน (เลือกตัวหนังสือใน PDF ไม่ได้) / test ระดับหน้าเจอแถวสินค้าใกล้หมดล้นจอมือถือ → แก้แล้ว / ยังไม่ได้ลองกดฟอร์มทุกปุ่มใน Chrome (logic ทดสอบใน bloc test แล้ว) |
+| 2026-10-31 | **(จาก api-Costbook) API ทุกเมนูพร้อมใช้:** product, cost (`GET` / `PUT /products/{id}/costs` ส่งทั้งใบ), stock (`/stock`, `/stock/movements`, `/stock/in`, `/stock/out`), transaction (`?month=2026-10` + `/summary`), invoice (`?month=`, `POST /invoices`, `/invoices/{id}`, `/invoices/{id}/cancel`), dashboard — ต้อง login ทุกเส้น, error code ใหม่ดู `../api-Costbook/docs/ARCHITECTURE.md` หัวข้อ 6 หรือ `http://localhost:8080/docs` | ใช้แล้วในทุกหน้า (บรรทัดบน) |
 | 2026-10-31 | ปุ่ม ☰ หด / กางเมนูข้างบนจอคอมแบบ smooth (`AnimatedContainer` 250ms): หดเหลือแถบไอคอน 76px + tooltip ชื่อเมนู, ไอคอนปุ่มสลับ ☰ / เมนูเปิด แบบจาง, มือถือ-แท็บเล็ตใช้ปุ่ม ☰ เปิด Drawer (มี tooltip `common.toggle_menu`) | test 114 ผ่าน (มี test ระหว่าง animation ไม่ล้นจอ), ดูภาพจริงใน Chrome ทั้งตอนกางและหดแล้ว |
 | 2026-10-31 | เมนูข้าง (sidebar) 7 หน้า: `AppMenu` + `AppShell` + `PageLayout` + `AppSideMenu` ใน `ShellRoute`, จอคอมเมนูอยู่ซ้ายตลอด / มือถือ-แท็บเล็ตเป็น Drawer (☰), ปุ่มออกจากระบบย้ายไปล่างสุดของเมนู, แยก `ShopLogo` เป็น widget กลาง (ใช้ทั้ง login และเมนู), หน้าที่ยังไม่ได้ทำใช้ `ComingSoonView`, เพิ่ม `appBarTheme` | test 109 ผ่าน, ดูภาพจริงใน Chrome 375 (ปิด / เปิดเมนู) / 768 / 1440 แล้ว |
 | 2026-10-31 | แอนิเมชันเปลี่ยนหน้าแบบซูมแทนการเลื่อน: `AppPageTransition.forward` (หน้าทั่วไป: ขยายเข้า / หดออก) และ `.backward` (หน้า login: ย่อเข้า / ขยายออก) ใช้ผ่าน `pageBuilder` ใน `appRouter` + `ColoredBox` พื้นหลังใน `app.dart` | test 88 ผ่าน (มี test ยืนยันว่า `go` แล้วหน้าเก่าซูมออกจริง), อัดเฟรมตอน logout ใน Chrome แล้ว (เครื่องทดสอบเรนเดอร์ช้า เห็นแค่บางเฟรม) |

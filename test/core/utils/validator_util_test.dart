@@ -46,4 +46,65 @@ void main() {
       expect(ValidatorUtil.email('abc'), isNot(ValidatorUtil.required('')));
     });
   });
+
+  group('ValidatorUtil.taxId', () {
+    test('ไม่กรอก ผ่าน (ว่างได้)', () {
+      expect(ValidatorUtil.taxId(''), isNull);
+    });
+
+    test('ตัวเลข 13 หลัก ผ่าน', () {
+      expect(ValidatorUtil.taxId('0105555555555'), isNull);
+    });
+
+    test('12 หลัก ได้ข้อความ error', () {
+      expect(ValidatorUtil.taxId('010555555555'), isNotNull);
+    });
+
+    test('มีขีด ได้ข้อความ error', () {
+      expect(ValidatorUtil.taxId('0-1055-55555-55-5'), isNotNull);
+    });
+  });
+
+  group('ValidatorUtil ตัวเลข', () {
+    test('positiveNumber 45.50 ผ่าน', () {
+      expect(ValidatorUtil.positiveNumber('45.50'), isNull);
+    });
+
+    test('positiveNumber 1,250 (มีลูกน้ำ) ผ่าน', () {
+      expect(ValidatorUtil.positiveNumber('1,250'), isNull);
+    });
+
+    test('positiveNumber 0 ได้ข้อความ error', () {
+      expect(ValidatorUtil.positiveNumber('0'), isNotNull);
+    });
+
+    test('positiveNumber ตัวอักษร ได้ข้อความ error', () {
+      expect(ValidatorUtil.positiveNumber('abc'), isNotNull);
+    });
+
+    test('zeroOrMore ไม่กรอก ผ่าน (ถือเป็น 0)', () {
+      expect(ValidatorUtil.zeroOrMore(''), isNull);
+    });
+
+    test('zeroOrMore 0 ผ่าน', () {
+      expect(ValidatorUtil.zeroOrMore('0'), isNull);
+    });
+
+    test('zeroOrMore ติดลบ ได้ข้อความ error', () {
+      expect(ValidatorUtil.zeroOrMore('-1'), isNotNull);
+    });
+
+    test('positiveInteger 3 ผ่าน', () {
+      expect(ValidatorUtil.positiveInteger('3'), isNull);
+    });
+
+    test('positiveInteger 1.5 (ไม่ใช่จำนวนเต็ม) ได้ข้อความ error', () {
+      expect(ValidatorUtil.positiveInteger('1.5'), isNotNull);
+    });
+
+    test('positiveInteger 0 ได้ข้อความ error', () {
+      expect(ValidatorUtil.positiveInteger('0'), isNotNull);
+    });
+  });
 }
+

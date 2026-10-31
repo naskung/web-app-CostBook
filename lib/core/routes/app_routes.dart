@@ -6,5 +6,9 @@ class AppRoutes {
   static const String stock = '/stock';
   static const String transactions = '/transactions';
   static const String invoices = '/invoices';
+  static const String invoiceCreate = '/invoices/create';
+  static const String invoiceDetail = '/invoices/:id';
   static const String settings = '/settings';
+
+  static String invoiceDetailPath(String id) => '/invoices/$id';
 }

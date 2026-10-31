@@ -1,0 +1,127 @@
+import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+
+import 'package:costbook/core/constants/app_status.dart';
+import 'package:costbook/core/network/api_exception.dart';
+import 'package:costbook/features/stock/bloc/stock_bloc.dart';
+import 'package:costbook/features/stock/models/movement_model.dart';
+import 'package:costbook/features/stock/models/stock_item_model.dart';
+import 'package:costbook/features/stock/repository/stock_repository.dart';
+
+class MockStockRepository extends Mock implements StockRepository {}
+
+void main() {
+  late MockStockRepository repository;
+
+  const low = StockItemModel(productId: 'p1', name: 'กาแฟเย็น', stock: 1, minStock: 5, isLow: true);
+  const ok = StockItemModel(productId: 'p2', name: 'ชาไทย', stock: 20, minStock: 5);
+  final movement = MovementModel(
+    id: 'm1',
+    productId: 'p1',
+    productName: 'กาแฟเย็น',
+    type: 'in',
+    quantity: 10,
+    createdAt: DateTime(2026, 10, 31),
+  );
+
+  setUp(() {
+    repository = MockStockRepository();
+  });
+
+  void whenSaveMovement(Future<void> Function() answer) {
+    when(
+      () => repository.addMovement(
+        type: any(named: 'type'),
+        productId: any(named: 'productId'),
+        quantity: any(named: 'quantity'),
+        note: any(named: 'note'),
+      ),
+    ).thenAnswer((_) => answer());
+  }
+
+  blocTest<StockBloc, StockState>(
+    'StockRequested สำเร็จ ได้คงเหลือของทุกสินค้า',
+    build: () {
+      when(() => repository.getStock()).thenAnswer((_) async => [low, ok]);
+      return StockBloc(repository);
+    },
+    act: (bloc) => bloc.add(StockRequested()),
+    expect: () => [
+      const StockState(status: AppStatus.loading),
+      const StockState(status: AppStatus.success, items: [low, ok]),
+    ],
+  );
+
+  blocTest<StockBloc, StockState>(
+    'StockRequested ล้มเหลว ได้ failure พร้อม code',
+    build: () {
+      when(() => repository.getStock()).thenThrow(ApiException('server_error'));
+      return StockBloc(repository);
+    },
+    act: (bloc) => bloc.add(StockRequested()),
+    expect: () => [
+      const StockState(status: AppStatus.loading),
+      const StockState(status: AppStatus.failure, errorCode: 'server_error'),
+    ],
+  );
+
+  test('เลือกเฉพาะใกล้หมด เห็นแค่สินค้าที่ใกล้หมด', () {
+    const state = StockState(items: [low, ok], onlyLow: true);
+    expect(state.visibleItems, [low]);
+  });
+
+  blocTest<StockBloc, StockState>(
+    'StockFilterChanged ไม่โหลดใหม่ แค่เปลี่ยนตัวกรอง',
+    build: () => StockBloc(repository),
+    seed: () => const StockState(status: AppStatus.success, items: [low, ok]),
+    act: (bloc) => bloc.add(StockFilterChanged(onlyLow: true)),
+    expect: () => [const StockState(status: AppStatus.success, items: [low, ok], onlyLow: true)],
+    verify: (_) => verifyNever(() => repository.getStock()),
+  );
+
+  blocTest<StockBloc, StockState>(
+    'StockViewChanged ไปหน้าประวัติ โหลดประวัติด้วย',
+    build: () {
+      when(() => repository.getStock()).thenAnswer((_) async => [low]);
+      when(() => repository.getMovements()).thenAnswer((_) async => [movement]);
+      return StockBloc(repository);
+    },
+    act: (bloc) => bloc.add(StockViewChanged(showHistory: true)),
+    expect: () => [
+      const StockState(status: AppStatus.loading, showHistory: true),
+      StockState(status: AppStatus.success, showHistory: true, items: const [low], movements: [movement]),
+    ],
+  );
+
+  blocTest<StockBloc, StockState>(
+    'StockMovementSaved สำเร็จ บันทึกแล้วโหลดคงเหลือใหม่',
+    build: () {
+      whenSaveMovement(() async {});
+      when(() => repository.getStock()).thenAnswer((_) async => [ok]);
+      return StockBloc(repository);
+    },
+    act: (bloc) => bloc.add(StockMovementSaved(type: 'in', productId: 'p2', quantity: 10, note: '')),
+    expect: () => [
+      const StockState(saveStatus: AppStatus.loading, savedType: 'in'),
+      const StockState(saveStatus: AppStatus.success, savedType: 'in'),
+      const StockState(status: AppStatus.success, items: [ok], saveStatus: AppStatus.success, savedType: 'in'),
+    ],
+    verify: (_) {
+      verify(() => repository.addMovement(type: 'in', productId: 'p2', quantity: 10, note: '')).called(1);
+    },
+  );
+
+  blocTest<StockBloc, StockState>(
+    'StockMovementSaved เบิกเกินที่มี ได้ saveStatus failure พร้อม code stock_not_enough',
+    build: () {
+      whenSaveMovement(() async => throw ApiException('stock_not_enough'));
+      return StockBloc(repository);
+    },
+    act: (bloc) => bloc.add(StockMovementSaved(type: 'out', productId: 'p1', quantity: 99, note: '')),
+    expect: () => [
+      const StockState(saveStatus: AppStatus.loading, savedType: 'out'),
+      const StockState(saveStatus: AppStatus.failure, saveErrorCode: 'stock_not_enough', savedType: 'out'),
+    ],
+  );
+}

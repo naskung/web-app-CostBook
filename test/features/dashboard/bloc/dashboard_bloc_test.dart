@@ -1,0 +1,65 @@
+import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+
+import 'package:costbook/core/constants/app_status.dart';
+import 'package:costbook/core/network/api_exception.dart';
+import 'package:costbook/features/dashboard/bloc/dashboard_bloc.dart';
+import 'package:costbook/features/dashboard/models/dashboard_model.dart';
+import 'package:costbook/features/dashboard/repository/dashboard_repository.dart';
+
+class MockDashboardRepository extends Mock implements DashboardRepository {}
+
+void main() {
+  late MockDashboardRepository repository;
+  final october = DateTime(2026, 10);
+  const dashboard = DashboardModel(income: 1000, expense: 400, profit: 600);
+
+  setUpAll(() {
+    registerFallbackValue(DateTime(2026));
+  });
+
+  setUp(() {
+    repository = MockDashboardRepository();
+  });
+
+  blocTest<DashboardBloc, DashboardState>(
+    'DashboardRequested โหลดตัวเลขสรุปของเดือน',
+    build: () {
+      when(() => repository.getDashboard(any())).thenAnswer((_) async => dashboard);
+      return DashboardBloc(repository, month: october);
+    },
+    act: (bloc) => bloc.add(DashboardRequested()),
+    expect: () => [
+      DashboardState(month: october, status: AppStatus.loading),
+      DashboardState(month: october, status: AppStatus.success, dashboard: dashboard),
+    ],
+  );
+
+  blocTest<DashboardBloc, DashboardState>(
+    'DashboardMonthChanged +1 โหลดเดือนถัดไป',
+    build: () {
+      when(() => repository.getDashboard(any())).thenAnswer((_) async => dashboard);
+      return DashboardBloc(repository, month: october);
+    },
+    act: (bloc) => bloc.add(DashboardMonthChanged(1)),
+    expect: () => [
+      DashboardState(month: DateTime(2026, 11), status: AppStatus.loading),
+      DashboardState(month: DateTime(2026, 11), status: AppStatus.success, dashboard: dashboard),
+    ],
+    verify: (_) => verify(() => repository.getDashboard(DateTime(2026, 11))).called(1),
+  );
+
+  blocTest<DashboardBloc, DashboardState>(
+    'DashboardRequested ต่อ server ไม่ได้ ได้ failure',
+    build: () {
+      when(() => repository.getDashboard(any())).thenThrow(ApiException('network_error'));
+      return DashboardBloc(repository, month: october);
+    },
+    act: (bloc) => bloc.add(DashboardRequested()),
+    expect: () => [
+      DashboardState(month: october, status: AppStatus.loading),
+      DashboardState(month: october, status: AppStatus.failure, errorCode: 'network_error'),
+    ],
+  );
+}

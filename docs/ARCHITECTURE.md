@@ -41,7 +41,9 @@ Backend อยู่ที่ repo `../api-Costbook` — ระหว่าง�
 | `pdf`, `printing` | สร้างและพิมพ์ใบกำกับภาษี |
 | `bloc_test`, `mocktail` (dev) | เขียน unit test ของ bloc |
 
-เพิ่มแล้ว (2026-10-31): `flutter_bloc`, `equatable`, `http`, `go_router`, `shared_preferences`, `bloc_test`, `mocktail` — ยังไม่เพิ่ม: `intl`, `pdf`, `printing` (เพิ่มตอนทำ feature ที่ใช้)
+เพิ่มครบทุกตัวแล้ว (2026-10-31)
+
+**`dependency_overrides: image: 4.5.4` ใน `pubspec.yaml` ห้ามลบ** — `pdf` ดึง `image` 4.11 มา ซึ่งเรียก method ที่ `archive` 4.0.9 (เวอร์ชันล่าสุดที่ใช้กับ Flutter 3.35 ได้) ยังไม่มี → compile ไม่ผ่าน ลบได้เมื่ออัปเกรด Flutter แล้ว `flutter pub get` ได้ `archive` ใหม่กว่า 4.0.9
 
 **ไม่ใช้:** GetX, get_it, freezed, json_serializable, build_runner (เหตุผล: อยากให้โค้ดง่าย)
 ภาษาแบบ `.tr` เราเขียนเอง ไม่ต้องใช้ GetX (ดูหัวข้อ 10)
@@ -65,36 +67,33 @@ web-app-CostBook/
 │   ├── fonts/             LINESeedSansTH (ฟอนต์หลักของแอป ลงทะเบียนใน pubspec.yaml)
 │   └── images/            รูปที่ใช้ทุกร้าน (โลโก้ร้านไม่ฝังในแอป — แต่ละร้านต่างกัน มาจากข้อมูลร้านในหน้า settings)
 ├── lib/
-│   ├── main.dart          จุดเริ่มแอป: โหลดภาษา + อ่าน token ที่จดจำไว้ แล้ว runApp
-│   ├── app.dart           MaterialApp.router + theme + bloc ที่ใช้ทั้งแอป
+│   ├── main.dart          จุดเริ่มแอป: โหลดภาษาที่เลือกไว้ + อ่าน token ที่จดจำไว้ + ตั้ง ApiClient.onUnauthorized แล้ว runApp
+│   ├── app.dart           LanguageBloc + MaterialApp.router (key = รหัสภาษา → เปลี่ยนภาษาแล้วข้อความเปลี่ยนทั้งแอป)
 │   ├── core/
-│   │   ├── constants/     app_status.dart, screen_type.dart, api_constants.dart
-│   │   ├── lang/          app_lang.dart (.tr), language_bloc.dart
-│   │   ├── network/       api_client.dart (เรียก API + เก็บ token), api_exception.dart (error code จาก API)
-│   │   ├── routes/        app_routes.dart (ชื่อ route), app_router.dart (GoRouter), app_menu.dart (รายการเมนู), app_shell.dart (เมนู + ออกจากระบบ), app_page_transition.dart
+│   │   ├── constants/     app_status.dart, screen_type.dart, api_constants.dart (baseUrl, companyLogoUrl)
+│   │   ├── lang/          app_lang.dart (.tr), language_bloc.dart (เปลี่ยน + จำภาษา)
+│   │   ├── network/       api_client.dart (get / post / put / delete + token + 401), api_exception.dart (error code จาก API)
+│   │   ├── routes/        app_routes.dart (ชื่อ route), app_router.dart (GoRouter + สร้าง bloc ของแต่ละหน้า), app_menu.dart, app_shell.dart, app_page_transition.dart
 │   │   ├── theme/         app_colors.dart (สี), app_sizes.dart (ขนาดตัวอักษร / ระยะห่าง), app_theme.dart (ฟอนต์ + รวมเป็น ThemeData)
-│   │   ├── utils/         money_util.dart, tax_util.dart, cost_util.dart, date_util.dart, validator_util.dart, responsive_util.dart
-│   │   └── helpers/       dialog_helper.dart, snackbar_helper.dart, pdf_helper.dart, responsive_helper.dart
+│   │   ├── utils/         money_util, tax_util, cost_util, date_util, validator_util, error_util, responsive_util
+│   │   └── helpers/       dialog_helper.dart (ถามยืนยัน), snackbar_helper.dart, pdf_helper.dart (พิมพ์ / ดาวน์โหลด PDF), responsive_helper.dart
 │   ├── shared/
 │   │   └── widgets/
-│   │       ├── atoms/
-│   │       ├── molecules/
-│   │       └── organisms/   page_layout.dart, app_side_menu.dart, screen_scaler.dart (ขยายทั้งแอปบนจอใหญ่)
-│   └── features/
-│       ├── auth/            bloc/auth_bloc.dart (+ event, state), repository/auth_repository.dart,
-│       │                    pages/login_page.dart, login_page_ext.dart, widgets/login_background.dart
-│       ├── dashboard/       pages/dashboard_page.dart (ตอนนี้เป็นหน้าแรกเปล่า + ปุ่มออกจากระบบ)
-│       ├── product/
-│       │   ├── bloc/        product_bloc.dart, product_event.dart, product_state.dart
-│       │   ├── models/      product_model.dart
-│       │   ├── repository/  product_repository.dart
-│       │   ├── pages/       product_list_page.dart, product_list_page_ext.dart (ถ้าหน้ายาว), product_form_page.dart
-│       │   └── widgets/     widget ที่ใช้เฉพาะ feature นี้
-│       ├── cost/
-│       ├── stock/
-│       ├── transaction/
-│       ├── invoice/
-│       └── settings/
+│   │       ├── atoms/       app_button, app_text_field, app_dropdown, app_loading, app_badge, money_text, shop_logo
+│   │       ├── molecules/   empty_view, error_view, stat_card, month_switcher, search_field, section_card, notice_banner
+│   │       └── organisms/   page_layout, app_side_menu, screen_scaler, page_content (ขอบ + ความกว้างหน้า), page_toolbar,
+│   │                        app_data_table (จอคอม = ตาราง / มือถือ = การ์ด), form_dialog (กล่องฟอร์ม), stat_grid
+│   └── features/          ทุก feature: models → repository → bloc → pages (+ _ext ถ้ายาว) → widgets
+│       ├── auth/            login + จดจำ token / อีเมล
+│       ├── dashboard/       ตัวเลขสรุปของเดือน + สินค้าใกล้หมด + ทางลัด
+│       ├── product/         รายการ / ค้นหา / เพิ่ม / แก้ / ลบสินค้า (widgets/product_form_dialog.dart)
+│       ├── cost/            ใบต้นทุนของสินค้า + markup → ราคาขาย (widgets/cost_item_dialog.dart)
+│       ├── stock/           คงเหลือ / ใกล้หมด / ประวัติ / รับเข้า / เบิกออก (widgets/stock_movement_dialog.dart)
+│       ├── transaction/     รายรับ-รายจ่ายรายเดือน + สรุป (widgets/transaction_form_dialog.dart)
+│       ├── invoice/         bloc 3 ตัว: invoice_list / invoice_form / invoice_detail
+│       │                    pages: invoice_list_page, invoice_form_page (+ _ext), invoice_detail_page
+│       │                    widgets: invoice_item_row.dart (บรรทัดสินค้าในฟอร์ม), invoice_paper.dart (กระดาษใบกำกับ A4)
+│       └── settings/        ข้อมูลร้าน + โลโก้ + เปลี่ยนภาษา
 └── test/                  โครงเหมือน lib/ ทุกอย่าง เช่น test/core/utils/tax_util_test.dart
 ```
 
@@ -307,26 +306,22 @@ class ProductRepository {
 
 ## 7. Route
 
-ชื่อ route ทุกตัวอยู่ใน `AppRoutes` ที่เดียว **ห้ามพิมพ์ path เป็น string ในหน้าจอ**
+ชื่อ route ทุกตัวอยู่ใน `AppRoutes` ที่เดียว **ห้ามพิมพ์ path เป็น string ในหน้าจอ** — เพิ่ม / แก้สินค้า / รายการ ใช้กล่องฟอร์ม (dialog) ไม่มี route แยก
 
 ```dart
 // lib/core/routes/app_routes.dart
 class AppRoutes {
-  static const dashboard = '/';
-  static const login = '/login';
-  static const products = '/products';
-  static const productAdd = '/products/add';
-  static const productEdit = '/products/:id/edit';
-  static const cost = '/cost';
-  static const stock = '/stock';
-  static const transactions = '/transactions';
-  static const invoices = '/invoices';
-  static const invoiceCreate = '/invoices/create';
-  static const invoiceDetail = '/invoices/:id';
-  static const settings = '/settings';
+  static const String login = '/login';
+  static const String dashboard = '/';
+  static const String products = '/products';
+  static const String cost = '/cost';
+  static const String stock = '/stock';
+  static const String transactions = '/transactions';
+  static const String invoices = '/invoices';
+  static const String invoiceCreate = '/invoices/create';
+  static const String invoiceDetail = '/invoices/:id';
+  static const String settings = '/settings';
 
-  // route ที่มี :id ให้มีฟังก์ชันสร้าง path
-  static String productEditPath(String id) => '/products/$id/edit';
   static String invoiceDetailPath(String id) => '/invoices/$id';
 }
 ```
@@ -422,7 +417,28 @@ error code ที่ `ApiClient` โยนออกมาเป็น `ApiExcept
 - `server_error` = API ตอบ error แต่ไม่มี `{"error": ...}`
 - bloc เจอ error อื่นที่ไม่ใช่ `ApiException` → `unknown_error`
 
-ยังไม่ได้ทำ: token หมดอายุ (7 วัน) แต่ยังจดจำไว้ → ตอนนี้ยังเข้าหน้าแรกได้ — ต้องจัดการตอนมี API ที่ต้อง login: ได้ 401 `unauthorized` → ลบ token แล้วไป `/login`
+token หมดอายุ (7 วัน) / ถูกปฏิเสธ: API ตอบ 401 `unauthorized` → `ApiClient` เรียก `ApiClient.onUnauthorized` (ตั้งใน `main.dart`) → ลบ token แล้ว `appRouter.go(AppRoutes.login)`
+(login ไม่ผ่าน `invalid_credentials` ก็เป็น 401 แต่ไม่เรียก `onUnauthorized`)
+
+### หน้า + bloc ของแต่ละเมนู (ทำแล้ว)
+
+ทุกหน้าสร้าง bloc ใน `app_router.dart` แล้ว `..add(<Event โหลดข้อมูล>)` ทันที — ออกจากหน้าแล้วกลับมา = bloc ใหม่ โหลดข้อมูลใหม่
+
+| เมนู | Route | Bloc | หมายเหตุ |
+|---|---|---|---|
+| ภาพรวม | `/` | `DashboardBloc` | เลือกเดือนได้ (`MonthSwitcher`) |
+| สินค้า | `/products` | `ProductBloc` | ค้นหาในเครื่อง (`visibleProducts`), ลบสินค้าที่อยู่ในใบกำกับไม่ได้ |
+| คำนวณต้นทุน | `/cost` | `CostBloc` | แก้ใบต้นทุนในเครื่องก่อน (`isDirty`) แล้วกด "บันทึก" ส่งทั้งใบ |
+| สต็อก | `/stock` | `StockBloc` | โหลดคงเหลือทุกสินค้าครั้งเดียว กรอง "ใกล้หมด" ในเครื่อง, แท็บประวัติโหลดเมื่อเปิด |
+| รายรับ-รายจ่าย | `/transactions` | `TransactionBloc` | หมวดเป็นรหัส (`TransactionModel.incomeCategories / expenseCategories`) แสดงด้วย `'transaction.category.<code>'.tr` |
+| ใบกำกับภาษี | `/invoices`, `/invoices/create`, `/invoices/:id` | `InvoiceListBloc`, `InvoiceFormBloc`, `InvoiceDetailBloc` | ออกใบสำเร็จ → ไปหน้าดูใบ (`AppRoutes.invoiceDetailPath(id)`) |
+| ตั้งค่า | `/settings` | `SettingsBloc` + `LanguageBloc` | ต้องกรอกเลขผู้เสียภาษีก่อนออกใบกำกับ |
+
+ผลของการบันทึก / ลบ แยกเป็น field ของ state: `saveStatus` / `saveErrorCode` (กล่องฟอร์มใช้ — สำเร็จแล้วปิดเอง ไม่สำเร็จแสดง error ในกล่อง) และ `deleteStatus` / `deleteErrorCode` (หน้าใช้ — แสดง snackbar)
+กล่องฟอร์มเปิดด้วย `XxxDialog.show(context, ...)` ซึ่งส่ง bloc ของหน้าเข้าไปด้วย `BlocProvider.value`
+
+ลองหน้าจอกับ API อื่นที่ไม่ใช่ `http://localhost:8080/api/v1` (เช่น server จริง / API ทดสอบ):
+`flutter build web --dart-define=API_URL=https://api.example.com/api/v1` (favicon ใน `web/index.html` ต้องแก้เอง)
 
 ---
 
@@ -816,7 +832,9 @@ error จาก API มาเป็น code เช่น `{"error": "product_nam
 
 หมายเหตุ:
 - เลขที่ใบกำกับควรให้ API รันให้ (กันเลขซ้ำ)
-- PDF ต้องฝังฟอนต์ไทย (ลอง LINESeedSansTH ใน `assets/fonts/` ก่อน) และทดสอบสระ / วรรณยุกต์ให้แสดงถูกตั้งแต่แรก
+- **PDF ใช้วิธีถ่ายรูปกระดาษใบกำกับ** (`PdfHelper`): `InvoicePaper` (กว้าง 794 = A4) อยู่ใน `RepaintBoundary` → `toImage` ความละเอียด 3 เท่า → ใส่ใน PDF ขนาด A4 → `Printing.layoutPdf` (พิมพ์) / `Printing.sharePdf` (ดาวน์โหลด)
+  - เหตุผล: ลองสร้างข้อความไทยด้วย package `pdf` + ฟอนต์ LINESeedSansTH แล้ววรรณยุกต์ที่ซ้อนสระบนหาย ("ที่อยู่" → "ทีอยู่") — Flutter วาดไทยถูก จึงถ่ายรูปจากหน้าจอแทน
+  - ข้อเสีย: เลือก / copy ตัวหนังสือใน PDF ไม่ได้, ใบที่สินค้าเยอะจนยาวเกิน 1 หน้า A4 จะถูกย่อให้อยู่หน้าเดียว (ยังไม่แบ่งหลายหน้า)
 - ให้นักบัญชีตรวจรูปแบบใบกำกับอีกครั้งก่อนใช้งานจริง
 - e-Tax Invoice ยังไม่อยู่ในขอบเขตตอนนี้
 

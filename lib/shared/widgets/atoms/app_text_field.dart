@@ -15,6 +15,11 @@ class AppTextField extends StatefulWidget {
     this.isPassword = false,
     this.validator,
     this.onSubmitted,
+    this.onChanged,
+    this.onTap,
+    this.readOnly = false,
+    this.maxLines = 1,
+    this.suffixText,
   });
 
   final String label;
@@ -27,6 +32,11 @@ class AppTextField extends StatefulWidget {
   final bool isPassword;
   final FormFieldValidator<String>? validator;
   final ValueChanged<String>? onSubmitted;
+  final ValueChanged<String>? onChanged;
+  final VoidCallback? onTap;
+  final bool readOnly;
+  final int maxLines;
+  final String? suffixText;
 
   @override
   State<AppTextField> createState() => _AppTextFieldState();
@@ -55,10 +65,15 @@ class _AppTextFieldState extends State<AppTextField> {
             obscureText: widget.isPassword && _isHidden,
             validator: widget.validator,
             onFieldSubmitted: widget.onSubmitted,
+            onChanged: widget.onChanged,
+            onTap: widget.onTap,
+            readOnly: widget.readOnly,
+            maxLines: widget.maxLines,
             decoration: InputDecoration(
               hintText: widget.hint,
               prefixIcon: widget.icon == null ? null : Icon(widget.icon),
               suffixIcon: _passwordToggle(),
+              suffixText: widget.suffixText,
             ),
           ),
         ],
