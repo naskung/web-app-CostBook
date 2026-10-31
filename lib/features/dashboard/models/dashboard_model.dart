@@ -82,6 +82,14 @@ class DashboardModel extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [income, expense, profit, invoiceCount, invoiceTotal, productCount, lowStockCount, lowStock];
+  List<Object?> get props => [
+    income,
+    expense,
+    profit,
+    invoiceCount,
+    invoiceTotal,
+    productCount,
+    lowStockCount,
+    lowStock,
+  ];
 }

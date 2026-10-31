@@ -27,7 +27,8 @@ class PdfHelper {
       pw.Page(
         pageFormat: PdfPageFormat.a4,
         margin: pw.EdgeInsets.zero,
-        build: (context) => pw.Image(pw.MemoryImage(pngBytes), fit: pw.BoxFit.contain, alignment: pw.Alignment.topCenter),
+        build:
+            (context) => pw.Image(pw.MemoryImage(pngBytes), fit: pw.BoxFit.contain, alignment: pw.Alignment.topCenter),
       ),
     );
     return document.save();

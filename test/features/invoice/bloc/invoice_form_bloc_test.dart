@@ -34,7 +34,7 @@ void main() {
     vat: 7,
     total: 107,
   );
-  const coffee = ProductModel(id: 'p1', name: 'กาแฟเย็น', unit: 'แก้ว', sellPrice: 45, stock: 10);
+  const coffee = ProductModel(id: 'p1', code: 'CF001', name: 'กาแฟเย็น', unit: 'แก้ว', sellPrice: 45, stock: 10);
   const company = CompanyModel(name: 'ร้านตัวอย่าง', taxId: '0105555555555');
   const coffeeLine = InvoiceDraftItemModel(
     productId: 'p1',
@@ -77,10 +77,11 @@ void main() {
       return buildBloc();
     },
     act: (bloc) => bloc.add(InvoiceFormOpened()),
-    expect: () => [
-      const InvoiceFormState(status: AppStatus.loading),
-      const InvoiceFormState(status: AppStatus.failure, errorCode: 'network_error'),
-    ],
+    expect:
+        () => [
+          const InvoiceFormState(status: AppStatus.loading),
+          const InvoiceFormState(status: AppStatus.failure, errorCode: 'network_error'),
+        ],
   );
 
   blocTest<InvoiceFormBloc, InvoiceFormState>(
@@ -88,7 +89,10 @@ void main() {
     build: buildBloc,
     seed: () => ready,
     act: (bloc) => bloc.add(InvoiceItemAdded('p1')),
-    expect: () => [ready.copyWith(items: [coffeeLine])],
+    expect:
+        () => [
+          ready.copyWith(items: [coffeeLine]),
+        ],
   );
 
   blocTest<InvoiceFormBloc, InvoiceFormState>(
@@ -96,26 +100,100 @@ void main() {
     build: buildBloc,
     seed: () => ready.copyWith(items: [coffeeLine]),
     act: (bloc) => bloc.add(InvoiceItemAdded('p1')),
-    expect: () => [ready.copyWith(items: [coffeeLine.copyWith(quantity: 2)])],
+    expect:
+        () => [
+          ready.copyWith(items: [coffeeLine.copyWith(quantity: 2)]),
+        ],
   );
 
   blocTest<InvoiceFormBloc, InvoiceFormState>(
     'แก้จำนวนและราคา แล้วลบสินค้าออก',
     build: buildBloc,
     seed: () => ready.copyWith(items: [coffeeLine]),
-    act: (bloc) => bloc
-      ..add(InvoiceItemChanged(productId: 'p1', quantity: 4, unitPrice: 40))
-      ..add(InvoiceItemRemoved('p1')),
-    expect: () => [
-      ready.copyWith(items: [coffeeLine.copyWith(quantity: 4, unitPrice: 40)]),
-      ready,
-    ],
+    act:
+        (bloc) =>
+            bloc
+              ..add(InvoiceItemChanged(productId: 'p1', quantity: 4, unitPrice: 40))
+              ..add(InvoiceItemRemoved('p1')),
+    expect:
+        () => [
+          ready.copyWith(items: [coffeeLine.copyWith(quantity: 4, unitPrice: 40)]),
+          ready,
+        ],
   );
 
   test('ยอดรวมในฟอร์ม 2 x 50 = 100 VAT 7 รวม 107', () {
     final state = ready.copyWith(items: [coffeeLine.copyWith(quantity: 2, unitPrice: 50)]);
-    expect([state.totals.subtotal, state.totals.vat, state.totals.total], [100, 7, 107]);
+    expect([state.amounts.subtotal, state.amounts.vat, state.amounts.total], [100, 7, 107]);
   });
+
+  test('ร้านไม่จด VAT: ไม่ต้องกรอกชื่อลูกค้า และไม่มี VAT', () {
+    final state = ready.copyWith(
+      company: const CompanyModel(name: 'ร้านตัวอย่าง', vatRegistered: false),
+      items: [coffeeLine.copyWith(quantity: 2, unitPrice: 50)],
+    );
+    expect(state.needsCustomerName, false);
+    expect([state.amounts.vat, state.amounts.total], [0, 100]);
+  });
+
+  test('itemCount นับจำนวนชิ้นรวมทุกบรรทัด', () {
+    final state = ready.copyWith(items: [coffeeLine.copyWith(quantity: 3)]);
+    expect(state.itemCount, 3);
+  });
+
+  test('productsMatching ค้นจากชื่อหรือรหัสสินค้า', () {
+    expect(ready.productsMatching('cf00'), [coffee]);
+    expect(ready.productsMatching('ชา'), isEmpty);
+  });
+
+  blocTest<InvoiceFormBloc, InvoiceFormState>(
+    'สแกนรหัสสินค้า (ไม่สนตัวพิมพ์เล็กใหญ่) เพิ่มสินค้าลงบิล',
+    build: buildBloc,
+    seed: () => ready,
+    act: (bloc) => bloc.add(InvoiceCodeScanned(' cf001 ')),
+    expect:
+        () => [
+          ready.copyWith(items: [coffeeLine]),
+        ],
+  );
+
+  blocTest<InvoiceFormBloc, InvoiceFormState>(
+    'สแกนรหัสที่ไม่มีในร้าน นับ scanMissCount เพิ่ม ไม่เพิ่มสินค้า',
+    build: buildBloc,
+    seed: () => ready,
+    act:
+        (bloc) =>
+            bloc
+              ..add(InvoiceCodeScanned('XX999'))
+              ..add(InvoiceCodeScanned('')),
+    expect: () => [ready.copyWith(scanMissCount: 1), ready.copyWith(scanMissCount: 2)],
+  );
+
+  blocTest<InvoiceFormBloc, InvoiceFormState>(
+    'ใส่ส่วนลด ยอดรวมลดลง',
+    build: buildBloc,
+    seed: () => ready.copyWith(items: [coffeeLine.copyWith(quantity: 2, unitPrice: 50)]),
+    act: (bloc) => bloc.add(InvoiceDiscountChanged(10)),
+    expect:
+        () => [
+          ready.copyWith(items: [coffeeLine.copyWith(quantity: 2, unitPrice: 50)], discount: 10),
+        ],
+    verify: (bloc) => expect(bloc.state.amounts.total, 96.3),
+  );
+
+  blocTest<InvoiceFormBloc, InvoiceFormState>(
+    'InvoiceFormReset ล้างบิลเดิม แล้วโหลดสินค้าใหม่ (สต็อกล่าสุด)',
+    build: () {
+      when(() => productRepository.getProducts()).thenAnswer((_) async => [coffee]);
+      when(() => settingsRepository.getCompany()).thenAnswer((_) async => company);
+      return buildBloc();
+    },
+    seed:
+        () =>
+            ready.copyWith(items: [coffeeLine], discount: 5, submitStatus: AppStatus.success, createdInvoice: invoice),
+    act: (bloc) => bloc.add(InvoiceFormReset()),
+    expect: () => [ready.copyWith(status: AppStatus.loading), ready],
+  );
 
   blocTest<InvoiceFormBloc, InvoiceFormState>(
     'InvoiceFormSubmitted สำเร็จ ส่งรายการสินค้าในฟอร์มไปด้วย และได้ใบที่ออกแล้ว',
@@ -125,11 +203,12 @@ void main() {
     },
     seed: () => ready.copyWith(items: [coffeeLine]),
     act: (bloc) => bloc.add(InvoiceFormSubmitted(draft)),
-    expect: () => [
-      ready.copyWith(items: [coffeeLine], submitStatus: AppStatus.loading),
-      ready.copyWith(items: [coffeeLine], submitStatus: AppStatus.success, createdInvoice: invoice),
-    ],
-    verify: (_) => verify(() => repository.createInvoice(draft.copyWith(items: [coffeeLine]))).called(1),
+    expect:
+        () => [
+          ready.copyWith(items: [coffeeLine], submitStatus: AppStatus.loading),
+          ready.copyWith(items: [coffeeLine], submitStatus: AppStatus.success, createdInvoice: invoice),
+        ],
+    verify: (_) => verify(() => repository.createInvoice(draft.copyWith(items: [coffeeLine], discount: 0))).called(1),
   );
 
   blocTest<InvoiceFormBloc, InvoiceFormState>(
@@ -140,9 +219,10 @@ void main() {
     },
     seed: () => ready.copyWith(items: [coffeeLine]),
     act: (bloc) => bloc.add(InvoiceFormSubmitted(draft)),
-    expect: () => [
-      ready.copyWith(items: [coffeeLine], submitStatus: AppStatus.loading),
-      ready.copyWith(items: [coffeeLine], submitStatus: AppStatus.failure, submitErrorCode: 'stock_not_enough'),
-    ],
+    expect:
+        () => [
+          ready.copyWith(items: [coffeeLine], submitStatus: AppStatus.loading),
+          ready.copyWith(items: [coffeeLine], submitStatus: AppStatus.failure, submitErrorCode: 'stock_not_enough'),
+        ],
   );
 }

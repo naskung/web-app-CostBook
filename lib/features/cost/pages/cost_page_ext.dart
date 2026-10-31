@@ -14,17 +14,27 @@ extension _CostPageExt on _CostPageState {
   Widget _productPicker(BuildContext context, CostState state) {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSizes.spaceMedium),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: AppSizes.formMaxWidth),
-          child: AppDropdown<String>(
-            label: 'cost.choose_product'.tr,
-            value: state.sheet?.productId,
-            items: {for (final product in state.products) product.id: product.name},
-            onChanged: (productId) => context.read<CostBloc>().add(CostProductSelected(productId ?? '')),
+      child: Wrap(
+        spacing: AppSizes.spaceMedium,
+        runSpacing: AppSizes.spaceMedium,
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.end,
+        children: [
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: AppSizes.formMaxWidth),
+            child: AppDropdown<String>(
+              label: 'cost.choose_product'.tr,
+              value: state.sheet?.productId,
+              items: {for (final product in state.products) product.id: product.name},
+              onChanged: (productId) => context.read<CostBloc>().add(CostProductSelected(productId ?? '')),
+            ),
           ),
-        ),
+          OutlinedButton.icon(
+            onPressed: () => CostPresetsDialog.show(context),
+            icon: const Icon(Icons.bookmark_border),
+            label: Text('cost.presets_button'.trParams({'count': '${state.presets.length}'})),
+          ),
+        ],
       ),
     );
   }
@@ -75,7 +85,7 @@ extension _CostPageExt on _CostPageState {
           ),
           const Divider(),
           if (items.isEmpty) Text('cost.empty_type'.tr, style: textTheme.bodySmall),
-          for (final item in items) _itemRow(context, item),
+          for (final item in items) _itemRow(context, sheet, item),
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
@@ -89,22 +99,39 @@ extension _CostPageExt on _CostPageState {
     );
   }
 
-  Widget _itemRow(BuildContext context, CostItemModel item) {
-    return Row(
-      children: [
-        Expanded(child: Text(item.name)),
-        MoneyText(item.amount),
-        IconButton(
-          tooltip: 'common.delete'.tr,
-          onPressed: () => context.read<CostBloc>().add(CostItemRemoved(item)),
-          icon: const Icon(Icons.close, size: AppSizes.iconSmall, color: AppColors.danger),
-        ),
-      ],
+  Widget _itemRow(BuildContext context, CostSheetModel sheet, CostItemModel item) {
+    final textTheme = Theme.of(context).textTheme;
+    return InkWell(
+      onTap: () => _editItem(item),
+      borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [Text(item.name), Text(_itemDetail(item), style: textTheme.bodySmall)],
+            ),
+          ),
+          MoneyText(sheet.amountOf(item)),
+          IconButton(
+            tooltip: 'common.delete'.tr,
+            onPressed: () => context.read<CostBloc>().add(CostItemRemoved(item)),
+            icon: const Icon(Icons.close, size: AppSizes.iconSmall, color: AppColors.danger),
+          ),
+        ],
+      ),
     );
+  }
+
+  String _itemDetail(CostItemModel item) {
+    if (item.isPercent) return 'cost.percent_detail'.trParams({'percent': MoneyUtil.format(item.percent)});
+    final quantity = MoneyUtil.format(item.quantity).replaceAll(RegExp(r'\.00$'), '');
+    return '$quantity ${item.unit} × ${MoneyUtil.format(item.unitPrice)}'.replaceAll('  ', ' ');
   }
 
   Widget _summaryCard(BuildContext context, CostState state, CostSheetModel sheet) {
     final bloc = context.read<CostBloc>();
+    final company = context.watch<SettingsBloc>().state.company;
     return SectionCard(
       title: 'cost.summary_title'.tr,
       child: Column(
@@ -121,19 +148,27 @@ extension _CostPageExt on _CostPageState {
           _summaryLine(context, 'cost.total_cost'.tr, sheet.totalCost),
           _summaryLine(context, 'cost.cost_per_unit'.tr, sheet.costPerUnit, isBig: true),
           const Divider(height: AppSizes.spaceLarge),
-          _markupRow(context),
+          _markupRow(context, company.priceHasVat),
           const SizedBox(height: AppSizes.spaceMedium),
           AppTextField(
-            label: 'cost.sell_price'.tr,
+            label: _sellPriceLabel(company),
             controller: _sellPriceController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             suffixText: 'common.baht'.tr,
             onChanged: (text) => bloc.add(CostSellPriceChanged(MoneyUtil.parse(text))),
           ),
           const SizedBox(height: AppSizes.spaceMedium),
-          _summaryLine(context, 'cost.profit_per_unit'.tr, sheet.profitPerUnit),
-          _summaryLine(context, 'cost.markup_result'.tr, sheet.markupPercent, suffix: ' %'),
-          _summaryLine(context, 'cost.price_with_vat'.tr, TaxUtil.totalWithVat(sheet.sellPrice)),
+          if (company.priceHasVat)
+            _summaryLine(context, 'cost.price_before_vat'.tr, sheet.netSellPrice(priceHasVat: true)),
+          _summaryLine(context, 'cost.profit_per_unit'.tr, sheet.profitPerUnit(priceHasVat: company.priceHasVat)),
+          _summaryLine(
+            context,
+            'cost.markup_result'.tr,
+            sheet.markupPercent(priceHasVat: company.priceHasVat),
+            suffix: ' %',
+          ),
+          if (company.vatRegistered && !company.pricesIncludeVat)
+            _summaryLine(context, 'cost.price_with_vat'.tr, TaxUtil.totalWithVat(sheet.sellPrice)),
           const SizedBox(height: AppSizes.spaceLarge),
           AppButton(
             text: 'common.save'.tr,
@@ -145,7 +180,13 @@ extension _CostPageExt on _CostPageState {
     );
   }
 
-  Widget _markupRow(BuildContext context) {
+  String _sellPriceLabel(CompanyModel company) {
+    if (!company.vatRegistered) return 'cost.sell_price_no_vat'.tr;
+    if (company.pricesIncludeVat) return 'cost.sell_price_include_vat'.tr;
+    return 'cost.sell_price'.tr;
+  }
+
+  Widget _markupRow(BuildContext context, bool priceHasVat) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -159,7 +200,10 @@ extension _CostPageExt on _CostPageState {
         ),
         const SizedBox(width: AppSizes.spaceSmall),
         OutlinedButton(
-          onPressed: () => context.read<CostBloc>().add(CostMarkupApplied(MoneyUtil.parse(_markupController.text))),
+          onPressed:
+              () => context.read<CostBloc>().add(
+                CostMarkupApplied(MoneyUtil.parse(_markupController.text), priceHasVat: priceHasVat),
+              ),
           style: OutlinedButton.styleFrom(minimumSize: const Size(0, AppSizes.buttonHeight)),
           child: Text('cost.apply_markup'.tr),
         ),

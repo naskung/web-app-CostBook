@@ -59,13 +59,7 @@ class TransactionModel extends Equatable {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'type': type,
-      'category': category,
-      'amount': amount,
-      'date': date,
-      'note': note,
-    };
+    return {'type': type, 'category': category, 'amount': amount, 'date': date, 'note': note};
   }
 
   @override

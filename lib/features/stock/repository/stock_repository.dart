@@ -22,7 +22,15 @@ class StockRepository {
     required String productId,
     required int quantity,
     required String note,
+    double unitCost = 0,
+    String supplier = '',
   }) async {
-    await api.post('/stock/$type', {'product_id': productId, 'quantity': quantity, 'note': note});
+    await api.post('/stock/$type', {
+      'product_id': productId,
+      'quantity': quantity,
+      'note': note,
+      'unit_cost': unitCost,
+      'supplier': supplier,
+    });
   }
 }

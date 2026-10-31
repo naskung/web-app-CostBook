@@ -9,6 +9,7 @@ import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/utils/date_util.dart';
 import 'package:costbook/features/invoice/bloc/invoice_list_bloc.dart';
 import 'package:costbook/features/invoice/models/invoice_summary_model.dart';
+import 'package:costbook/features/settings/bloc/settings_bloc.dart';
 import 'package:costbook/shared/widgets/atoms/app_badge.dart';
 import 'package:costbook/shared/widgets/atoms/app_loading.dart';
 import 'package:costbook/shared/widgets/atoms/money_text.dart';
@@ -29,10 +30,7 @@ class InvoiceListPage extends StatelessWidget {
         final stateView = _stateView(context, state);
         return PageContent(
           centerChild: stateView,
-          children: [
-            _toolbar(context, state),
-            if (stateView == null) _table(context, state.invoices),
-          ],
+          children: [_toolbar(context, state), if (stateView == null) _table(context, state.invoices)],
         );
       },
     );
@@ -45,7 +43,11 @@ class InvoiceListPage extends StatelessWidget {
         FilledButton.icon(
           onPressed: () => context.go(AppRoutes.invoiceCreate),
           icon: const Icon(Icons.add),
-          label: Text('invoice.create'.tr),
+          label: Text(
+            context.watch<SettingsBloc>().state.company.vatRegistered
+                ? 'invoice.create'.tr
+                : 'invoice.create_receipt'.tr,
+          ),
         ),
       ],
       children: [
@@ -90,9 +92,21 @@ class InvoiceListPage extends StatelessWidget {
   List<Widget> _row(BuildContext context, InvoiceSummaryModel invoice) {
     final textTheme = Theme.of(context).textTheme;
     return [
-      Text(invoice.invoiceNo, style: textTheme.titleSmall),
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(invoice.invoiceNo, style: textTheme.titleSmall),
+          Text(
+            invoice.isReceipt ? 'invoice.type_receipt'.tr : 'invoice.type_tax_invoice'.tr,
+            style: textTheme.bodySmall,
+          ),
+        ],
+      ),
       Text(DateUtil.toDisplayDate(DateUtil.fromApiDate(invoice.issueDate))),
-      Text(invoice.customerName, overflow: TextOverflow.ellipsis),
+      Text(
+        invoice.customerName.isEmpty ? 'invoice.walk_in_customer'.tr : invoice.customerName,
+        overflow: TextOverflow.ellipsis,
+      ),
       MoneyText(invoice.total, style: textTheme.titleSmall),
       _statusBadge(invoice),
     ];
@@ -100,7 +114,11 @@ class InvoiceListPage extends StatelessWidget {
 
   Widget _statusBadge(InvoiceSummaryModel invoice) {
     if (invoice.isCancelled) {
-      return AppBadge(text: 'invoice.status_cancelled'.tr, color: AppColors.danger, backgroundColor: AppColors.dangerSoft);
+      return AppBadge(
+        text: 'invoice.status_cancelled'.tr,
+        color: AppColors.danger,
+        backgroundColor: AppColors.dangerSoft,
+      );
     }
     return AppBadge(text: 'invoice.status_issued'.tr, color: AppColors.success, backgroundColor: AppColors.successSoft);
   }

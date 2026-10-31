@@ -20,11 +20,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onLoginSubmitted(LoginSubmitted event, Emitter<AuthState> emit) async {
     emit(const AuthState(status: AppStatus.loading));
     try {
-      await repository.login(
-        email: event.email,
-        password: event.password,
-        rememberMe: event.rememberMe,
-      );
+      await repository.login(email: event.email, password: event.password, rememberMe: event.rememberMe);
       emit(const AuthState(status: AppStatus.success));
     } on ApiException catch (e) {
       emit(AuthState(status: AppStatus.failure, errorCode: e.code));

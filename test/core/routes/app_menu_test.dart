@@ -9,10 +9,11 @@ void main() {
     return AppMenu.items.firstWhere((item) => item.route == route);
   }
 
-  test('มีเมนูครบ 7 หน้า ตามลำดับ', () {
+  test('มีเมนูครบ 8 หน้า ตามลำดับ', () {
     final routes = AppMenu.items.map((item) => item.route).toList();
     expect(routes, [
       AppRoutes.dashboard,
+      AppRoutes.sell,
       AppRoutes.products,
       AppRoutes.cost,
       AppRoutes.stock,
@@ -44,5 +45,15 @@ void main() {
 
   test('titleOf path ที่ไม่มีในเมนู ได้ชื่อแอป', () {
     expect(AppMenu.titleOf('/unknown'), 'app.name'.tr);
+  });
+
+  test('ร้านไม่ใช้หน้าคำนวณต้นทุน ซ่อนเมนูคำนวณต้นทุน', () {
+    final routes = AppMenu.itemsFor(useCostPage: false).map((item) => item.route);
+    expect(routes, isNot(contains(AppRoutes.cost)));
+    expect(routes.length, AppMenu.items.length - 1);
+  });
+
+  test('ร้านใช้หน้าคำนวณต้นทุน เห็นเมนูครบ', () {
+    expect(AppMenu.itemsFor(useCostPage: true), AppMenu.items);
   });
 }

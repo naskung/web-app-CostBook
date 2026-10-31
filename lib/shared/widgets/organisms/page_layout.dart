@@ -11,6 +11,7 @@ class PageLayout extends StatefulWidget {
   const PageLayout({
     super.key,
     required this.title,
+    required this.menuItems,
     required this.appName,
     required this.logoutLabel,
     required this.menuButtonLabel,
@@ -23,6 +24,7 @@ class PageLayout extends StatefulWidget {
   static const Duration menuAnimationDuration = Duration(milliseconds: 250);
 
   final String title;
+  final List<AppMenuItem> menuItems;
   final String appName;
   final String logoutLabel;
   final String menuButtonLabel;
@@ -61,10 +63,7 @@ class _PageLayoutState extends State<PageLayout> {
           child: _sideMenu(widget.onNavigate),
         ),
         Expanded(
-          child: Scaffold(
-            appBar: AppBar(leading: _toggleButton(), title: Text(widget.title)),
-            body: widget.child,
-          ),
+          child: Scaffold(appBar: AppBar(leading: _toggleButton(), title: Text(widget.title)), body: widget.child),
         ),
       ],
     );
@@ -76,10 +75,7 @@ class _PageLayoutState extends State<PageLayout> {
       tooltip: widget.menuButtonLabel,
       icon: AnimatedSwitcher(
         duration: PageLayout.menuAnimationDuration,
-        child: Icon(
-          _isMenuExpanded ? Icons.menu_open_rounded : Icons.menu,
-          key: ValueKey(_isMenuExpanded),
-        ),
+        child: Icon(_isMenuExpanded ? Icons.menu_open_rounded : Icons.menu, key: ValueKey(_isMenuExpanded)),
       ),
     );
   }
@@ -90,10 +86,11 @@ class _PageLayoutState extends State<PageLayout> {
       drawer: Drawer(
         backgroundColor: AppColors.dark,
         child: Builder(
-          builder: (drawerContext) => _sideMenu((route) {
-            Scaffold.of(drawerContext).closeDrawer();
-            widget.onNavigate(route);
-          }),
+          builder:
+              (drawerContext) => _sideMenu((route) {
+                Scaffold.of(drawerContext).closeDrawer();
+                widget.onNavigate(route);
+              }),
         ),
       ),
       body: widget.child,
@@ -102,18 +99,19 @@ class _PageLayoutState extends State<PageLayout> {
 
   Widget _drawerButton() {
     return Builder(
-      builder: (scaffoldContext) => IconButton(
-        onPressed: () => Scaffold.of(scaffoldContext).openDrawer(),
-        tooltip: widget.menuButtonLabel,
-        icon: const Icon(Icons.menu),
-      ),
+      builder:
+          (scaffoldContext) => IconButton(
+            onPressed: () => Scaffold.of(scaffoldContext).openDrawer(),
+            tooltip: widget.menuButtonLabel,
+            icon: const Icon(Icons.menu),
+          ),
     );
   }
 
   Widget _sideMenu(ValueChanged<String> onItemTap) {
     return AppSideMenu(
       title: widget.appName,
-      items: AppMenu.items,
+      items: widget.menuItems,
       currentPath: widget.currentPath,
       logoutLabel: widget.logoutLabel,
       onItemTap: onItemTap,

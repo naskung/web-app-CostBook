@@ -105,7 +105,12 @@ extension _TransactionListPageExt on TransactionListPage {
       Text(DateUtil.toDisplayDate(DateUtil.fromApiDate(transaction.date))),
       Text('transaction.category.${transaction.category}'.tr, style: textTheme.titleSmall),
       Text(_noteText(transaction), style: textTheme.bodySmall),
-      MoneyText(transaction.amount, prefix: transaction.isIncome ? '+' : '-', color: color, style: textTheme.titleSmall),
+      MoneyText(
+        transaction.amount,
+        prefix: transaction.isIncome ? '+' : '-',
+        color: color,
+        style: textTheme.titleSmall,
+      ),
       _actions(context, transaction),
     ];
   }

@@ -14,8 +14,12 @@ import 'package:costbook/core/utils/money_util.dart';
 import 'package:costbook/core/utils/tax_util.dart';
 import 'package:costbook/features/cost/bloc/cost_bloc.dart';
 import 'package:costbook/features/cost/models/cost_item_model.dart';
+import 'package:costbook/features/cost/models/cost_preset_model.dart';
 import 'package:costbook/features/cost/models/cost_sheet_model.dart';
 import 'package:costbook/features/cost/widgets/cost_item_dialog.dart';
+import 'package:costbook/features/cost/widgets/cost_presets_dialog.dart';
+import 'package:costbook/features/settings/bloc/settings_bloc.dart';
+import 'package:costbook/features/settings/models/company_model.dart';
 import 'package:costbook/shared/widgets/atoms/app_button.dart';
 import 'package:costbook/shared/widgets/atoms/app_dropdown.dart';
 import 'package:costbook/shared/widgets/atoms/app_loading.dart';
@@ -60,8 +64,20 @@ class _CostPageState extends State<CostPage> {
 
   Future<void> _addItem(String type) async {
     final bloc = context.read<CostBloc>();
-    final item = await CostItemDialog.show(context, type);
-    if (item != null) bloc.add(CostItemAdded(item));
+    final result = await CostItemDialog.show(
+      context,
+      item: CostItemModel(type: type, name: ''),
+      presets: bloc.state.presets,
+    );
+    if (result == null) return;
+    bloc.add(CostItemAdded(result.item));
+    if (result.remember) bloc.add(CostPresetSaved(CostPresetModel.fromItem(result.item)));
+  }
+
+  Future<void> _editItem(CostItemModel item) async {
+    final bloc = context.read<CostBloc>();
+    final result = await CostItemDialog.show(context, item: item, presets: bloc.state.presets);
+    if (result != null) bloc.add(CostItemChanged(oldItem: item, newItem: result.item));
   }
 
   void _onSaveResult(BuildContext context, CostState state) {
@@ -81,8 +97,9 @@ class _CostPageState extends State<CostPage> {
           listener: (context, state) => _syncControllers(state.sheet ?? const CostSheetModel(productId: '')),
         ),
         BlocListener<CostBloc, CostState>(
-          listenWhen: (previous, current) =>
-              previous.saveStatus == AppStatus.loading && current.saveStatus != AppStatus.loading,
+          listenWhen:
+              (previous, current) =>
+                  previous.saveStatus == AppStatus.loading && current.saveStatus != AppStatus.loading,
           listener: _onSaveResult,
         ),
       ],

@@ -37,10 +37,7 @@ void main() {
       return AuthBloc(repository);
     },
     act: (bloc) => bloc.add(loginEvent()),
-    expect: () => [
-      const AuthState(status: AppStatus.loading),
-      const AuthState(status: AppStatus.success),
-    ],
+    expect: () => [const AuthState(status: AppStatus.loading), const AuthState(status: AppStatus.success)],
     verify: (_) {
       verify(() => repository.login(email: 'admin@costbook.com', password: '1234', rememberMe: true)).called(1);
     },
@@ -53,10 +50,11 @@ void main() {
       return AuthBloc(repository);
     },
     act: (bloc) => bloc.add(loginEvent()),
-    expect: () => [
-      const AuthState(status: AppStatus.loading),
-      const AuthState(status: AppStatus.failure, errorCode: 'invalid_credentials'),
-    ],
+    expect:
+        () => [
+          const AuthState(status: AppStatus.loading),
+          const AuthState(status: AppStatus.failure, errorCode: 'invalid_credentials'),
+        ],
   );
 
   blocTest<AuthBloc, AuthState>(
@@ -66,10 +64,11 @@ void main() {
       return AuthBloc(repository);
     },
     act: (bloc) => bloc.add(loginEvent()),
-    expect: () => [
-      const AuthState(status: AppStatus.loading),
-      const AuthState(status: AppStatus.failure, errorCode: 'unknown_error'),
-    ],
+    expect:
+        () => [
+          const AuthState(status: AppStatus.loading),
+          const AuthState(status: AppStatus.failure, errorCode: 'unknown_error'),
+        ],
   );
 
   blocTest<AuthBloc, AuthState>(

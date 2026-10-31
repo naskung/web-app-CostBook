@@ -41,4 +41,18 @@ void main() {
       expect(CostUtil.markupPercent(sellPrice: 45, cost: 0), 0);
     });
   });
+
+  group('CostUtil บรรทัดต้นทุน', () {
+    test('PLA 40 กรัม × 0.45 = 18', () {
+      expect(CostUtil.lineAmount(quantity: 40, unitPrice: 0.45), 18);
+    });
+
+    test('ค่าเครื่อง 2.5 ชม. × 6 = 15', () {
+      expect(CostUtil.lineAmount(quantity: 2.5, unitPrice: 6), 15);
+    });
+
+    test('เผื่อเสีย 10% ของ 33 = 3.30', () {
+      expect(CostUtil.percentOf(base: 33, percent: 10), 3.3);
+    });
+  });
 }

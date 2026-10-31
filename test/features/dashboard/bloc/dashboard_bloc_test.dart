@@ -30,10 +30,11 @@ void main() {
       return DashboardBloc(repository, month: october);
     },
     act: (bloc) => bloc.add(DashboardRequested()),
-    expect: () => [
-      DashboardState(month: october, status: AppStatus.loading),
-      DashboardState(month: october, status: AppStatus.success, dashboard: dashboard),
-    ],
+    expect:
+        () => [
+          DashboardState(month: october, status: AppStatus.loading),
+          DashboardState(month: october, status: AppStatus.success, dashboard: dashboard),
+        ],
   );
 
   blocTest<DashboardBloc, DashboardState>(
@@ -43,10 +44,11 @@ void main() {
       return DashboardBloc(repository, month: october);
     },
     act: (bloc) => bloc.add(DashboardMonthChanged(1)),
-    expect: () => [
-      DashboardState(month: DateTime(2026, 11), status: AppStatus.loading),
-      DashboardState(month: DateTime(2026, 11), status: AppStatus.success, dashboard: dashboard),
-    ],
+    expect:
+        () => [
+          DashboardState(month: DateTime(2026, 11), status: AppStatus.loading),
+          DashboardState(month: DateTime(2026, 11), status: AppStatus.success, dashboard: dashboard),
+        ],
     verify: (_) => verify(() => repository.getDashboard(DateTime(2026, 11))).called(1),
   );
 
@@ -57,9 +59,10 @@ void main() {
       return DashboardBloc(repository, month: october);
     },
     act: (bloc) => bloc.add(DashboardRequested()),
-    expect: () => [
-      DashboardState(month: october, status: AppStatus.loading),
-      DashboardState(month: october, status: AppStatus.failure, errorCode: 'network_error'),
-    ],
+    expect:
+        () => [
+          DashboardState(month: october, status: AppStatus.loading),
+          DashboardState(month: october, status: AppStatus.failure, errorCode: 'network_error'),
+        ],
   );
 }

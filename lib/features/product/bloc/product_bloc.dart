@@ -13,6 +13,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
   ProductBloc(this.repository) : super(const ProductState()) {
     on<ProductsRequested>(_onProductsRequested);
     on<ProductSearchChanged>(_onSearchChanged);
+    on<ProductCategoryChanged>(_onCategoryChanged);
     on<ProductSaved>(_onProductSaved);
     on<ProductDeleted>(_onProductDeleted);
   }
@@ -31,6 +32,10 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
 
   void _onSearchChanged(ProductSearchChanged event, Emitter<ProductState> emit) {
     emit(state.copyWith(query: event.query));
+  }
+
+  void _onCategoryChanged(ProductCategoryChanged event, Emitter<ProductState> emit) {
+    emit(state.copyWith(category: event.category));
   }
 
   Future<void> _onProductSaved(ProductSaved event, Emitter<ProductState> emit) async {

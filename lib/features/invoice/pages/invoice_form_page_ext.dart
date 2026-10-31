@@ -20,11 +20,17 @@ extension _InvoiceFormPageExt on _InvoiceFormPageState {
     );
   }
 
-  Widget _customerSection(BuildContext context) {
-    return SectionCard(title: 'invoice.form_customer'.tr, child: LayoutBuilder(builder: _customerFields));
+  Widget _customerSection(BuildContext context, InvoiceFormState state) {
+    return SectionCard(
+      title: 'invoice.form_customer'.tr,
+      subtitle: state.needsCustomerName ? null : 'invoice.customer_optional'.tr,
+      child: LayoutBuilder(
+        builder: (context, constraints) => _customerFields(context, constraints, state.needsCustomerName),
+      ),
+    );
   }
 
-  Widget _customerFields(BuildContext context, BoxConstraints constraints) {
+  Widget _customerFields(BuildContext context, BoxConstraints constraints, bool needsCustomerName) {
     final isMobile = ResponsiveHelper.screenType(context) == ScreenType.mobile;
     final halfWidth = isMobile ? constraints.maxWidth : (constraints.maxWidth - AppSizes.spaceMedium) / 2;
     return Wrap(
@@ -36,7 +42,7 @@ extension _InvoiceFormPageExt on _InvoiceFormPageState {
           child: AppTextField(
             label: 'invoice.customer_name'.tr,
             controller: _nameController,
-            validator: ValidatorUtil.required,
+            validator: needsCustomerName ? ValidatorUtil.required : null,
           ),
         ),
         SizedBox(
@@ -106,25 +112,51 @@ extension _InvoiceFormPageExt on _InvoiceFormPageState {
   }
 
   Widget _totalsSection(BuildContext context, InvoiceFormState state) {
-    final totals = state.totals;
+    final amounts = state.amounts;
+    final isVat = state.company.vatRegistered;
     return SectionCard(
       title: 'invoice.grand_total'.tr,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _totalLine(context, 'invoice.subtotal'.tr, totals.subtotal),
-          _totalLine(context, 'invoice.vat'.tr, totals.vat),
+          _totalLine(context, 'invoice.items_total'.tr, amounts.itemsTotal),
+          _discountField(context),
+          if (isVat) _totalLine(context, 'invoice.subtotal'.tr, amounts.subtotal),
+          if (isVat) _totalLine(context, 'invoice.vat'.tr, amounts.vat),
           const Divider(),
-          _totalLine(context, 'invoice.grand_total'.tr, totals.total, isBig: true),
+          _totalLine(context, 'invoice.grand_total'.tr, amounts.total, isBig: true),
+          if (isVat && state.company.pricesIncludeVat)
+            Text('invoice.prices_include_vat'.tr, style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: AppSizes.spaceMedium),
           AppTextField(label: 'common.note'.tr, hint: 'invoice.note_hint'.tr, controller: _noteController),
           const SizedBox(height: AppSizes.spaceLarge),
           Text('invoice.submit_note'.tr, style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
           const SizedBox(height: AppSizes.spaceSmall),
           AppButton(
-            text: 'invoice.submit'.tr,
+            text: isVat ? 'invoice.submit'.tr : 'invoice.submit_receipt'.tr,
             isLoading: state.submitStatus == AppStatus.loading,
             onPressed: state.items.isEmpty ? null : _onSubmit,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _discountField(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.spaceSmall),
+      child: Row(
+        children: [
+          Expanded(child: Text('invoice.discount'.tr, style: Theme.of(context).textTheme.bodyMedium)),
+          SizedBox(
+            width: AppSizes.monthLabelWidth,
+            child: TextField(
+              controller: _discountController,
+              textAlign: TextAlign.end,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(hintText: '0.00', isDense: true),
+              onChanged: (text) => context.read<InvoiceFormBloc>().add(InvoiceDiscountChanged(MoneyUtil.parse(text))),
+            ),
           ),
         ],
       ),

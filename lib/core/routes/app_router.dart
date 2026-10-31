@@ -27,6 +27,7 @@ import 'package:costbook/features/product/pages/product_list_page.dart';
 import 'package:costbook/features/product/repository/product_repository.dart';
 import 'package:costbook/features/settings/bloc/settings_bloc.dart';
 import 'package:costbook/features/settings/pages/settings_page.dart';
+import 'package:costbook/features/sell/pages/sell_page.dart';
 import 'package:costbook/features/settings/repository/settings_repository.dart';
 import 'package:costbook/features/stock/bloc/stock_bloc.dart';
 import 'package:costbook/features/stock/pages/stock_page.dart';
@@ -41,24 +42,27 @@ final appRouter = GoRouter(
   routes: [
     GoRoute(
       path: AppRoutes.login,
-      pageBuilder: (context, state) => AppPageTransition.backward(
-        key: state.pageKey,
-        child: BlocProvider(
-          create: _createAuthBloc,
-          child: const LoginPage(),
-        ),
-      ),
+      pageBuilder:
+          (context, state) => AppPageTransition.backward(
+            key: state.pageKey,
+            child: BlocProvider(create: _createAuthBloc, child: const LoginPage()),
+          ),
     ),
     ShellRoute(
-      pageBuilder: (context, state, child) => AppPageTransition.forward(
-        key: state.pageKey,
-        child: BlocProvider(
-          create: _createAuthBloc,
-          child: AppShell(currentPath: state.uri.path, child: child),
-        ),
-      ),
+      pageBuilder:
+          (context, state, child) => AppPageTransition.forward(
+            key: state.pageKey,
+            child: MultiBlocProvider(
+              providers: [
+                BlocProvider(create: _createAuthBloc),
+                BlocProvider(create: (_) => SettingsBloc(SettingsRepository(ApiClient()))..add(SettingsRequested())),
+              ],
+              child: AppShell(currentPath: state.uri.path, child: child),
+            ),
+          ),
       routes: [
         _menuRoute(AppRoutes.dashboard, _dashboardPage),
+        _menuRoute(AppRoutes.sell, _sellPage),
         _menuRoute(AppRoutes.products, _productPage),
         _menuRoute(AppRoutes.cost, _costPage),
         _menuRoute(AppRoutes.stock, _stockPage),
@@ -118,8 +122,8 @@ Widget _stockPage(GoRouterState state) {
 
 Widget _transactionPage(GoRouterState state) {
   return BlocProvider(
-    create: (_) =>
-        TransactionBloc(TransactionRepository(ApiClient()), month: _thisMonth())..add(TransactionsRequested()),
+    create:
+        (_) => TransactionBloc(TransactionRepository(ApiClient()), month: _thisMonth())..add(TransactionsRequested()),
     child: const TransactionListPage(),
   );
 }
@@ -133,11 +137,7 @@ Widget _invoiceListPage(GoRouterState state) {
 
 Widget _invoiceFormPage(GoRouterState state) {
   return BlocProvider(
-    create: (_) => InvoiceFormBloc(
-      InvoiceRepository(ApiClient()),
-      ProductRepository(ApiClient()),
-      SettingsRepository(ApiClient()),
-    )..add(InvoiceFormOpened()),
+    create: (_) => _createInvoiceFormBloc()..add(InvoiceFormOpened()),
     child: const InvoiceFormPage(),
   );
 }
@@ -145,16 +145,25 @@ Widget _invoiceFormPage(GoRouterState state) {
 Widget _invoiceDetailPage(GoRouterState state) {
   final invoiceId = state.pathParameters['id'] ?? '';
   return BlocProvider(
-    create: (_) =>
-        InvoiceDetailBloc(InvoiceRepository(ApiClient()), invoiceId: invoiceId)..add(InvoiceDetailRequested()),
+    create:
+        (_) => InvoiceDetailBloc(InvoiceRepository(ApiClient()), invoiceId: invoiceId)..add(InvoiceDetailRequested()),
     child: const InvoiceDetailPage(),
   );
 }
 
 Widget _settingsPage(GoRouterState state) {
-  return BlocProvider(
-    create: (_) => SettingsBloc(SettingsRepository(ApiClient()))..add(SettingsRequested()),
-    child: const SettingsPage(),
+  return const SettingsPage();
+}
+
+Widget _sellPage(GoRouterState state) {
+  return BlocProvider(create: (_) => _createInvoiceFormBloc()..add(InvoiceFormOpened()), child: const SellPage());
+}
+
+InvoiceFormBloc _createInvoiceFormBloc() {
+  return InvoiceFormBloc(
+    InvoiceRepository(ApiClient()),
+    ProductRepository(ApiClient()),
+    SettingsRepository(ApiClient()),
   );
 }
 

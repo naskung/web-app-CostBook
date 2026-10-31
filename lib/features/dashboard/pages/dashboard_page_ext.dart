@@ -87,6 +87,11 @@ extension _DashboardPageExt on DashboardPage {
         runSpacing: AppSizes.spaceSmall,
         children: [
           FilledButton.icon(
+            onPressed: () => context.go(AppRoutes.sell),
+            icon: const Icon(Icons.point_of_sale_outlined),
+            label: Text('dashboard.sell'.tr),
+          ),
+          OutlinedButton.icon(
             onPressed: () => context.go(AppRoutes.invoiceCreate),
             icon: const Icon(Icons.receipt_long_outlined),
             label: Text('dashboard.new_invoice'.tr),

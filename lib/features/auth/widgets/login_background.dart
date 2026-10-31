@@ -50,11 +50,7 @@ class _Glow extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: RadialGradient(
-          center: center,
-          radius: radius,
-          colors: [color, AppColors.glowEnd],
-        ),
+        gradient: RadialGradient(center: center, radius: radius, colors: [color, AppColors.glowEnd]),
       ),
     );
   }
@@ -89,12 +85,13 @@ class _StripePainter extends CustomPainter {
   }
 
   void _drawStripe(Canvas canvas, double startX, double width, Color color) {
-    final path = Path()
-      ..moveTo(startX, 0)
-      ..lineTo(startX + width, 0)
-      ..lineTo(startX + width + AppSizes.stripeSlant, AppSizes.stripeLength)
-      ..lineTo(startX + AppSizes.stripeSlant, AppSizes.stripeLength)
-      ..close();
+    final path =
+        Path()
+          ..moveTo(startX, 0)
+          ..lineTo(startX + width, 0)
+          ..lineTo(startX + width + AppSizes.stripeSlant, AppSizes.stripeLength)
+          ..lineTo(startX + AppSizes.stripeSlant, AppSizes.stripeLength)
+          ..close();
     canvas.drawPath(path, Paint()..color = color);
   }
 

@@ -86,14 +86,15 @@ web-app-CostBook/
 │   └── features/          ทุก feature: models → repository → bloc → pages (+ _ext ถ้ายาว) → widgets
 │       ├── auth/            login + จดจำ token / อีเมล
 │       ├── dashboard/       ตัวเลขสรุปของเดือน + สินค้าใกล้หมด + ทางลัด
-│       ├── product/         รายการ / ค้นหา / เพิ่ม / แก้ / ลบสินค้า (widgets/product_form_dialog.dart)
-│       ├── cost/            ใบต้นทุนของสินค้า + markup → ราคาขาย (widgets/cost_item_dialog.dart)
+│       ├── sell/            หน้าขายด่วน (ใช้ InvoiceFormBloc ของ invoice) + widgets/sell_product_tile.dart
+│       ├── product/         รายการ / ค้นหา / หมวด / เพิ่ม / แก้ / ลบสินค้า (widgets/product_form_dialog.dart, custom_field_input.dart)
+│       ├── cost/            ใบต้นทุนของสินค้า + markup → ราคาขาย (widgets/cost_item_dialog.dart, cost_presets_dialog.dart)
 │       ├── stock/           คงเหลือ / ใกล้หมด / ประวัติ / รับเข้า / เบิกออก (widgets/stock_movement_dialog.dart)
 │       ├── transaction/     รายรับ-รายจ่ายรายเดือน + สรุป (widgets/transaction_form_dialog.dart)
 │       ├── invoice/         bloc 3 ตัว: invoice_list / invoice_form / invoice_detail
 │       │                    pages: invoice_list_page, invoice_form_page (+ _ext), invoice_detail_page
 │       │                    widgets: invoice_item_row.dart (บรรทัดสินค้าในฟอร์ม), invoice_paper.dart (กระดาษใบกำกับ A4)
-│       └── settings/        ข้อมูลร้าน + โลโก้ + เปลี่ยนภาษา
+│       └── settings/        ข้อมูลร้าน + รูปแบบร้าน + ช่องข้อมูลเพิ่มเติม (widgets/product_field_dialog.dart) + โลโก้ + เปลี่ยนภาษา
 └── test/                  โครงเหมือน lib/ ทุกอย่าง เช่น test/core/utils/tax_util_test.dart
 ```
 
@@ -297,7 +298,8 @@ class ProductRepository {
 
 | Bloc แบบไหน | สร้างที่ |
 |---|---|
-| ใช้ทั้งแอป (ภาษา, ข้อมูลบริษัท) | `app.dart` |
+| ใช้ทั้งแอป (ภาษา) | `app.dart` |
+| ใช้ทุกหน้าหลัง login (`AuthBloc`, `SettingsBloc` = ข้อมูลร้าน + รูปแบบร้าน + ช่องข้อมูลเพิ่มเติม) | `ShellRoute` ใน `app_router.dart` — หน้าไหนอยากรู้รูปแบบร้านใช้ `context.watch<SettingsBloc>()` |
 | ใช้หน้าเดียว | ใน `builder` ของ route นั้น (ดูหัวข้อ 7) |
 
 ไม่ใช้ get_it — สร้าง object ตรง ๆ เช่น `ProductBloc(ProductRepository(ApiClient()))`
@@ -427,12 +429,24 @@ token หมดอายุ (7 วัน) / ถูกปฏิเสธ: API ต
 | เมนู | Route | Bloc | หมายเหตุ |
 |---|---|---|---|
 | ภาพรวม | `/` | `DashboardBloc` | เลือกเดือนได้ (`MonthSwitcher`) |
-| สินค้า | `/products` | `ProductBloc` | ค้นหาในเครื่อง (`visibleProducts`), ลบสินค้าที่อยู่ในใบกำกับไม่ได้ |
-| คำนวณต้นทุน | `/cost` | `CostBloc` | แก้ใบต้นทุนในเครื่องก่อน (`isDirty`) แล้วกด "บันทึก" ส่งทั้งใบ |
-| สต็อก | `/stock` | `StockBloc` | โหลดคงเหลือทุกสินค้าครั้งเดียว กรอง "ใกล้หมด" ในเครื่อง, แท็บประวัติโหลดเมื่อเปิด |
+| ขายด่วน | `/sell` | `InvoiceFormBloc` (ตัวเดียวกับฟอร์มเอกสารขาย) | หน้าขายหน้าร้าน: ค้นหา / สแกนรหัสแล้วกด Enter (`InvoiceCodeScanned`) → ลงบิล → รับเงิน → "ขายบิลต่อไป" (`InvoiceFormReset` ล้างบิล + โหลดสต็อกใหม่) |
+| สินค้า | `/products` | `ProductBloc` | ค้นหาในเครื่อง (`visibleProducts` ค้นจากชื่อ / รหัส / หมวด / ช่องเพิ่มเติม) + เลือกหมวด, column ของช่องเพิ่มเติมที่ `showInList`, ลบสินค้าที่อยู่ในใบกำกับไม่ได้ |
+| คำนวณต้นทุน | `/cost` | `CostBloc` | แก้ใบต้นทุนในเครื่องก่อน (`isDirty`) แล้วกด "บันทึก" ส่งทั้งใบ, บรรทัดแบบ จำนวน × ราคา หรือ %, รายการที่ใช้บ่อย (`presets`) — ร้านปิด `useCostPage` → ซ่อนเมนูนี้ |
+| สต็อก | `/stock` | `StockBloc` | โหลดคงเหลือทุกสินค้าครั้งเดียว กรอง "ใกล้หมด" ในเครื่อง, แท็บประวัติโหลดเมื่อเปิด, รับเข้าใส่ต้นทุนต่อหน่วย + ผู้ขายได้ (API คิดต้นทุนเฉลี่ย) — สินค้าไม่นับสต็อกไม่โชว์ |
 | รายรับ-รายจ่าย | `/transactions` | `TransactionBloc` | หมวดเป็นรหัส (`TransactionModel.incomeCategories / expenseCategories`) แสดงด้วย `'transaction.category.<code>'.tr` |
-| ใบกำกับภาษี | `/invoices`, `/invoices/create`, `/invoices/:id` | `InvoiceListBloc`, `InvoiceFormBloc`, `InvoiceDetailBloc` | ออกใบสำเร็จ → ไปหน้าดูใบ (`AppRoutes.invoiceDetailPath(id)`) |
-| ตั้งค่า | `/settings` | `SettingsBloc` + `LanguageBloc` | ต้องกรอกเลขผู้เสียภาษีก่อนออกใบกำกับ |
+| เอกสารขาย | `/invoices`, `/invoices/create`, `/invoices/:id` | `InvoiceListBloc`, `InvoiceFormBloc`, `InvoiceDetailBloc` | ออกใบสำเร็จ → ไปหน้าดูใบ (`AppRoutes.invoiceDetailPath(id)`), ร้านจด VAT ได้ใบกำกับภาษี ไม่จด ได้ใบเสร็จรับเงิน |
+| ตั้งค่า | `/settings` | `SettingsBloc` (จาก shell) + `LanguageBloc` | ข้อมูลร้าน, รูปแบบร้าน, ช่องข้อมูลเพิ่มเติมของสินค้า, โลโก้, ภาษา — ร้านจด VAT ต้องกรอกเลขผู้เสียภาษีก่อนออกใบกำกับ |
+
+**รูปแบบร้าน** (ตั้งในหน้าตั้งค่า เก็บใน `CompanyModel`) — ทุกหน้าที่เกี่ยวกับเงินต้องดูค่านี้:
+
+| ค่า | ผลในแอป |
+|---|---|
+| `vatRegistered` | `false` → ออกใบเสร็จ (ไม่มี VAT, ไม่ต้องมีชื่อลูกค้า / เลขผู้เสียภาษี), หน้าคำนวณต้นทุนไม่พูดถึง VAT |
+| `pricesIncludeVat` | `true` → ราคาขายรวม VAT แล้ว: ยอดในบิลถอด VAT ออก, หน้าต้นทุนคิดกำไร / markup จากราคาก่อน VAT, ปุ่ม "คำนวณราคาขาย" บวก VAT ให้ |
+| `priceHasVat` (getter) | `vatRegistered && pricesIncludeVat` — ใช้ตัวนี้เวลาถามว่า "ราคาที่ตั้งไว้มี VAT อยู่ข้างในไหม" |
+| `useCostPage` | `false` → ซ่อนเมนูคำนวณต้นทุน (`AppMenu.itemsFor(useCostPage:)`) |
+
+**ช่องข้อมูลเพิ่มเติม** (`ProductFieldModel`): ร้านเพิ่มช่องเอง (ข้อความ / ตัวเลข / วันที่ / ตัวเลือก) ในหน้าตั้งค่า → ฟอร์มสินค้าแสดงช่องให้กรอก (`CustomFieldInput`) → เก็บใน `ProductModel.customFields` (`{id ช่อง: ค่า}`)
 
 ผลของการบันทึก / ลบ แยกเป็น field ของ state: `saveStatus` / `saveErrorCode` (กล่องฟอร์มใช้ — สำเร็จแล้วปิดเอง ไม่สำเร็จแสดง error ในกล่อง) และ `deleteStatus` / `deleteErrorCode` (หน้าใช้ — แสดง snackbar)
 กล่องฟอร์มเปิดด้วย `XxxDialog.show(context, ...)` ซึ่งส่ง bloc ของหน้าเข้าไปด้วย `BlocProvider.value`
@@ -808,17 +822,23 @@ error จาก API มาเป็น code เช่น `{"error": "product_nam
 
 | เรื่อง | สูตร |
 |---|---|
+| บรรทัดต้นทุนแบบ จำนวน × ราคา | จำนวน × ราคาต่อหน่วย (`CostUtil.lineAmount`) เช่น 160 กรัม × 0.45 = 72 |
+| บรรทัดต้นทุนแบบ % | % × ผลรวมบรรทัดแบบ จำนวน × ราคา ทั้งใบ ÷ 100 (`CostUtil.percentOf`) |
 | ต้นทุนรวม | วัตถุดิบ + ค่าแรง + ค่าใช้จ่ายอื่น |
 | ต้นทุนต่อหน่วย | ต้นทุนรวม ÷ จำนวนที่ผลิตได้ |
-| ราคาขาย | ต้นทุนต่อหน่วย × (1 + markup% ÷ 100) |
-| กำไรต่อหน่วย | ราคาขาย − ต้นทุนต่อหน่วย |
+| ราคาขาย | ต้นทุนต่อหน่วย × (1 + markup% ÷ 100) — ร้านตั้งราคารวม VAT → บวก VAT ต่อ |
+| กำไรต่อหน่วย | ราคาขาย (ก่อน VAT) − ต้นทุนต่อหน่วย — ราคารวม VAT ต้องถอด VAT ออกก่อน (`CostSheetModel.netSellPrice`) เพราะ VAT ไม่ใช่เงินของร้าน |
 | VAT | ราคาก่อน VAT × 7 ÷ 100 |
 | ถอด VAT จากราคารวม | ราคารวม × 100 ÷ 107 |
+| ยอดในเอกสารขาย | `TaxUtil.documentAmounts`: รวมสินค้า − ส่วนลด → ใบเสร็จ: ไม่มี VAT / ราคารวม VAT: ถอด VAT / ราคาไม่รวม VAT: บวก VAT (คิดทั้งใบ ไม่คิดทีละบรรทัด ตรงกับ API) |
 | stock คงเหลือ | รับเข้า − เบิกออก |
 | ใกล้หมด | คงเหลือ ≤ จำนวนขั้นต่ำ (minStock) |
 
 - เงินปัดเศษ 2 ตำแหน่งด้วย `MoneyUtil.round2` ทุกครั้งที่คำนวณเสร็จ
 - สูตรทุกตัวอยู่ใน `core/utils` และต้องมี unit test
+
+**ใบเสร็จรับเงิน** (ร้านไม่จด VAT): หัวกระดาษ "ใบเสร็จรับเงิน", เลข `RC-2026-0001`, ไม่มี VAT, ไม่มีเลขผู้เสียภาษีถ้าร้านไม่ได้กรอก, ไม่ใส่ชื่อลูกค้า = "ลูกค้าทั่วไป", ช่องเซ็นชื่อ "ผู้รับเงิน"
+**ใบกำกับภาษีอย่างย่อ** ยังไม่ทำ (ผู้ใช้บอกว่ายังไม่ต้อง)
 
 **ใบกำกับภาษีเต็มรูป** (ประมวลรัษฎากร ม.86/4) ต้องมี:
 

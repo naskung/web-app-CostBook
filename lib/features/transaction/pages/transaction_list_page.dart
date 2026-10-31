@@ -32,13 +32,15 @@ class TransactionListPage extends StatelessWidget {
     return MultiBlocListener(
       listeners: [
         BlocListener<TransactionBloc, TransactionState>(
-          listenWhen: (previous, current) =>
-              previous.saveStatus == AppStatus.loading && current.saveStatus == AppStatus.success,
+          listenWhen:
+              (previous, current) =>
+                  previous.saveStatus == AppStatus.loading && current.saveStatus == AppStatus.success,
           listener: (context, state) => SnackbarHelper.showSuccess(context, 'common.saved'.tr),
         ),
         BlocListener<TransactionBloc, TransactionState>(
-          listenWhen: (previous, current) =>
-              previous.deleteStatus == AppStatus.loading && current.deleteStatus != AppStatus.loading,
+          listenWhen:
+              (previous, current) =>
+                  previous.deleteStatus == AppStatus.loading && current.deleteStatus != AppStatus.loading,
           listener: _onDeleteResult,
         ),
       ],

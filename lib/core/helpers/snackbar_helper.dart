@@ -14,8 +14,6 @@ class SnackbarHelper {
   static void _show(BuildContext context, String message, Color color) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: color, behavior: SnackBarBehavior.floating),
-      );
+      ..showSnackBar(SnackBar(content: Text(message), backgroundColor: color, behavior: SnackBarBehavior.floating));
   }
 }

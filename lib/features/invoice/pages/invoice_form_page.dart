@@ -43,6 +43,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
   final _addressController = TextEditingController();
   final _noteController = TextEditingController();
   final _dateController = TextEditingController();
+  final _discountController = TextEditingController();
   DateTime _issueDate = DateTime.now();
   String? _productToAdd;
 
@@ -60,6 +61,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
     _addressController.dispose();
     _noteController.dispose();
     _dateController.dispose();
+    _discountController.dispose();
     super.dispose();
   }
 
@@ -110,8 +112,9 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<InvoiceFormBloc, InvoiceFormState>(
-      listenWhen: (previous, current) =>
-          previous.submitStatus == AppStatus.loading && current.submitStatus != AppStatus.loading,
+      listenWhen:
+          (previous, current) =>
+              previous.submitStatus == AppStatus.loading && current.submitStatus != AppStatus.loading,
       listener: _onSubmitResult,
       builder: (context, state) {
         if (state.status == AppStatus.initial || state.status == AppStatus.loading) return const AppLoading();
@@ -128,8 +131,8 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
             maxWidth: AppSizes.contentMaxWidth * 3 / 4,
             children: [
               _backButton(context),
-              if (!state.company.hasTaxId) _taxIdBanner(context),
-              _customerSection(context),
+              if (state.company.needsTaxId) _taxIdBanner(context),
+              _customerSection(context, state),
               _itemsSection(context, state),
               _totalsSection(context, state),
             ],

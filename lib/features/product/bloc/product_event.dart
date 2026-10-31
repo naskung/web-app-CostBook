@@ -10,6 +10,12 @@ class ProductSearchChanged extends ProductEvent {
   final String query;
 }
 
+class ProductCategoryChanged extends ProductEvent {
+  ProductCategoryChanged(this.category);
+
+  final String category;
+}
+
 class ProductSaved extends ProductEvent {
   ProductSaved(this.product);
 

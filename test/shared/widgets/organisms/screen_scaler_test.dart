@@ -45,11 +45,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         builder: (context, child) => ScreenScaler(child: child ?? const SizedBox()),
-        home: Scaffold(
-          body: Center(
-            child: ElevatedButton(onPressed: () => tapped = true, child: const Text('ok')),
-          ),
-        ),
+        home: Scaffold(body: Center(child: ElevatedButton(onPressed: () => tapped = true, child: const Text('ok')))),
       ),
     );
     await tester.tap(find.byType(ElevatedButton));

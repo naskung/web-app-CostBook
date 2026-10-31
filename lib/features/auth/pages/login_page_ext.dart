@@ -18,13 +18,7 @@ extension _LoginPageExt on _LoginPageState {
   Widget _content(BuildContext context) {
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: AppSizes.formMaxWidth),
-      child: Column(
-        children: [
-          _brand(context),
-          const SizedBox(height: AppSizes.spaceXLarge),
-          _formCard(context),
-        ],
-      ),
+      child: Column(children: [_brand(context), const SizedBox(height: AppSizes.spaceXLarge), _formCard(context)]),
     );
   }
 
@@ -86,11 +80,7 @@ extension _LoginPageExt on _LoginPageState {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (state.status == AppStatus.failure) _errorText(context, state.errorCode),
-            AppButton(
-              text: 'login.submit'.tr,
-              isLoading: state.status == AppStatus.loading,
-              onPressed: _onLogin,
-            ),
+            AppButton(text: 'login.submit'.tr, isLoading: state.status == AppStatus.loading, onPressed: _onLogin),
           ],
         );
       },

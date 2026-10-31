@@ -36,10 +36,11 @@ void main() {
     'TransactionsRequested โหลดรายการและยอดสรุปของเดือน',
     build: buildBloc,
     act: (bloc) => bloc.add(TransactionsRequested()),
-    expect: () => [
-      TransactionState(month: october, status: AppStatus.loading),
-      TransactionState(month: october, status: AppStatus.success, transactions: const [rent], summary: summary),
-    ],
+    expect:
+        () => [
+          TransactionState(month: october, status: AppStatus.loading),
+          TransactionState(month: october, status: AppStatus.success, transactions: const [rent], summary: summary),
+        ],
   );
 
   blocTest<TransactionBloc, TransactionState>(
@@ -49,20 +50,22 @@ void main() {
       return buildBloc();
     },
     act: (bloc) => bloc.add(TransactionsRequested()),
-    expect: () => [
-      TransactionState(month: october, status: AppStatus.loading),
-      TransactionState(month: october, status: AppStatus.failure, errorCode: 'network_error'),
-    ],
+    expect:
+        () => [
+          TransactionState(month: october, status: AppStatus.loading),
+          TransactionState(month: october, status: AppStatus.failure, errorCode: 'network_error'),
+        ],
   );
 
   blocTest<TransactionBloc, TransactionState>(
     'TransactionMonthChanged +1 เปลี่ยนเป็นเดือนถัดไป แล้วโหลดของเดือนนั้น',
     build: buildBloc,
     act: (bloc) => bloc.add(TransactionMonthChanged(1)),
-    expect: () => [
-      TransactionState(month: november, status: AppStatus.loading),
-      TransactionState(month: november, status: AppStatus.success, transactions: const [rent], summary: summary),
-    ],
+    expect:
+        () => [
+          TransactionState(month: november, status: AppStatus.loading),
+          TransactionState(month: november, status: AppStatus.success, transactions: const [rent], summary: summary),
+        ],
     verify: (_) => verify(() => repository.getTransactions(november)).called(1),
   );
 
@@ -73,17 +76,18 @@ void main() {
       return buildBloc();
     },
     act: (bloc) => bloc.add(TransactionSaved(rent)),
-    expect: () => [
-      TransactionState(month: october, saveStatus: AppStatus.loading),
-      TransactionState(month: october, saveStatus: AppStatus.success),
-      TransactionState(
-        month: october,
-        status: AppStatus.success,
-        transactions: const [rent],
-        summary: summary,
-        saveStatus: AppStatus.success,
-      ),
-    ],
+    expect:
+        () => [
+          TransactionState(month: october, saveStatus: AppStatus.loading),
+          TransactionState(month: october, saveStatus: AppStatus.success),
+          TransactionState(
+            month: october,
+            status: AppStatus.success,
+            transactions: const [rent],
+            summary: summary,
+            saveStatus: AppStatus.success,
+          ),
+        ],
   );
 
   blocTest<TransactionBloc, TransactionState>(
@@ -93,10 +97,11 @@ void main() {
       return buildBloc();
     },
     act: (bloc) => bloc.add(TransactionSaved(rent)),
-    expect: () => [
-      TransactionState(month: october, saveStatus: AppStatus.loading),
-      TransactionState(month: october, saveStatus: AppStatus.failure, saveErrorCode: 'transaction_amount_invalid'),
-    ],
+    expect:
+        () => [
+          TransactionState(month: october, saveStatus: AppStatus.loading),
+          TransactionState(month: october, saveStatus: AppStatus.failure, saveErrorCode: 'transaction_amount_invalid'),
+        ],
   );
 
   blocTest<TransactionBloc, TransactionState>(
@@ -106,10 +111,15 @@ void main() {
       return buildBloc();
     },
     act: (bloc) => bloc.add(TransactionDeleted('t1')),
-    expect: () => [
-      TransactionState(month: october, deleteStatus: AppStatus.loading),
-      TransactionState(month: october, deleteStatus: AppStatus.failure, deleteErrorCode: 'transaction_from_invoice'),
-    ],
+    expect:
+        () => [
+          TransactionState(month: october, deleteStatus: AppStatus.loading),
+          TransactionState(
+            month: october,
+            deleteStatus: AppStatus.failure,
+            deleteErrorCode: 'transaction_from_invoice',
+          ),
+        ],
   );
 
   blocTest<TransactionBloc, TransactionState>(
@@ -120,10 +130,16 @@ void main() {
       return buildBloc();
     },
     act: (bloc) => bloc.add(TransactionDeleted('t1')),
-    expect: () => [
-      TransactionState(month: october, deleteStatus: AppStatus.loading),
-      TransactionState(month: october, deleteStatus: AppStatus.success),
-      TransactionState(month: october, status: AppStatus.success, summary: summary, deleteStatus: AppStatus.success),
-    ],
+    expect:
+        () => [
+          TransactionState(month: october, deleteStatus: AppStatus.loading),
+          TransactionState(month: october, deleteStatus: AppStatus.success),
+          TransactionState(
+            month: october,
+            status: AppStatus.success,
+            summary: summary,
+            deleteStatus: AppStatus.success,
+          ),
+        ],
   );
 }

@@ -13,8 +13,9 @@ class MockProductRepository extends Mock implements ProductRepository {}
 void main() {
   late MockProductRepository repository;
 
-  const coffee = ProductModel(id: '1', name: 'กาแฟเย็น', sellPrice: 45);
-  const tea = ProductModel(id: '2', name: 'ชาไทย', sellPrice: 40);
+  const coffee = ProductModel(id: '1', name: 'กาแฟเย็น', category: 'เครื่องดื่ม', sellPrice: 45);
+  const tea = ProductModel(id: '2', name: 'ชาไทย', category: 'เครื่องดื่ม', sellPrice: 40);
+  const cake = ProductModel(id: '3', name: 'เค้กส้ม', category: 'ขนม', sellPrice: 60);
 
   setUpAll(() {
     registerFallbackValue(const ProductModel(name: ''));
@@ -31,10 +32,11 @@ void main() {
       return ProductBloc(repository);
     },
     act: (bloc) => bloc.add(ProductsRequested()),
-    expect: () => [
-      const ProductState(status: AppStatus.loading),
-      const ProductState(status: AppStatus.success, products: [coffee, tea]),
-    ],
+    expect:
+        () => [
+          const ProductState(status: AppStatus.loading),
+          const ProductState(status: AppStatus.success, products: [coffee, tea]),
+        ],
   );
 
   blocTest<ProductBloc, ProductState>(
@@ -44,10 +46,11 @@ void main() {
       return ProductBloc(repository);
     },
     act: (bloc) => bloc.add(ProductsRequested()),
-    expect: () => [
-      const ProductState(status: AppStatus.loading),
-      const ProductState(status: AppStatus.failure, errorCode: 'server_error'),
-    ],
+    expect:
+        () => [
+          const ProductState(status: AppStatus.loading),
+          const ProductState(status: AppStatus.failure, errorCode: 'server_error'),
+        ],
   );
 
   test('ค้นหา "ชา" เหลือแค่ชาไทย (ไม่สนตัวพิมพ์เล็ก-ใหญ่)', () {
@@ -69,10 +72,11 @@ void main() {
     },
     seed: () => const ProductState(status: AppStatus.success, products: [coffee]),
     act: (bloc) => bloc.add(ProductSaved(const ProductModel(name: 'ชาไทย', sellPrice: 40))),
-    expect: () => [
-      const ProductState(status: AppStatus.success, products: [coffee], saveStatus: AppStatus.loading),
-      const ProductState(status: AppStatus.success, products: [coffee, tea], saveStatus: AppStatus.success),
-    ],
+    expect:
+        () => [
+          const ProductState(status: AppStatus.success, products: [coffee], saveStatus: AppStatus.loading),
+          const ProductState(status: AppStatus.success, products: [coffee, tea], saveStatus: AppStatus.success),
+        ],
   );
 
   blocTest<ProductBloc, ProductState>(
@@ -82,10 +86,11 @@ void main() {
       return ProductBloc(repository);
     },
     act: (bloc) => bloc.add(ProductSaved(const ProductModel(name: ''))),
-    expect: () => [
-      const ProductState(saveStatus: AppStatus.loading),
-      const ProductState(saveStatus: AppStatus.failure, saveErrorCode: 'product_name_required'),
-    ],
+    expect:
+        () => [
+          const ProductState(saveStatus: AppStatus.loading),
+          const ProductState(saveStatus: AppStatus.failure, saveErrorCode: 'product_name_required'),
+        ],
   );
 
   blocTest<ProductBloc, ProductState>(
@@ -96,10 +101,11 @@ void main() {
     },
     seed: () => const ProductState(status: AppStatus.success, products: [coffee, tea]),
     act: (bloc) => bloc.add(ProductDeleted('1')),
-    expect: () => [
-      const ProductState(status: AppStatus.success, products: [coffee, tea], deleteStatus: AppStatus.loading),
-      const ProductState(status: AppStatus.success, products: [tea], deleteStatus: AppStatus.success),
-    ],
+    expect:
+        () => [
+          const ProductState(status: AppStatus.success, products: [coffee, tea], deleteStatus: AppStatus.loading),
+          const ProductState(status: AppStatus.success, products: [tea], deleteStatus: AppStatus.success),
+        ],
   );
 
   blocTest<ProductBloc, ProductState>(
@@ -110,14 +116,37 @@ void main() {
     },
     seed: () => const ProductState(status: AppStatus.success, products: [coffee]),
     act: (bloc) => bloc.add(ProductDeleted('1')),
-    expect: () => [
-      const ProductState(status: AppStatus.success, products: [coffee], deleteStatus: AppStatus.loading),
-      const ProductState(
-        status: AppStatus.success,
-        products: [coffee],
-        deleteStatus: AppStatus.failure,
-        deleteErrorCode: 'product_in_use',
-      ),
-    ],
+    expect:
+        () => [
+          const ProductState(status: AppStatus.success, products: [coffee], deleteStatus: AppStatus.loading),
+          const ProductState(
+            status: AppStatus.success,
+            products: [coffee],
+            deleteStatus: AppStatus.failure,
+            deleteErrorCode: 'product_in_use',
+          ),
+        ],
+  );
+
+  test('categories ได้หมวดไม่ซ้ำ เรียงตามชื่อ ไม่รวมหมวดว่าง', () {
+    const state = ProductState(products: [coffee, cake, tea, ProductModel(name: 'ไม่มีหมวด')]);
+    expect(state.categories, ['ขนม', 'เครื่องดื่ม']);
+  });
+
+  test('เลือกหมวด "ขนม" เห็นแค่เค้กส้ม', () {
+    const state = ProductState(products: [coffee, tea, cake], category: 'ขนม');
+    expect(state.visibleProducts, [cake]);
+  });
+
+  test('เลือกหมวดพร้อมค้นหา ต้องตรงทั้งสองอย่าง', () {
+    const state = ProductState(products: [coffee, tea, cake], category: 'เครื่องดื่ม', query: 'ชา');
+    expect(state.visibleProducts, [tea]);
+  });
+
+  blocTest<ProductBloc, ProductState>(
+    'ProductCategoryChanged เปลี่ยนหมวด ไม่โหลดใหม่',
+    build: () => ProductBloc(repository),
+    act: (bloc) => bloc.add(ProductCategoryChanged('ขนม')),
+    expect: () => [const ProductState(category: 'ขนม')],
   );
 }

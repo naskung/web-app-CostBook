@@ -6,6 +6,8 @@ class InvoiceFormState extends Equatable {
     this.products = const [],
     this.company = const CompanyModel(),
     this.items = const [],
+    this.discount = 0,
+    this.scanMissCount = 0,
     this.errorCode = '',
     this.submitStatus = AppStatus.initial,
     this.submitErrorCode = '',
@@ -16,18 +18,33 @@ class InvoiceFormState extends Equatable {
   final List<ProductModel> products;
   final CompanyModel company;
   final List<InvoiceDraftItemModel> items;
+  final double discount;
+  final int scanMissCount;
   final String errorCode;
   final AppStatus submitStatus;
   final String submitErrorCode;
   final InvoiceModel? createdInvoice;
 
-  InvoiceDraftModel get totals => InvoiceDraftModel(issueDate: '', customerName: '', items: items);
+  DocumentAmounts get amounts {
+    final draft = InvoiceDraftModel(issueDate: '', items: items, discount: discount);
+    return draft.amounts(vatRegistered: company.vatRegistered, pricesIncludeVat: company.pricesIncludeVat);
+  }
+
+  bool get needsCustomerName => company.vatRegistered;
+
+  int get itemCount => items.fold(0, (count, item) => count + item.quantity);
+
+  List<ProductModel> productsMatching(String query) {
+    return products.where((product) => product.matches(query)).toList();
+  }
 
   InvoiceFormState copyWith({
     AppStatus? status,
     List<ProductModel>? products,
     CompanyModel? company,
     List<InvoiceDraftItemModel>? items,
+    double? discount,
+    int? scanMissCount,
     String? errorCode,
     AppStatus? submitStatus,
     String? submitErrorCode,
@@ -38,6 +55,8 @@ class InvoiceFormState extends Equatable {
       products: products ?? this.products,
       company: company ?? this.company,
       items: items ?? this.items,
+      discount: discount ?? this.discount,
+      scanMissCount: scanMissCount ?? this.scanMissCount,
       errorCode: errorCode ?? this.errorCode,
       submitStatus: submitStatus ?? this.submitStatus,
       submitErrorCode: submitErrorCode ?? this.submitErrorCode,
@@ -46,6 +65,16 @@ class InvoiceFormState extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [status, products, company, items, errorCode, submitStatus, submitErrorCode, createdInvoice];
+  List<Object?> get props => [
+    status,
+    products,
+    company,
+    items,
+    discount,
+    scanMissCount,
+    errorCode,
+    submitStatus,
+    submitErrorCode,
+    createdInvoice,
+  ];
 }

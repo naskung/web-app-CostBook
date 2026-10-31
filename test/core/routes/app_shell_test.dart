@@ -10,13 +10,19 @@ import 'package:costbook/core/routes/app_shell.dart';
 import 'package:costbook/core/theme/app_theme.dart';
 import 'package:costbook/features/auth/bloc/auth_bloc.dart';
 import 'package:costbook/features/auth/repository/auth_repository.dart';
+import 'package:costbook/features/settings/bloc/settings_bloc.dart';
+import 'package:costbook/features/settings/models/company_model.dart';
+import 'package:costbook/features/settings/repository/settings_repository.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
+
+class MockSettingsRepository extends Mock implements SettingsRepository {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late MockAuthRepository repository;
+  late MockSettingsRepository settingsRepository;
 
   setUpAll(() async {
     await AppLang.load('th');
@@ -25,6 +31,9 @@ void main() {
   setUp(() {
     repository = MockAuthRepository();
     when(() => repository.logout()).thenAnswer((_) async {});
+    settingsRepository = MockSettingsRepository();
+    when(() => settingsRepository.getCompany()).thenAnswer((_) async => const CompanyModel(name: 'ร้าน'));
+    when(() => settingsRepository.getFields()).thenAnswer((_) async => []);
   });
 
   Future<void> pumpShell(WidgetTester tester) async {
@@ -34,15 +43,16 @@ void main() {
     final router = GoRouter(
       initialLocation: AppRoutes.dashboard,
       routes: [
-        GoRoute(
-          path: AppRoutes.login,
-          builder: (context, state) => const Text('login-page'),
-        ),
+        GoRoute(path: AppRoutes.login, builder: (context, state) => const Text('login-page')),
         ShellRoute(
-          builder: (context, state, child) => BlocProvider(
-            create: (_) => AuthBloc(repository),
-            child: AppShell(currentPath: state.uri.path, child: child),
-          ),
+          builder:
+              (context, state, child) => MultiBlocProvider(
+                providers: [
+                  BlocProvider(create: (_) => AuthBloc(repository)),
+                  BlocProvider(create: (_) => SettingsBloc(settingsRepository)..add(SettingsRequested())),
+                ],
+                child: AppShell(currentPath: state.uri.path, child: child),
+              ),
           routes: [
             GoRoute(path: AppRoutes.dashboard, builder: (context, state) => const Text('dashboard-page')),
             GoRoute(path: AppRoutes.products, builder: (context, state) => const Text('products-page')),
@@ -74,5 +84,15 @@ void main() {
     await tester.pumpAndSettle();
     verify(() => repository.logout()).called(1);
     expect(find.text('login-page'), findsOneWidget);
+  });
+
+  testWidgets('ร้านปิดหน้าคำนวณต้นทุน ไม่เห็นเมนูคำนวณต้นทุน', (tester) async {
+    when(
+      () => settingsRepository.getCompany(),
+    ).thenAnswer((_) async => const CompanyModel(name: 'ร้านของชำ', useCostPage: false));
+    await pumpShell(tester);
+    await tester.pumpAndSettle();
+    expect(find.text('menu.cost'.tr), findsNothing);
+    expect(find.text('menu.sell'.tr), findsOneWidget);
   });
 }

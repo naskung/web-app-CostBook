@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:costbook/core/lang/app_lang.dart';
+import 'package:costbook/core/routes/app_menu.dart';
 import 'package:costbook/core/routes/app_routes.dart';
 import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
@@ -35,6 +36,7 @@ void main() {
         builder: (context, child) => ScreenScaler(child: child ?? const SizedBox()),
         home: PageLayout(
           title: 'menu.dashboard'.tr,
+          menuItems: AppMenu.items,
           appName: 'app.name'.tr,
           logoutLabel: 'common.logout'.tr,
           menuButtonLabel: 'common.toggle_menu'.tr,
@@ -155,10 +157,12 @@ void main() {
   testWidgets('เมนูของหน้าที่เปิดอยู่ เป็นสีส้ม', (tester) async {
     await pumpLayout(tester, const Size(1440, 900));
     final selectedTile = tester.widget<Material>(
-      find.ancestor(
-        of: find.descendant(of: find.byType(AppSideMenu), matching: find.text('menu.dashboard'.tr)),
-        matching: find.byType(Material),
-      ).first,
+      find
+          .ancestor(
+            of: find.descendant(of: find.byType(AppSideMenu), matching: find.text('menu.dashboard'.tr)),
+            matching: find.byType(Material),
+          )
+          .first,
     );
     expect(selectedTile.color, AppColors.primary);
   });

@@ -5,6 +5,7 @@ import 'package:costbook/features/invoice/models/invoice_item_model.dart';
 class InvoiceModel extends Equatable {
   const InvoiceModel({
     required this.id,
+    this.docType = taxInvoice,
     required this.invoiceNo,
     required this.issueDate,
     required this.status,
@@ -18,6 +19,9 @@ class InvoiceModel extends Equatable {
     this.customerTaxId = '',
     this.customerBranch = '',
     this.note = '',
+    this.pricesIncludeVat = false,
+    this.itemsTotal = 0,
+    this.discount = 0,
     required this.subtotal,
     required this.vat,
     required this.total,
@@ -26,8 +30,11 @@ class InvoiceModel extends Equatable {
 
   static const String issued = 'issued';
   static const String cancelled = 'cancelled';
+  static const String taxInvoice = 'tax_invoice';
+  static const String receipt = 'receipt';
 
   final String id;
+  final String docType;
   final String invoiceNo;
   final String issueDate;
   final String status;
@@ -41,6 +48,9 @@ class InvoiceModel extends Equatable {
   final String customerTaxId;
   final String customerBranch;
   final String note;
+  final bool pricesIncludeVat;
+  final double itemsTotal;
+  final double discount;
   final double subtotal;
   final double vat;
   final double total;
@@ -48,10 +58,13 @@ class InvoiceModel extends Equatable {
 
   bool get isCancelled => status == cancelled;
 
+  bool get isReceipt => docType == receipt;
+
   factory InvoiceModel.fromJson(Map<String, dynamic> json) {
     final items = json['items'] as List? ?? [];
     return InvoiceModel(
       id: json['id'] as String? ?? '',
+      docType: json['doc_type'] as String? ?? taxInvoice,
       invoiceNo: json['invoice_no'] as String? ?? '',
       issueDate: json['issue_date'] as String? ?? '',
       status: json['status'] as String? ?? issued,
@@ -65,6 +78,9 @@ class InvoiceModel extends Equatable {
       customerTaxId: json['customer_tax_id'] as String? ?? '',
       customerBranch: json['customer_branch'] as String? ?? '',
       note: json['note'] as String? ?? '',
+      pricesIncludeVat: json['prices_include_vat'] as bool? ?? false,
+      itemsTotal: (json['items_total'] as num? ?? 0).toDouble(),
+      discount: (json['discount'] as num? ?? 0).toDouble(),
       subtotal: (json['subtotal'] as num? ?? 0).toDouble(),
       vat: (json['vat'] as num? ?? 0).toDouble(),
       total: (json['total'] as num? ?? 0).toDouble(),
@@ -75,6 +91,7 @@ class InvoiceModel extends Equatable {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'doc_type': docType,
       'invoice_no': invoiceNo,
       'issue_date': issueDate,
       'status': status,
@@ -88,6 +105,9 @@ class InvoiceModel extends Equatable {
       'customer_tax_id': customerTaxId,
       'customer_branch': customerBranch,
       'note': note,
+      'prices_include_vat': pricesIncludeVat,
+      'items_total': itemsTotal,
+      'discount': discount,
       'subtotal': subtotal,
       'vat': vat,
       'total': total,
@@ -98,6 +118,7 @@ class InvoiceModel extends Equatable {
   @override
   List<Object?> get props => [
     id,
+    docType,
     invoiceNo,
     issueDate,
     status,
@@ -111,6 +132,9 @@ class InvoiceModel extends Equatable {
     customerTaxId,
     customerBranch,
     note,
+    pricesIncludeVat,
+    itemsTotal,
+    discount,
     subtotal,
     vat,
     total,

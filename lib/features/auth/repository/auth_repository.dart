@@ -10,11 +10,7 @@ class AuthRepository {
 
   final ApiClient api;
 
-  Future<void> login({
-    required String email,
-    required String password,
-    required bool rememberMe,
-  }) async {
+  Future<void> login({required String email, required String password, required bool rememberMe}) async {
     final data = await api.post('/auth/login', {'email': email, 'password': password});
     ApiClient.token = data['token'] as String? ?? '';
 

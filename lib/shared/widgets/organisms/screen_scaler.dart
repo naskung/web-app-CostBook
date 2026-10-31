@@ -23,10 +23,7 @@ class ScreenScaler extends StatelessWidget {
     return FittedBox(
       fit: BoxFit.fill,
       alignment: Alignment.topLeft,
-      child: SizedBox.fromSize(
-        size: scaledMedia.size,
-        child: MediaQuery(data: scaledMedia, child: child),
-      ),
+      child: SizedBox.fromSize(size: scaledMedia.size, child: MediaQuery(data: scaledMedia, child: child)),
     );
   }
 }

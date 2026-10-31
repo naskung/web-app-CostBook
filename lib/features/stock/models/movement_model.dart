@@ -10,6 +10,8 @@ class MovementModel extends Equatable {
     required this.quantity,
     this.note = '',
     this.invoiceNo = '',
+    this.unitCost = 0,
+    this.supplier = '',
     required this.createdAt,
   });
 
@@ -24,6 +26,8 @@ class MovementModel extends Equatable {
   final int quantity;
   final String note;
   final String invoiceNo;
+  final double unitCost;
+  final String supplier;
   final DateTime createdAt;
 
   bool get isIn => type == stockIn;
@@ -40,6 +44,8 @@ class MovementModel extends Equatable {
       quantity: (json['quantity'] as num? ?? 0).toInt(),
       note: json['note'] as String? ?? '',
       invoiceNo: json['invoice_no'] as String? ?? '',
+      unitCost: (json['unit_cost'] as num? ?? 0).toDouble(),
+      supplier: json['supplier'] as String? ?? '',
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? '')?.toLocal() ?? DateTime(1970),
     );
   }
@@ -54,10 +60,24 @@ class MovementModel extends Equatable {
       'quantity': quantity,
       'note': note,
       'invoice_no': invoiceNo,
+      'unit_cost': unitCost,
+      'supplier': supplier,
       'created_at': createdAt.toUtc().toIso8601String(),
     };
   }
 
   @override
-  List<Object?> get props => [id, productId, productName, unit, type, quantity, note, invoiceNo, createdAt];
+  List<Object?> get props => [
+    id,
+    productId,
+    productName,
+    unit,
+    type,
+    quantity,
+    note,
+    invoiceNo,
+    unitCost,
+    supplier,
+    createdAt,
+  ];
 }

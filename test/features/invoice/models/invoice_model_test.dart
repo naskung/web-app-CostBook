@@ -17,7 +17,15 @@ void main() {
     vat: 12.43,
     total: 189.93,
     items: [
-      InvoiceItemModel(id: 'l1', productId: 'p1', name: 'กาแฟเย็น', unit: 'แก้ว', quantity: 3, unitPrice: 45, amount: 135),
+      InvoiceItemModel(
+        id: 'l1',
+        productId: 'p1',
+        name: 'กาแฟเย็น',
+        unit: 'แก้ว',
+        quantity: 3,
+        unitPrice: 45,
+        amount: 135,
+      ),
     ],
   );
 

@@ -50,8 +50,9 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<InvoiceDetailBloc, InvoiceDetailState>(
-      listenWhen: (previous, current) =>
-          previous.cancelStatus == AppStatus.loading && current.cancelStatus != AppStatus.loading,
+      listenWhen:
+          (previous, current) =>
+              previous.cancelStatus == AppStatus.loading && current.cancelStatus != AppStatus.loading,
       listener: _onCancelResult,
       builder: (context, state) {
         final invoice = state.invoice;

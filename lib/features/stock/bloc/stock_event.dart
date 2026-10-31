@@ -17,10 +17,19 @@ class StockViewChanged extends StockEvent {
 }
 
 class StockMovementSaved extends StockEvent {
-  StockMovementSaved({required this.type, required this.productId, required this.quantity, required this.note});
+  StockMovementSaved({
+    required this.type,
+    required this.productId,
+    required this.quantity,
+    required this.note,
+    this.unitCost = 0,
+    this.supplier = '',
+  });
 
   final String type;
   final String productId;
   final int quantity;
   final String note;
+  final double unitCost;
+  final String supplier;
 }

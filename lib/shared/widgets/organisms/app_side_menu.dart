@@ -58,10 +58,7 @@ class AppSideMenu extends StatelessWidget {
   Widget _header(BuildContext context, bool isCompact) {
     const logo = ShopLogo(size: AppSizes.menuLogoSize, radius: AppSizes.radius);
     if (isCompact) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: AppSizes.spaceSmall),
-        child: Center(child: logo),
-      );
+      return const Padding(padding: EdgeInsets.symmetric(vertical: AppSizes.spaceSmall), child: Center(child: logo));
     }
     return Padding(
       padding: const EdgeInsets.all(AppSizes.spaceSmall),

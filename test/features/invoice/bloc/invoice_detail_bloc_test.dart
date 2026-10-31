@@ -45,10 +45,11 @@ void main() {
       return InvoiceDetailBloc(repository, invoiceId: 'i1');
     },
     act: (bloc) => bloc.add(InvoiceDetailRequested()),
-    expect: () => [
-      const InvoiceDetailState(status: AppStatus.loading),
-      const InvoiceDetailState(status: AppStatus.success, invoice: invoice),
-    ],
+    expect:
+        () => [
+          const InvoiceDetailState(status: AppStatus.loading),
+          const InvoiceDetailState(status: AppStatus.success, invoice: invoice),
+        ],
   );
 
   blocTest<InvoiceDetailBloc, InvoiceDetailState>(
@@ -58,10 +59,11 @@ void main() {
       return InvoiceDetailBloc(repository, invoiceId: 'i1');
     },
     act: (bloc) => bloc.add(InvoiceDetailRequested()),
-    expect: () => [
-      const InvoiceDetailState(status: AppStatus.loading),
-      const InvoiceDetailState(status: AppStatus.failure, errorCode: 'invoice_not_found'),
-    ],
+    expect:
+        () => [
+          const InvoiceDetailState(status: AppStatus.loading),
+          const InvoiceDetailState(status: AppStatus.failure, errorCode: 'invoice_not_found'),
+        ],
   );
 
   blocTest<InvoiceDetailBloc, InvoiceDetailState>(
@@ -72,10 +74,11 @@ void main() {
     },
     seed: () => const InvoiceDetailState(status: AppStatus.success, invoice: invoice),
     act: (bloc) => bloc.add(InvoiceCancelRequested()),
-    expect: () => [
-      const InvoiceDetailState(status: AppStatus.success, invoice: invoice, cancelStatus: AppStatus.loading),
-      const InvoiceDetailState(status: AppStatus.success, invoice: cancelled, cancelStatus: AppStatus.success),
-    ],
+    expect:
+        () => [
+          const InvoiceDetailState(status: AppStatus.success, invoice: invoice, cancelStatus: AppStatus.loading),
+          const InvoiceDetailState(status: AppStatus.success, invoice: cancelled, cancelStatus: AppStatus.success),
+        ],
   );
 
   blocTest<InvoiceDetailBloc, InvoiceDetailState>(
@@ -86,14 +89,15 @@ void main() {
     },
     seed: () => const InvoiceDetailState(status: AppStatus.success, invoice: cancelled),
     act: (bloc) => bloc.add(InvoiceCancelRequested()),
-    expect: () => [
-      const InvoiceDetailState(status: AppStatus.success, invoice: cancelled, cancelStatus: AppStatus.loading),
-      const InvoiceDetailState(
-        status: AppStatus.success,
-        invoice: cancelled,
-        cancelStatus: AppStatus.failure,
-        cancelErrorCode: 'invoice_already_cancelled',
-      ),
-    ],
+    expect:
+        () => [
+          const InvoiceDetailState(status: AppStatus.success, invoice: cancelled, cancelStatus: AppStatus.loading),
+          const InvoiceDetailState(
+            status: AppStatus.success,
+            invoice: cancelled,
+            cancelStatus: AppStatus.failure,
+            cancelErrorCode: 'invoice_already_cancelled',
+          ),
+        ],
   );
 }

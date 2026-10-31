@@ -9,3 +9,15 @@ class CompanySaved extends SettingsEvent {
 
   final CompanyModel company;
 }
+
+class ProductFieldSaved extends SettingsEvent {
+  ProductFieldSaved(this.field);
+
+  final ProductFieldModel field;
+}
+
+class ProductFieldDeleted extends SettingsEvent {
+  ProductFieldDeleted(this.id);
+
+  final String id;
+}

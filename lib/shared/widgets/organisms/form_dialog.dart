@@ -39,9 +39,7 @@ class FormDialog extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(AppSizes.spaceLarge, AppSizes.spaceLarge, AppSizes.spaceLarge, 0),
               child: Text(title, style: textTheme.titleLarge),
             ),
-            Flexible(
-              child: SingleChildScrollView(padding: const EdgeInsets.all(AppSizes.spaceLarge), child: child),
-            ),
+            Flexible(child: SingleChildScrollView(padding: const EdgeInsets.all(AppSizes.spaceLarge), child: child)),
             if (errorText.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.spaceLarge),

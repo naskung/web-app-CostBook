@@ -29,6 +29,8 @@ class AppSizes {
   static const double dialogMaxWidth = 560;
   static const double contentMaxWidth = 1200;
   static const double statCardWidth = 260;
+  static const double sellTileWidth = 140;
+  static const double sellCartWidth = 440;
   static const double iconSmall = 20;
   static const double badgePaddingX = 10;
   static const double badgePaddingY = 2;

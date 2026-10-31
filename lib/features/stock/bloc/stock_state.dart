@@ -53,6 +53,15 @@ class StockState extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [status, items, movements, onlyLow, showHistory, errorCode, saveStatus, saveErrorCode, savedType];
+  List<Object?> get props => [
+    status,
+    items,
+    movements,
+    onlyLow,
+    showHistory,
+    errorCode,
+    saveStatus,
+    saveErrorCode,
+    savedType,
+  ];
 }

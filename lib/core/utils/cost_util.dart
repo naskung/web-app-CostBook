@@ -1,6 +1,14 @@
 import 'package:costbook/core/utils/money_util.dart';
 
 class CostUtil {
+  static double lineAmount({required double quantity, required double unitPrice}) {
+    return MoneyUtil.round2(quantity * unitPrice);
+  }
+
+  static double percentOf({required double base, required double percent}) {
+    return MoneyUtil.round2(base * percent / 100);
+  }
+
   static double costPerUnit({
     required double material,
     required double labor,

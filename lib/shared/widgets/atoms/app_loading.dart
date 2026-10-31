@@ -8,10 +8,7 @@ class AppLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(AppSizes.spaceXLarge),
-        child: CircularProgressIndicator(),
-      ),
+      child: Padding(padding: EdgeInsets.all(AppSizes.spaceXLarge), child: CircularProgressIndicator()),
     );
   }
 }

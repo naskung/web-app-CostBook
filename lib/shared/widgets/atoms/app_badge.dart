@@ -14,7 +14,10 @@ class AppBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.badgePaddingX, vertical: AppSizes.badgePaddingY),
       decoration: BoxDecoration(color: backgroundColor, borderRadius: BorderRadius.circular(AppSizes.radiusLarge)),
-      child: Text(text, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: color, fontWeight: FontWeight.bold)),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: color, fontWeight: FontWeight.bold),
+      ),
     );
   }
 }

@@ -37,5 +37,27 @@ void main() {
       expect(const CompanyModel(name: 'ร้าน').hasTaxId, false);
       expect(company.hasTaxId, true);
     });
+
+    test('ค่าตั้งต้น: จด VAT ราคาไม่รวม VAT และใช้หน้าคำนวณต้นทุน', () {
+      const shop = CompanyModel();
+      expect([shop.vatRegistered, shop.pricesIncludeVat, shop.useCostPage], [true, false, true]);
+    });
+
+    test('อ่านรูปแบบร้านจาก JSON ได้', () {
+      final shop = CompanyModel.fromJson({'vat_registered': false, 'prices_include_vat': true, 'use_cost_page': false});
+      expect([shop.vatRegistered, shop.pricesIncludeVat, shop.useCostPage], [false, true, false]);
+    });
+
+    test('needsTaxId เป็น true เฉพาะร้านที่จด VAT แต่ยังไม่กรอกเลขผู้เสียภาษี', () {
+      expect(const CompanyModel(name: 'ร้าน').needsTaxId, true);
+      expect(const CompanyModel(name: 'ร้าน', vatRegistered: false).needsTaxId, false);
+      expect(company.needsTaxId, false);
+    });
+
+    test('priceHasVat เป็น true เฉพาะร้านที่จด VAT และตั้งราคารวม VAT แล้ว', () {
+      expect(const CompanyModel(pricesIncludeVat: true).priceHasVat, true);
+      expect(const CompanyModel(vatRegistered: false, pricesIncludeVat: true).priceHasVat, false);
+      expect(const CompanyModel().priceHasVat, false);
+    });
   });
 }

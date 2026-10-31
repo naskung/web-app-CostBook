@@ -37,7 +37,7 @@ class InvoicePaper extends StatelessWidget {
               _ItemsTable(items: invoice.items),
               _TotalsBox(invoice: invoice),
               const SizedBox(height: AppSizes.spaceXLarge * 2),
-              const _Signatures(),
+              _Signatures(isReceipt: invoice.isReceipt),
             ],
           ),
           if (invoice.isCancelled) const Positioned.fill(child: _CancelledStamp()),
@@ -71,10 +71,12 @@ class _PaperHeader extends StatelessWidget {
             children: [
               Text(invoice.sellerName, style: textTheme.titleLarge),
               if (invoice.sellerAddress.isNotEmpty) Text(invoice.sellerAddress, style: textTheme.bodyMedium),
-              Text(
-                'invoice.paper_seller_tax_id'.trParams({'id': invoice.sellerTaxId}) + _branchText(invoice.sellerBranch),
-                style: textTheme.bodyMedium,
-              ),
+              if (invoice.sellerTaxId.isNotEmpty)
+                Text(
+                  'invoice.paper_seller_tax_id'.trParams({'id': invoice.sellerTaxId}) +
+                      _branchText(invoice.sellerBranch),
+                  style: textTheme.bodyMedium,
+                ),
               if (invoice.sellerPhone.isNotEmpty)
                 Text('invoice.paper_phone'.trParams({'phone': invoice.sellerPhone}), style: textTheme.bodyMedium),
             ],
@@ -84,7 +86,10 @@ class _PaperHeader extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text('invoice.paper_title'.tr, style: textTheme.headlineSmall?.copyWith(color: AppColors.primary)),
+            Text(
+              invoice.isReceipt ? 'invoice.paper_title_receipt'.tr : 'invoice.paper_title'.tr,
+              style: textTheme.headlineSmall?.copyWith(color: AppColors.primary),
+            ),
             const SizedBox(height: AppSizes.spaceSmall),
             Text('${'invoice.paper_no'.tr} ${invoice.invoiceNo}', style: textTheme.titleSmall),
             Text(
@@ -116,7 +121,12 @@ class _CustomerBox extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('invoice.paper_customer'.tr, style: textTheme.bodySmall),
-          Text(invoice.customerName + _branchText(invoice.customerBranch), style: textTheme.titleSmall),
+          Text(
+            invoice.customerName.isEmpty
+                ? 'invoice.walk_in_customer'.tr
+                : invoice.customerName + _branchText(invoice.customerBranch),
+            style: textTheme.titleSmall,
+          ),
           if (invoice.customerAddress.isNotEmpty) Text(invoice.customerAddress, style: textTheme.bodyMedium),
           if (invoice.customerTaxId.isNotEmpty)
             Text('invoice.paper_seller_tax_id'.trParams({'id': invoice.customerTaxId}), style: textTheme.bodyMedium),
@@ -197,7 +207,13 @@ class _TotalsBox extends StatelessWidget {
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(top: AppSizes.spaceMedium, right: AppSizes.spaceLarge),
-            child: Text(invoice.note, style: textTheme.bodyMedium),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (invoice.pricesIncludeVat) Text('invoice.prices_include_vat'.tr, style: textTheme.bodySmall),
+                Text(invoice.note, style: textTheme.bodyMedium),
+              ],
+            ),
           ),
         ),
         SizedBox(
@@ -205,8 +221,10 @@ class _TotalsBox extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: AppSizes.spaceSmall),
-              _line('invoice.subtotal'.tr, invoice.subtotal, textTheme.bodyMedium),
-              _line('invoice.vat'.tr, invoice.vat, textTheme.bodyMedium),
+              _line('invoice.items_total'.tr, invoice.itemsTotal, textTheme.bodyMedium),
+              if (invoice.discount > 0) _line('invoice.discount'.tr, invoice.discount, textTheme.bodyMedium),
+              if (!invoice.isReceipt) _line('invoice.subtotal'.tr, invoice.subtotal, textTheme.bodyMedium),
+              if (!invoice.isReceipt) _line('invoice.vat'.tr, invoice.vat, textTheme.bodyMedium),
               const Divider(),
               _line('invoice.grand_total'.tr, invoice.total, textTheme.titleMedium),
             ],
@@ -219,18 +237,15 @@ class _TotalsBox extends StatelessWidget {
   Widget _line(String label, double value, TextStyle? style) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSizes.spaceXSmall, horizontal: AppSizes.spaceSmall),
-      child: Row(
-        children: [
-          Expanded(child: Text(label, style: style)),
-          Text(MoneyUtil.format(value), style: style),
-        ],
-      ),
+      child: Row(children: [Expanded(child: Text(label, style: style)), Text(MoneyUtil.format(value), style: style)]),
     );
   }
 }
 
 class _Signatures extends StatelessWidget {
-  const _Signatures();
+  const _Signatures({required this.isReceipt});
+
+  final bool isReceipt;
 
   @override
   Widget build(BuildContext context) {
@@ -238,7 +253,7 @@ class _Signatures extends StatelessWidget {
       children: [
         Expanded(child: _signature(context, 'invoice.paper_receiver'.tr)),
         const SizedBox(width: AppSizes.spaceXLarge * 2),
-        Expanded(child: _signature(context, 'invoice.paper_issuer'.tr)),
+        Expanded(child: _signature(context, isReceipt ? 'invoice.paper_cashier'.tr : 'invoice.paper_issuer'.tr)),
       ],
     );
   }

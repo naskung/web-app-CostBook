@@ -7,9 +7,12 @@ import 'package:costbook/core/helpers/snackbar_helper.dart';
 import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
+import 'package:costbook/core/utils/date_util.dart';
 import 'package:costbook/features/product/bloc/product_bloc.dart';
 import 'package:costbook/features/product/models/product_model.dart';
 import 'package:costbook/features/product/widgets/product_form_dialog.dart';
+import 'package:costbook/features/settings/bloc/settings_bloc.dart';
+import 'package:costbook/features/settings/models/product_field_model.dart';
 import 'package:costbook/shared/widgets/atoms/app_badge.dart';
 import 'package:costbook/shared/widgets/atoms/app_loading.dart';
 import 'package:costbook/shared/widgets/atoms/money_text.dart';
@@ -30,24 +33,27 @@ class ProductListPage extends StatelessWidget {
     return MultiBlocListener(
       listeners: [
         BlocListener<ProductBloc, ProductState>(
-          listenWhen: (previous, current) =>
-              previous.saveStatus == AppStatus.loading && current.saveStatus == AppStatus.success,
+          listenWhen:
+              (previous, current) =>
+                  previous.saveStatus == AppStatus.loading && current.saveStatus == AppStatus.success,
           listener: (context, state) => SnackbarHelper.showSuccess(context, 'common.saved'.tr),
         ),
         BlocListener<ProductBloc, ProductState>(
-          listenWhen: (previous, current) =>
-              previous.deleteStatus == AppStatus.loading && current.deleteStatus != AppStatus.loading,
+          listenWhen:
+              (previous, current) =>
+                  previous.deleteStatus == AppStatus.loading && current.deleteStatus != AppStatus.loading,
           listener: _onDeleteResult,
         ),
       ],
       child: BlocBuilder<ProductBloc, ProductState>(
         builder: (context, state) {
+          final settings = context.watch<SettingsBloc>().state;
           final stateView = _stateView(context, state);
           return PageContent(
             centerChild: stateView,
             children: [
-              _toolbar(context),
-              if (stateView == null) _table(context, state.visibleProducts),
+              _toolbar(context, state, settings.fields),
+              if (stateView == null) _table(context, state.visibleProducts, settings),
             ],
           );
         },

@@ -52,15 +52,9 @@ void main() {
       routes: [
         GoRoute(
           path: AppRoutes.login,
-          builder: (context, state) => BlocProvider(
-            create: (_) => AuthBloc(repository),
-            child: const LoginPage(),
-          ),
+          builder: (context, state) => BlocProvider(create: (_) => AuthBloc(repository), child: const LoginPage()),
         ),
-        GoRoute(
-          path: AppRoutes.dashboard,
-          builder: (context, state) => const Text('dashboard-page'),
-        ),
+        GoRoute(path: AppRoutes.dashboard, builder: (context, state) => const Text('dashboard-page')),
       ],
     );
     addTearDown(router.dispose);
@@ -106,7 +100,10 @@ void main() {
   testWidgets('โหลดโลโก้ร้านจาก API company/logo', (tester) async {
     await pumpLoginPage(tester, const Size(375, 667));
     final logo = find.byWidgetPredicate(
-      (widget) => widget is Image && widget.image is NetworkImage && (widget.image as NetworkImage).url == ApiConstants.companyLogoUrl,
+      (widget) =>
+          widget is Image &&
+          widget.image is NetworkImage &&
+          (widget.image as NetworkImage).url == ApiConstants.companyLogoUrl,
     );
     expect(logo, findsOneWidget);
   });

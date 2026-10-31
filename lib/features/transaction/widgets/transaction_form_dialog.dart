@@ -98,8 +98,8 @@ class _TransactionFormDialogState extends State<TransactionFormDialog> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<TransactionBloc, TransactionState>(
-      listenWhen: (previous, current) =>
-          previous.saveStatus == AppStatus.loading && current.saveStatus == AppStatus.success,
+      listenWhen:
+          (previous, current) => previous.saveStatus == AppStatus.loading && current.saveStatus == AppStatus.success,
       listener: (context, state) => Navigator.pop(context),
       builder: (context, state) {
         final hasError = _isSubmitted && state.saveStatus == AppStatus.failure;

@@ -53,6 +53,8 @@ class StockBloc extends Bloc<StockEvent, StockState> {
         productId: event.productId,
         quantity: event.quantity,
         note: event.note,
+        unitCost: event.unitCost,
+        supplier: event.supplier,
       );
       emit(state.copyWith(saveStatus: AppStatus.success));
       await _load(emit);

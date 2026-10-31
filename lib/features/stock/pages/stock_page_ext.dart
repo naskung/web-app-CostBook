@@ -19,7 +19,11 @@ extension _StockPageExt on StockPage {
       children: [
         SegmentedButton<bool>(
           segments: [
-            ButtonSegment(value: false, label: Text('stock.view_stock'.tr), icon: const Icon(Icons.inventory_2_outlined)),
+            ButtonSegment(
+              value: false,
+              label: Text('stock.view_stock'.tr),
+              icon: const Icon(Icons.inventory_2_outlined),
+            ),
             ButtonSegment(value: true, label: Text('stock.view_history'.tr), icon: const Icon(Icons.history)),
           ],
           selected: {state.showHistory},
@@ -85,7 +89,11 @@ extension _StockPageExt on StockPage {
       return AppBadge(text: 'stock.status_out'.tr, color: AppColors.danger, backgroundColor: AppColors.dangerSoft);
     }
     if (item.isLow) {
-      return AppBadge(text: 'stock.status_low'.tr, color: AppColors.textPrimary, backgroundColor: AppColors.warningSoft);
+      return AppBadge(
+        text: 'stock.status_low'.tr,
+        color: AppColors.textPrimary,
+        backgroundColor: AppColors.warningSoft,
+      );
     }
     return AppBadge(text: 'stock.status_ok'.tr, color: AppColors.success, backgroundColor: AppColors.successSoft);
   }
@@ -125,9 +133,9 @@ extension _StockPageExt on StockPage {
             _typeBadge(movement),
             Text(
               '${movement.isIn ? '+' : '-'}${movement.quantity} ${movement.unit}',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: movement.isIn ? AppColors.success : AppColors.danger,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(color: movement.isIn ? AppColors.success : AppColors.danger),
             ),
             Text(_noteText(movement), style: Theme.of(context).textTheme.bodySmall),
           ],
@@ -148,7 +156,14 @@ extension _StockPageExt on StockPage {
   }
 
   String _noteText(MovementModel movement) {
-    if (!movement.isFromInvoice) return movement.note;
+    if (!movement.isFromInvoice) {
+      final parts = [
+        if (movement.unitCost > 0) 'stock.cost_detail'.trParams({'cost': MoneyUtil.format(movement.unitCost)}),
+        if (movement.supplier.isNotEmpty) movement.supplier,
+        if (movement.note.isNotEmpty) movement.note,
+      ];
+      return parts.join(' · ');
+    }
     if (movement.isIn) return 'stock.from_invoice_in'.trParams({'no': movement.invoiceNo});
     return 'stock.from_invoice_out'.trParams({'no': movement.invoiceNo});
   }

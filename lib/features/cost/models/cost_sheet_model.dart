@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import 'package:costbook/core/utils/cost_util.dart';
 import 'package:costbook/core/utils/money_util.dart';
+import 'package:costbook/core/utils/tax_util.dart';
 import 'package:costbook/features/cost/models/cost_item_model.dart';
 
 class CostSheetModel extends Equatable {
@@ -27,12 +28,24 @@ class CostSheetModel extends Equatable {
     return items.where((item) => item.type == type).toList();
   }
 
+  double get fixedTotal {
+    final fixedItems = items.where((item) => !item.isPercent);
+    return MoneyUtil.sum(
+      fixedItems.map((item) => CostUtil.lineAmount(quantity: item.quantity, unitPrice: item.unitPrice)),
+    );
+  }
+
+  double amountOf(CostItemModel item) {
+    if (item.isPercent) return CostUtil.percentOf(base: fixedTotal, percent: item.percent);
+    return CostUtil.lineAmount(quantity: item.quantity, unitPrice: item.unitPrice);
+  }
+
   double totalOf(String type) {
-    return MoneyUtil.round2(itemsOf(type).fold(0, (sum, item) => sum + item.amount));
+    return MoneyUtil.sum(itemsOf(type).map(amountOf));
   }
 
   double get totalCost {
-    return MoneyUtil.round2(totalOf(CostItemModel.material) + totalOf(CostItemModel.labor) + totalOf(CostItemModel.overhead));
+    return MoneyUtil.sum(CostItemModel.types.map(totalOf));
   }
 
   double get costPerUnit {
@@ -44,9 +57,18 @@ class CostSheetModel extends Equatable {
     );
   }
 
-  double get profitPerUnit => CostUtil.profitPerUnit(sellPrice: sellPrice, cost: costPerUnit);
+  double netSellPrice({required bool priceHasVat}) {
+    if (priceHasVat) return TaxUtil.priceBeforeVat(sellPrice);
+    return sellPrice;
+  }
 
-  double get markupPercent => CostUtil.markupPercent(sellPrice: sellPrice, cost: costPerUnit);
+  double profitPerUnit({required bool priceHasVat}) {
+    return CostUtil.profitPerUnit(sellPrice: netSellPrice(priceHasVat: priceHasVat), cost: costPerUnit);
+  }
+
+  double markupPercent({required bool priceHasVat}) {
+    return CostUtil.markupPercent(sellPrice: netSellPrice(priceHasVat: priceHasVat), cost: costPerUnit);
+  }
 
   factory CostSheetModel.fromJson(Map<String, dynamic> json) {
     final items = json['items'] as List? ?? [];

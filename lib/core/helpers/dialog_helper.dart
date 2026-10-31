@@ -12,18 +12,19 @@ class DialogHelper {
   }) async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text('common.cancel'.tr)),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-            child: Text(confirmText),
+      builder:
+          (dialogContext) => AlertDialog(
+            title: Text(title),
+            content: Text(message),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text('common.cancel'.tr)),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+                child: Text(confirmText),
+              ),
+            ],
           ),
-        ],
-      ),
     );
     return result ?? false;
   }

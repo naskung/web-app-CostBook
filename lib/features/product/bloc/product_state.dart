@@ -5,6 +5,7 @@ class ProductState extends Equatable {
     this.status = AppStatus.initial,
     this.products = const [],
     this.query = '',
+    this.category = '',
     this.errorCode = '',
     this.saveStatus = AppStatus.initial,
     this.saveErrorCode = '',
@@ -15,6 +16,7 @@ class ProductState extends Equatable {
   final AppStatus status;
   final List<ProductModel> products;
   final String query;
+  final String category;
   final String errorCode;
   final AppStatus saveStatus;
   final String saveErrorCode;
@@ -22,15 +24,23 @@ class ProductState extends Equatable {
   final String deleteErrorCode;
 
   List<ProductModel> get visibleProducts {
-    final text = query.trim().toLowerCase();
-    if (text.isEmpty) return products;
-    return products.where((product) => product.name.toLowerCase().contains(text)).toList();
+    return products.where((product) {
+      final isInCategory = category.isEmpty || product.category == category;
+      return isInCategory && product.matches(query);
+    }).toList();
+  }
+
+  List<String> get categories {
+    final names = products.map((product) => product.category).where((name) => name.isNotEmpty).toSet().toList();
+    names.sort();
+    return names;
   }
 
   ProductState copyWith({
     AppStatus? status,
     List<ProductModel>? products,
     String? query,
+    String? category,
     String? errorCode,
     AppStatus? saveStatus,
     String? saveErrorCode,
@@ -41,6 +51,7 @@ class ProductState extends Equatable {
       status: status ?? this.status,
       products: products ?? this.products,
       query: query ?? this.query,
+      category: category ?? this.category,
       errorCode: errorCode ?? this.errorCode,
       saveStatus: saveStatus ?? this.saveStatus,
       saveErrorCode: saveErrorCode ?? this.saveErrorCode,
@@ -50,6 +61,15 @@ class ProductState extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [status, products, query, errorCode, saveStatus, saveErrorCode, deleteStatus, deleteErrorCode];
+  List<Object?> get props => [
+    status,
+    products,
+    query,
+    category,
+    errorCode,
+    saveStatus,
+    saveErrorCode,
+    deleteStatus,
+    deleteErrorCode,
+  ];
 }

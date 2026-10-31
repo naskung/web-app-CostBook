@@ -38,10 +38,11 @@ void main() {
       return InvoiceListBloc(repository, month: october);
     },
     act: (bloc) => bloc.add(InvoicesRequested()),
-    expect: () => [
-      InvoiceListState(month: october, status: AppStatus.loading),
-      InvoiceListState(month: october, status: AppStatus.success, invoices: const [summary]),
-    ],
+    expect:
+        () => [
+          InvoiceListState(month: october, status: AppStatus.loading),
+          InvoiceListState(month: october, status: AppStatus.success, invoices: const [summary]),
+        ],
   );
 
   blocTest<InvoiceListBloc, InvoiceListState>(
@@ -51,10 +52,11 @@ void main() {
       return InvoiceListBloc(repository, month: october);
     },
     act: (bloc) => bloc.add(InvoiceMonthChanged(-1)),
-    expect: () => [
-      InvoiceListState(month: DateTime(2026, 9), status: AppStatus.loading),
-      InvoiceListState(month: DateTime(2026, 9), status: AppStatus.success),
-    ],
+    expect:
+        () => [
+          InvoiceListState(month: DateTime(2026, 9), status: AppStatus.loading),
+          InvoiceListState(month: DateTime(2026, 9), status: AppStatus.success),
+        ],
     verify: (_) => verify(() => repository.getInvoices(DateTime(2026, 9))).called(1),
   );
 
@@ -65,9 +67,10 @@ void main() {
       return InvoiceListBloc(repository, month: october);
     },
     act: (bloc) => bloc.add(InvoicesRequested()),
-    expect: () => [
-      InvoiceListState(month: october, status: AppStatus.loading),
-      InvoiceListState(month: october, status: AppStatus.failure, errorCode: 'server_error'),
-    ],
+    expect:
+        () => [
+          InvoiceListState(month: october, status: AppStatus.loading),
+          InvoiceListState(month: october, status: AppStatus.failure, errorCode: 'server_error'),
+        ],
   );
 }

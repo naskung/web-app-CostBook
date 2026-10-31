@@ -15,16 +15,17 @@ class App extends StatelessWidget {
     return BlocProvider(
       create: (_) => LanguageBloc(),
       child: BlocBuilder<LanguageBloc, String>(
-        builder: (context, langCode) => MaterialApp.router(
-          key: ValueKey(langCode),
-          title: 'CostBook',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
-          builder: (context, child) => ScreenScaler(
-            child: ColoredBox(color: AppColors.background, child: child ?? const SizedBox()),
-          ),
-          routerConfig: appRouter,
-        ),
+        builder:
+            (context, langCode) => MaterialApp.router(
+              key: ValueKey(langCode),
+              title: 'CostBook',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.light,
+              builder:
+                  (context, child) =>
+                      ScreenScaler(child: ColoredBox(color: AppColors.background, child: child ?? const SizedBox())),
+              routerConfig: appRouter,
+            ),
       ),
     );
   }

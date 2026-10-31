@@ -1,5 +1,6 @@
 import 'package:costbook/core/network/api_client.dart';
 import 'package:costbook/features/settings/models/company_model.dart';
+import 'package:costbook/features/settings/models/product_field_model.dart';
 
 class SettingsRepository {
   SettingsRepository(this.api);
@@ -14,5 +15,22 @@ class SettingsRepository {
   Future<CompanyModel> updateCompany(CompanyModel company) async {
     final data = await api.put('/company', company.toJson()) as Map<String, dynamic>;
     return CompanyModel.fromJson(data);
+  }
+
+  Future<List<ProductFieldModel>> getFields() async {
+    final data = await api.get('/product-fields') as List;
+    return data.map((item) => ProductFieldModel.fromJson(item as Map<String, dynamic>)).toList();
+  }
+
+  Future<void> saveField(ProductFieldModel field) async {
+    if (field.isNew) {
+      await api.post('/product-fields', field.toJson());
+      return;
+    }
+    await api.put('/product-fields/${field.id}', field.toJson());
+  }
+
+  Future<void> deleteField(String id) async {
+    await api.delete('/product-fields/$id');
   }
 }

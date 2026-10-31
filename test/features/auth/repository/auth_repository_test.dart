@@ -17,8 +17,12 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     api = MockApiClient();
     repository = AuthRepository(api);
-    when(() => api.post('/auth/login', {'email': 'admin@costbook.com', 'password': '1234'}))
-        .thenAnswer((_) async => {'token': 'abc', 'user': {'id': '1'}});
+    when(() => api.post('/auth/login', {'email': 'admin@costbook.com', 'password': '1234'})).thenAnswer(
+      (_) async => {
+        'token': 'abc',
+        'user': {'id': '1'},
+      },
+    );
   });
 
   tearDown(() {
@@ -70,12 +74,10 @@ void main() {
   });
 
   test('login ไม่สำเร็จ ไม่เก็บอีเมล', () async {
-    when(() => api.post('/auth/login', {'email': 'wrong@costbook.com', 'password': 'x'}))
-        .thenThrow(Exception('invalid_credentials'));
-    await expectLater(
-      repository.login(email: 'wrong@costbook.com', password: 'x', rememberMe: false),
-      throwsException,
-    );
+    when(
+      () => api.post('/auth/login', {'email': 'wrong@costbook.com', 'password': 'x'}),
+    ).thenThrow(Exception('invalid_credentials'));
+    await expectLater(repository.login(email: 'wrong@costbook.com', password: 'x', rememberMe: false), throwsException);
     expect(await repository.loadSavedEmail(), '');
   });
 

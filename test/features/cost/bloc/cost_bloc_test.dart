@@ -6,6 +6,7 @@ import 'package:costbook/core/constants/app_status.dart';
 import 'package:costbook/core/network/api_exception.dart';
 import 'package:costbook/features/cost/bloc/cost_bloc.dart';
 import 'package:costbook/features/cost/models/cost_item_model.dart';
+import 'package:costbook/features/cost/models/cost_preset_model.dart';
 import 'package:costbook/features/cost/models/cost_sheet_model.dart';
 import 'package:costbook/features/cost/repository/cost_repository.dart';
 import 'package:costbook/features/product/models/product_model.dart';
@@ -20,11 +21,13 @@ void main() {
   late MockProductRepository productRepository;
 
   const coffee = ProductModel(id: 'p1', name: 'กาแฟเย็น');
-  const beans = CostItemModel(type: 'material', name: 'เมล็ดกาแฟ', amount: 200);
+  const beans = CostItemModel(type: 'material', name: 'เมล็ดกาแฟ', quantity: 1, unitPrice: 200);
+  const preset = CostPresetModel(id: 'pr1', type: 'material', name: 'เมล็ดกาแฟ', unitPrice: 200);
   const sheet = CostSheetModel(productId: 'p1', productName: 'กาแฟเย็น', batchQuantity: 10);
 
   setUpAll(() {
     registerFallbackValue(sheet);
+    registerFallbackValue(preset);
   });
 
   setUp(() {
@@ -38,29 +41,40 @@ void main() {
     'CostPageOpened โหลดสินค้า แล้วเปิดใบต้นทุนของสินค้าตัวแรก',
     build: () {
       when(() => productRepository.getProducts()).thenAnswer((_) async => [coffee]);
+      when(() => repository.getPresets()).thenAnswer((_) async => [preset]);
       when(() => repository.getSheet('p1')).thenAnswer((_) async => sheet);
       return buildBloc();
     },
     act: (bloc) => bloc.add(CostPageOpened()),
-    expect: () => [
-      const CostState(status: AppStatus.loading),
-      const CostState(status: AppStatus.success, products: [coffee]),
-      const CostState(status: AppStatus.success, products: [coffee], sheetStatus: AppStatus.loading),
-      const CostState(status: AppStatus.success, products: [coffee], sheetStatus: AppStatus.success, sheet: sheet),
-    ],
+    expect:
+        () => [
+          const CostState(status: AppStatus.loading),
+          const CostState(status: AppStatus.success, products: [coffee], presets: [preset]),
+          const CostState(
+            status: AppStatus.success,
+            products: [coffee],
+            presets: [preset],
+            sheetStatus: AppStatus.loading,
+          ),
+          const CostState(
+            status: AppStatus.success,
+            products: [coffee],
+            presets: [preset],
+            sheetStatus: AppStatus.success,
+            sheet: sheet,
+          ),
+        ],
   );
 
   blocTest<CostBloc, CostState>(
     'CostPageOpened ไม่มีสินค้า ได้ success รายการว่าง ไม่โหลดใบต้นทุน',
     build: () {
       when(() => productRepository.getProducts()).thenAnswer((_) async => []);
+      when(() => repository.getPresets()).thenAnswer((_) async => []);
       return buildBloc();
     },
     act: (bloc) => bloc.add(CostPageOpened()),
-    expect: () => [
-      const CostState(status: AppStatus.loading),
-      const CostState(status: AppStatus.success),
-    ],
+    expect: () => [const CostState(status: AppStatus.loading), const CostState(status: AppStatus.success)],
     verify: (_) => verifyNever(() => repository.getSheet(any())),
   );
 
@@ -71,10 +85,11 @@ void main() {
       return buildBloc();
     },
     act: (bloc) => bloc.add(CostPageOpened()),
-    expect: () => [
-      const CostState(status: AppStatus.loading),
-      const CostState(status: AppStatus.failure, errorCode: 'network_error'),
-    ],
+    expect:
+        () => [
+          const CostState(status: AppStatus.loading),
+          const CostState(status: AppStatus.failure, errorCode: 'network_error'),
+        ],
   );
 
   blocTest<CostBloc, CostState>(
@@ -82,9 +97,10 @@ void main() {
     build: buildBloc,
     seed: () => const CostState(status: AppStatus.success, sheet: sheet),
     act: (bloc) => bloc.add(CostItemAdded(beans)),
-    expect: () => [
-      CostState(status: AppStatus.success, sheet: sheet.copyWith(items: [beans]), isDirty: true),
-    ],
+    expect:
+        () => [
+          CostState(status: AppStatus.success, sheet: sheet.copyWith(items: [beans]), isDirty: true),
+        ],
   );
 
   blocTest<CostBloc, CostState>(
@@ -92,9 +108,10 @@ void main() {
     build: buildBloc,
     seed: () => CostState(status: AppStatus.success, sheet: sheet.copyWith(items: [beans, beans])),
     act: (bloc) => bloc.add(CostItemRemoved(beans)),
-    expect: () => [
-      CostState(status: AppStatus.success, sheet: sheet.copyWith(items: [beans]), isDirty: true),
-    ],
+    expect:
+        () => [
+          CostState(status: AppStatus.success, sheet: sheet.copyWith(items: [beans]), isDirty: true),
+        ],
   );
 
   blocTest<CostBloc, CostState>(
@@ -102,22 +119,37 @@ void main() {
     build: buildBloc,
     seed: () => CostState(status: AppStatus.success, sheet: sheet.copyWith(items: [beans])),
     act: (bloc) => bloc.add(CostMarkupApplied(50)),
-    expect: () => [
-      CostState(status: AppStatus.success, sheet: sheet.copyWith(items: [beans], sellPrice: 30), isDirty: true),
-    ],
+    expect:
+        () => [
+          CostState(status: AppStatus.success, sheet: sheet.copyWith(items: [beans], sellPrice: 30), isDirty: true),
+        ],
+  );
+
+  blocTest<CostBloc, CostState>(
+    'ร้านตั้งราคารวม VAT: markup 50% จากต้นทุน 20 ได้ 30 บวก VAT เป็นราคาขาย 32.10',
+    build: buildBloc,
+    seed: () => CostState(status: AppStatus.success, sheet: sheet.copyWith(items: [beans])),
+    act: (bloc) => bloc.add(CostMarkupApplied(50, priceHasVat: true)),
+    expect:
+        () => [
+          CostState(status: AppStatus.success, sheet: sheet.copyWith(items: [beans], sellPrice: 32.1), isDirty: true),
+        ],
   );
 
   blocTest<CostBloc, CostState>(
     'แก้จำนวนผลิตต่อรอบ และราคาขาย',
     build: buildBloc,
     seed: () => const CostState(status: AppStatus.success, sheet: sheet),
-    act: (bloc) => bloc
-      ..add(CostBatchQuantityChanged(25))
-      ..add(CostSellPriceChanged(45)),
-    expect: () => [
-      CostState(status: AppStatus.success, sheet: sheet.copyWith(batchQuantity: 25), isDirty: true),
-      CostState(status: AppStatus.success, sheet: sheet.copyWith(batchQuantity: 25, sellPrice: 45), isDirty: true),
-    ],
+    act:
+        (bloc) =>
+            bloc
+              ..add(CostBatchQuantityChanged(25))
+              ..add(CostSellPriceChanged(45)),
+    expect:
+        () => [
+          CostState(status: AppStatus.success, sheet: sheet.copyWith(batchQuantity: 25), isDirty: true),
+          CostState(status: AppStatus.success, sheet: sheet.copyWith(batchQuantity: 25, sellPrice: 45), isDirty: true),
+        ],
   );
 
   blocTest<CostBloc, CostState>(
@@ -128,15 +160,16 @@ void main() {
     },
     seed: () => CostState(status: AppStatus.success, sheet: sheet.copyWith(items: [beans]), isDirty: true),
     act: (bloc) => bloc.add(CostSheetSaved()),
-    expect: () => [
-      CostState(
-        status: AppStatus.success,
-        sheet: sheet.copyWith(items: [beans]),
-        isDirty: true,
-        saveStatus: AppStatus.loading,
-      ),
-      CostState(status: AppStatus.success, sheet: sheet.copyWith(items: [beans]), saveStatus: AppStatus.success),
-    ],
+    expect:
+        () => [
+          CostState(
+            status: AppStatus.success,
+            sheet: sheet.copyWith(items: [beans]),
+            isDirty: true,
+            saveStatus: AppStatus.loading,
+          ),
+          CostState(status: AppStatus.success, sheet: sheet.copyWith(items: [beans]), saveStatus: AppStatus.success),
+        ],
   );
 
   blocTest<CostBloc, CostState>(
@@ -147,14 +180,63 @@ void main() {
     },
     seed: () => const CostState(status: AppStatus.success, sheet: sheet),
     act: (bloc) => bloc.add(CostSheetSaved()),
-    expect: () => [
-      const CostState(status: AppStatus.success, sheet: sheet, saveStatus: AppStatus.loading),
-      const CostState(
-        status: AppStatus.success,
-        sheet: sheet,
-        saveStatus: AppStatus.failure,
-        saveErrorCode: 'cost_batch_quantity_invalid',
-      ),
-    ],
+    expect:
+        () => [
+          const CostState(status: AppStatus.success, sheet: sheet, saveStatus: AppStatus.loading),
+          const CostState(
+            status: AppStatus.success,
+            sheet: sheet,
+            saveStatus: AppStatus.failure,
+            saveErrorCode: 'cost_batch_quantity_invalid',
+          ),
+        ],
+  );
+
+  blocTest<CostBloc, CostState>(
+    'แก้บรรทัดต้นทุน แทนที่บรรทัดเดิมในตำแหน่งเดิม',
+    build: buildBloc,
+    seed: () => CostState(status: AppStatus.success, sheet: sheet.copyWith(items: [beans])),
+    act:
+        (bloc) => bloc.add(
+          CostItemChanged(
+            oldItem: beans,
+            newItem: const CostItemModel(type: 'material', name: 'เมล็ดกาแฟ', quantity: 2, unitPrice: 200),
+          ),
+        ),
+    expect:
+        () => [
+          CostState(
+            status: AppStatus.success,
+            sheet: sheet.copyWith(
+              items: [const CostItemModel(type: 'material', name: 'เมล็ดกาแฟ', quantity: 2, unitPrice: 200)],
+            ),
+            isDirty: true,
+          ),
+        ],
+  );
+
+  blocTest<CostBloc, CostState>(
+    'CostPresetSaved บันทึกแล้วโหลดรายการที่ใช้บ่อยใหม่',
+    build: () {
+      when(() => repository.savePreset(any())).thenAnswer((_) async {});
+      when(() => repository.getPresets()).thenAnswer((_) async => [preset]);
+      return buildBloc();
+    },
+    act: (bloc) => bloc.add(CostPresetSaved(CostPresetModel.fromItem(beans))),
+    expect:
+        () => [
+          const CostState(presets: [preset]),
+        ],
+  );
+
+  blocTest<CostBloc, CostState>(
+    'CostPresetDeleted ลบแล้วรายการหายไป',
+    build: () {
+      when(() => repository.deletePreset('pr1')).thenAnswer((_) async {});
+      return buildBloc();
+    },
+    seed: () => const CostState(presets: [preset]),
+    act: (bloc) => bloc.add(CostPresetDeleted('pr1')),
+    expect: () => [const CostState()],
   );
 }

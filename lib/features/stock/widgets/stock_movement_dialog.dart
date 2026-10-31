@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:costbook/core/constants/app_status.dart';
 import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
+import 'package:costbook/core/utils/money_util.dart';
 import 'package:costbook/core/utils/validator_util.dart';
 import 'package:costbook/features/stock/bloc/stock_bloc.dart';
 import 'package:costbook/features/stock/models/movement_model.dart';
@@ -22,10 +23,7 @@ class StockMovementDialog extends StatefulWidget {
     final bloc = context.read<StockBloc>();
     return showDialog<void>(
       context: context,
-      builder: (_) => BlocProvider.value(
-        value: bloc,
-        child: StockMovementDialog(type: type, productId: productId),
-      ),
+      builder: (_) => BlocProvider.value(value: bloc, child: StockMovementDialog(type: type, productId: productId)),
     );
   }
 
@@ -37,6 +35,8 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
   final _formKey = GlobalKey<FormState>();
   final _quantityController = TextEditingController();
   final _noteController = TextEditingController();
+  final _unitCostController = TextEditingController();
+  final _supplierController = TextEditingController();
   late String _productId = widget.productId;
   bool _isSubmitted = false;
 
@@ -46,6 +46,8 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
   void dispose() {
     _quantityController.dispose();
     _noteController.dispose();
+    _unitCostController.dispose();
+    _supplierController.dispose();
     super.dispose();
   }
 
@@ -59,6 +61,8 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
         productId: _productId,
         quantity: int.tryParse(_quantityController.text.trim()) ?? 0,
         note: _noteController.text.trim(),
+        unitCost: _isIn ? MoneyUtil.parse(_unitCostController.text) : 0,
+        supplier: _isIn ? _supplierController.text.trim() : '',
       ),
     );
   }
@@ -66,8 +70,8 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<StockBloc, StockState>(
-      listenWhen: (previous, current) =>
-          previous.saveStatus == AppStatus.loading && current.saveStatus == AppStatus.success,
+      listenWhen:
+          (previous, current) => previous.saveStatus == AppStatus.loading && current.saveStatus == AppStatus.success,
       listener: (context, state) => Navigator.pop(context),
       builder: (context, state) {
         final hasError = _isSubmitted && state.saveStatus == AppStatus.failure;
@@ -106,6 +110,7 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
             keyboardType: TextInputType.number,
             validator: ValidatorUtil.positiveInteger,
           ),
+          if (_isIn) ..._costFields(context),
           const SizedBox(height: AppSizes.spaceMedium),
           AppTextField(
             label: 'common.note'.tr,
@@ -116,6 +121,37 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
         ],
       ),
     );
+  }
+
+  List<Widget> _costFields(BuildContext context) {
+    return [
+      const SizedBox(height: AppSizes.spaceMedium),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: AppTextField(
+              label: 'stock.unit_cost'.tr,
+              hint: 'common.optional'.tr,
+              controller: _unitCostController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              validator: ValidatorUtil.zeroOrMore,
+              suffixText: 'common.baht'.tr,
+            ),
+          ),
+          const SizedBox(width: AppSizes.spaceMedium),
+          Expanded(
+            child: AppTextField(
+              label: 'stock.supplier'.tr,
+              hint: 'common.optional'.tr,
+              controller: _supplierController,
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: AppSizes.spaceSmall),
+      Text('stock.unit_cost_hint'.tr, style: Theme.of(context).textTheme.bodySmall),
+    ];
   }
 
   Widget _currentStock(BuildContext context, List<StockItemModel> items) {

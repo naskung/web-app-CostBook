@@ -59,7 +59,7 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
             children: [
               Expanded(child: Text(widget.item.name, style: textTheme.titleSmall)),
               Text(
-                'invoice.in_stock'.trParams({'stock': '${widget.item.stock}'}),
+                _stockText(),
                 style: textTheme.bodySmall?.copyWith(
                   color: widget.item.isOverStock ? AppColors.danger : AppColors.textSecondary,
                 ),
@@ -75,6 +75,11 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
         ],
       ),
     );
+  }
+
+  String _stockText() {
+    if (!widget.item.trackStock) return 'product.no_stock'.tr;
+    return 'invoice.in_stock'.trParams({'stock': '${widget.item.stock}'});
   }
 
   Widget _fields(BuildContext context) {

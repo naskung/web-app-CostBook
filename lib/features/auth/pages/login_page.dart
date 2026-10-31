@@ -62,11 +62,7 @@ class _LoginPageState extends State<LoginPage> {
     if (!isValid) return;
 
     authBloc.add(
-      LoginSubmitted(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        rememberMe: _rememberMe,
-      ),
+      LoginSubmitted(email: _emailController.text.trim(), password: _passwordController.text, rememberMe: _rememberMe),
     );
   }
 
@@ -90,10 +86,7 @@ class _LoginPageState extends State<LoginPage> {
             const LoginBackground(),
             SafeArea(
               child: Center(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(_pagePadding(context)),
-                  child: _content(context),
-                ),
+                child: SingleChildScrollView(padding: EdgeInsets.all(_pagePadding(context)), child: _content(context)),
               ),
             ),
           ],

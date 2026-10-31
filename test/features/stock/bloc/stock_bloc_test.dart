@@ -36,6 +36,8 @@ void main() {
         productId: any(named: 'productId'),
         quantity: any(named: 'quantity'),
         note: any(named: 'note'),
+        unitCost: any(named: 'unitCost'),
+        supplier: any(named: 'supplier'),
       ),
     ).thenAnswer((_) => answer());
   }
@@ -47,10 +49,11 @@ void main() {
       return StockBloc(repository);
     },
     act: (bloc) => bloc.add(StockRequested()),
-    expect: () => [
-      const StockState(status: AppStatus.loading),
-      const StockState(status: AppStatus.success, items: [low, ok]),
-    ],
+    expect:
+        () => [
+          const StockState(status: AppStatus.loading),
+          const StockState(status: AppStatus.success, items: [low, ok]),
+        ],
   );
 
   blocTest<StockBloc, StockState>(
@@ -60,10 +63,11 @@ void main() {
       return StockBloc(repository);
     },
     act: (bloc) => bloc.add(StockRequested()),
-    expect: () => [
-      const StockState(status: AppStatus.loading),
-      const StockState(status: AppStatus.failure, errorCode: 'server_error'),
-    ],
+    expect:
+        () => [
+          const StockState(status: AppStatus.loading),
+          const StockState(status: AppStatus.failure, errorCode: 'server_error'),
+        ],
   );
 
   test('เลือกเฉพาะใกล้หมด เห็นแค่สินค้าที่ใกล้หมด', () {
@@ -76,7 +80,10 @@ void main() {
     build: () => StockBloc(repository),
     seed: () => const StockState(status: AppStatus.success, items: [low, ok]),
     act: (bloc) => bloc.add(StockFilterChanged(onlyLow: true)),
-    expect: () => [const StockState(status: AppStatus.success, items: [low, ok], onlyLow: true)],
+    expect:
+        () => [
+          const StockState(status: AppStatus.success, items: [low, ok], onlyLow: true),
+        ],
     verify: (_) => verifyNever(() => repository.getStock()),
   );
 
@@ -88,10 +95,11 @@ void main() {
       return StockBloc(repository);
     },
     act: (bloc) => bloc.add(StockViewChanged(showHistory: true)),
-    expect: () => [
-      const StockState(status: AppStatus.loading, showHistory: true),
-      StockState(status: AppStatus.success, showHistory: true, items: const [low], movements: [movement]),
-    ],
+    expect:
+        () => [
+          const StockState(status: AppStatus.loading, showHistory: true),
+          StockState(status: AppStatus.success, showHistory: true, items: const [low], movements: [movement]),
+        ],
   );
 
   blocTest<StockBloc, StockState>(
@@ -102,13 +110,16 @@ void main() {
       return StockBloc(repository);
     },
     act: (bloc) => bloc.add(StockMovementSaved(type: 'in', productId: 'p2', quantity: 10, note: '')),
-    expect: () => [
-      const StockState(saveStatus: AppStatus.loading, savedType: 'in'),
-      const StockState(saveStatus: AppStatus.success, savedType: 'in'),
-      const StockState(status: AppStatus.success, items: [ok], saveStatus: AppStatus.success, savedType: 'in'),
-    ],
+    expect:
+        () => [
+          const StockState(saveStatus: AppStatus.loading, savedType: 'in'),
+          const StockState(saveStatus: AppStatus.success, savedType: 'in'),
+          const StockState(status: AppStatus.success, items: [ok], saveStatus: AppStatus.success, savedType: 'in'),
+        ],
     verify: (_) {
-      verify(() => repository.addMovement(type: 'in', productId: 'p2', quantity: 10, note: '')).called(1);
+      verify(
+        () => repository.addMovement(type: 'in', productId: 'p2', quantity: 10, note: '', unitCost: 0, supplier: ''),
+      ).called(1);
     },
   );
 
@@ -119,9 +130,57 @@ void main() {
       return StockBloc(repository);
     },
     act: (bloc) => bloc.add(StockMovementSaved(type: 'out', productId: 'p1', quantity: 99, note: '')),
-    expect: () => [
-      const StockState(saveStatus: AppStatus.loading, savedType: 'out'),
-      const StockState(saveStatus: AppStatus.failure, saveErrorCode: 'stock_not_enough', savedType: 'out'),
-    ],
+    expect:
+        () => [
+          const StockState(saveStatus: AppStatus.loading, savedType: 'out'),
+          const StockState(saveStatus: AppStatus.failure, saveErrorCode: 'stock_not_enough', savedType: 'out'),
+        ],
+  );
+
+  blocTest<StockBloc, StockState>(
+    'StockMovementSaved รับเข้าพร้อมต้นทุนต่อหน่วยและผู้ขาย ส่งไปให้ API ครบ',
+    build: () {
+      whenSaveMovement(() async {});
+      when(() => repository.getStock()).thenAnswer((_) async => [ok]);
+      return StockBloc(repository);
+    },
+    act:
+        (bloc) => bloc.add(
+          StockMovementSaved(
+            type: 'in',
+            productId: 'p2',
+            quantity: 1000,
+            note: '',
+            unitCost: 0.45,
+            supplier: 'ร้านเส้น',
+          ),
+        ),
+    skip: 3,
+    verify: (_) {
+      verify(
+        () => repository.addMovement(
+          type: 'in',
+          productId: 'p2',
+          quantity: 1000,
+          note: '',
+          unitCost: 0.45,
+          supplier: 'ร้านเส้น',
+        ),
+      ).called(1);
+    },
+  );
+
+  blocTest<StockBloc, StockState>(
+    'StockMovementSaved สินค้าไม่นับสต็อก ได้ saveStatus failure พร้อม code stock_not_tracked',
+    build: () {
+      whenSaveMovement(() async => throw ApiException('stock_not_tracked'));
+      return StockBloc(repository);
+    },
+    act: (bloc) => bloc.add(StockMovementSaved(type: 'in', productId: 'p3', quantity: 1, note: '')),
+    expect:
+        () => [
+          const StockState(saveStatus: AppStatus.loading, savedType: 'in'),
+          const StockState(saveStatus: AppStatus.failure, saveErrorCode: 'stock_not_tracked', savedType: 'in'),
+        ],
   );
 }

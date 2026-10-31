@@ -7,21 +7,17 @@ import 'package:costbook/core/routes/app_page_transition.dart';
 void main() {
   const pageKey = ValueKey('page');
 
-  Future<void> pumpTransition(
-    WidgetTester tester,
-    Page<void> page, {
-    required double enter,
-    double exit = 0,
-  }) async {
+  Future<void> pumpTransition(WidgetTester tester, Page<void> page, {required double enter, double exit = 0}) async {
     final transitionPage = page as CustomTransitionPage<void>;
     await tester.pumpWidget(
       Builder(
-        builder: (context) => transitionPage.transitionsBuilder(
-          context,
-          AlwaysStoppedAnimation(enter),
-          AlwaysStoppedAnimation(exit),
-          const SizedBox(),
-        ),
+        builder:
+            (context) => transitionPage.transitionsBuilder(
+              context,
+              AlwaysStoppedAnimation(enter),
+              AlwaysStoppedAnimation(exit),
+              const SizedBox(),
+            ),
       ),
     );
   }

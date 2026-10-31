@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 class InvoiceSummaryModel extends Equatable {
   const InvoiceSummaryModel({
     required this.id,
+    this.docType = 'tax_invoice',
     required this.invoiceNo,
     required this.issueDate,
     required this.status,
@@ -11,6 +12,7 @@ class InvoiceSummaryModel extends Equatable {
   });
 
   final String id;
+  final String docType;
   final String invoiceNo;
   final String issueDate;
   final String status;
@@ -19,9 +21,12 @@ class InvoiceSummaryModel extends Equatable {
 
   bool get isCancelled => status == 'cancelled';
 
+  bool get isReceipt => docType == 'receipt';
+
   factory InvoiceSummaryModel.fromJson(Map<String, dynamic> json) {
     return InvoiceSummaryModel(
       id: json['id'] as String? ?? '',
+      docType: json['doc_type'] as String? ?? 'tax_invoice',
       invoiceNo: json['invoice_no'] as String? ?? '',
       issueDate: json['issue_date'] as String? ?? '',
       status: json['status'] as String? ?? 'issued',
@@ -33,6 +38,7 @@ class InvoiceSummaryModel extends Equatable {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'doc_type': docType,
       'invoice_no': invoiceNo,
       'issue_date': issueDate,
       'status': status,
@@ -42,5 +48,5 @@ class InvoiceSummaryModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, invoiceNo, issueDate, status, customerName, total];
+  List<Object?> get props => [id, docType, invoiceNo, issueDate, status, customerName, total];
 }

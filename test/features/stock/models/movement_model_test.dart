@@ -34,6 +34,19 @@ void main() {
       expect(MovementModel.fromJson(movement.toJson()), movement);
     });
 
+    test('อ่านต้นทุนต่อหน่วยและผู้ขายของการรับเข้าได้', () {
+      final json = {
+        'id': 'm2',
+        'type': 'in',
+        'quantity': 1000,
+        'unit_cost': 0.45,
+        'supplier': 'ร้านเส้นพลาสติก',
+        'created_at': '2026-10-31T03:00:00Z',
+      };
+      final model = MovementModel.fromJson(json);
+      expect([model.unitCost, model.supplier], [0.45, 'ร้านเส้นพลาสติก']);
+    });
+
     test('isIn / isFromInvoice', () {
       expect(movement.isIn, false);
       expect(movement.isFromInvoice, true);

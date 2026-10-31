@@ -6,6 +6,7 @@ import 'package:costbook/core/helpers/snackbar_helper.dart';
 import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/utils/date_util.dart';
+import 'package:costbook/core/utils/money_util.dart';
 import 'package:costbook/features/stock/bloc/stock_bloc.dart';
 import 'package:costbook/features/stock/models/movement_model.dart';
 import 'package:costbook/features/stock/models/stock_item_model.dart';
@@ -26,21 +27,19 @@ class StockPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocListener<StockBloc, StockState>(
-      listenWhen: (previous, current) =>
-          previous.saveStatus == AppStatus.loading && current.saveStatus == AppStatus.success,
-      listener: (context, state) => SnackbarHelper.showSuccess(
-        context,
-        state.savedType == MovementModel.stockIn ? 'stock.saved_in'.tr : 'stock.saved_out'.tr,
-      ),
+      listenWhen:
+          (previous, current) => previous.saveStatus == AppStatus.loading && current.saveStatus == AppStatus.success,
+      listener:
+          (context, state) => SnackbarHelper.showSuccess(
+            context,
+            state.savedType == MovementModel.stockIn ? 'stock.saved_in'.tr : 'stock.saved_out'.tr,
+          ),
       child: BlocBuilder<StockBloc, StockState>(
         builder: (context, state) {
           final stateView = _stateView(context, state);
           return PageContent(
             centerChild: stateView,
-            children: [
-              _toolbar(context, state),
-              if (stateView == null) _content(context, state),
-            ],
+            children: [_toolbar(context, state), if (stateView == null) _content(context, state)],
           );
         },
       ),

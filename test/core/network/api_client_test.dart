@@ -94,9 +94,7 @@ void main() {
     });
 
     test('ต่อ server ไม่ได้ ได้ code network_error', () async {
-      final api = ApiClient(
-        client: MockClient((request) async => throw http.ClientException('connection refused')),
-      );
+      final api = ApiClient(client: MockClient((request) async => throw http.ClientException('connection refused')));
       expect(await errorCodeOf(api.post('/auth/login', {})), 'network_error');
     });
   });

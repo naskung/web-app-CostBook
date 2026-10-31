@@ -11,10 +11,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: PageContent(
-            centerChild: centerChild,
-            children: const [SizedBox(height: 100, child: Text('toolbar'))],
-          ),
+          body: PageContent(centerChild: centerChild, children: const [SizedBox(height: 100, child: Text('toolbar'))]),
         ),
       ),
     );
