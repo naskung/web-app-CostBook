@@ -20,6 +20,9 @@
 
 Backend อยู่ที่ repo `../api-Costbook` — ระหว่างที่ API ยังไม่เสร็จ ให้ repository คืนข้อมูลตัวอย่างไปก่อน (ใส่ `// TODO: ต่อ API`)
 
+- `ApiConstants.baseUrl = 'http://localhost:8080/api/v1'`
+- endpoint, ชื่อ field ใน JSON และรูปแบบ error ดูที่ `../api-Costbook/docs/ARCHITECTURE.md` หัวข้อ 6–7
+
 ---
 
 ## 2. เทคโนโลยีที่ใช้
@@ -669,6 +672,9 @@ Text('product.title'.tr)
 Text('stock.low'.trParams({'count': '${product.stock}'}))
 context.read<LanguageBloc>().add(ChangeLanguage('en')); // เปลี่ยนภาษา
 ```
+
+error จาก API มาเป็น code เช่น `{"error": "product_name_required"}` → แสดงด้วย `'error.$code'.tr`
+(เพิ่ม key `"error.product_name_required"` ทั้งใน `th.json` และ `en.json`)
 
 ---
 
