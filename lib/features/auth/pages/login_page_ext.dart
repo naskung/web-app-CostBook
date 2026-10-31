@@ -32,7 +32,7 @@ extension _LoginPageExt on _LoginPageState {
     final textTheme = Theme.of(context).textTheme;
     return Column(
       children: [
-        _shopLogo(),
+        const ShopLogo(size: AppSizes.logoSize, radius: AppSizes.radiusLarge),
         const SizedBox(height: AppSizes.spaceMedium),
         Text('app.name'.tr, style: textTheme.headlineSmall?.copyWith(color: AppColors.onDark)),
         const SizedBox(height: AppSizes.spaceSmall),
@@ -42,28 +42,6 @@ extension _LoginPageExt on _LoginPageState {
           textAlign: TextAlign.center,
         ),
       ],
-    );
-  }
-
-  Widget _shopLogo() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
-      child: Image.network(
-        ApiConstants.companyLogoUrl,
-        width: AppSizes.logoSize,
-        height: AppSizes.logoSize,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _defaultLogo(),
-      ),
-    );
-  }
-
-  Widget _defaultLogo() {
-    return Container(
-      width: AppSizes.logoSize,
-      height: AppSizes.logoSize,
-      color: AppColors.primary,
-      child: const Icon(Icons.menu_book_rounded, color: AppColors.onPrimary, size: AppSizes.iconBox),
     );
   }
 

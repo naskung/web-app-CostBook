@@ -5,6 +5,7 @@ class AppSizes {
   static const double fontTitle = 20;
   static const double fontHeading = 24;
 
+  static const double spaceXSmall = 4;
   static const double spaceSmall = 8;
   static const double spaceMedium = 16;
   static const double spaceLarge = 24;
@@ -24,6 +25,13 @@ class AppSizes {
   static const double loadingSize = 20;
   static const double loadingStroke = 2;
   static const double formMaxWidth = 440;
+
+  static const double sideMenuWidth = 260;
+  static const double sideMenuCollapsedWidth = 76;
+  static const double sideMenuCompactBreak = 160;
+  static const double menuLogoSize = 40;
+  static const double menuItemPaddingY = 12;
+  static const double illustrationSize = 96;
 
   static const double loginBandRatio = 0.5;
   static const double curveDepth = 48;

@@ -28,6 +28,16 @@ class AppTheme {
     textTheme: _textTheme,
     elevatedButtonTheme: _buttonTheme,
     inputDecorationTheme: _inputTheme,
+    appBarTheme: _appBarTheme,
+  );
+
+  static const AppBarTheme _appBarTheme = AppBarTheme(
+    backgroundColor: AppColors.surface,
+    foregroundColor: AppColors.textPrimary,
+    elevation: 0,
+    scrolledUnderElevation: 0,
+    centerTitle: false,
+    shape: Border(bottom: BorderSide(color: AppColors.border)),
   );
 
   static const TextTheme _textTheme = TextTheme(

@@ -71,7 +71,7 @@ web-app-CostBook/
 │   │   ├── constants/     app_status.dart, screen_type.dart, api_constants.dart
 │   │   ├── lang/          app_lang.dart (.tr), language_bloc.dart
 │   │   ├── network/       api_client.dart (เรียก API + เก็บ token), api_exception.dart (error code จาก API)
-│   │   ├── routes/        app_routes.dart (ชื่อ route), app_router.dart (GoRouter)
+│   │   ├── routes/        app_routes.dart (ชื่อ route), app_router.dart (GoRouter), app_menu.dart (รายการเมนู), app_shell.dart (เมนู + ออกจากระบบ), app_page_transition.dart
 │   │   ├── theme/         app_colors.dart (สี), app_sizes.dart (ขนาดตัวอักษร / ระยะห่าง), app_theme.dart (ฟอนต์ + รวมเป็น ThemeData)
 │   │   ├── utils/         money_util.dart, tax_util.dart, cost_util.dart, date_util.dart, validator_util.dart, responsive_util.dart
 │   │   └── helpers/       dialog_helper.dart, snackbar_helper.dart, pdf_helper.dart, responsive_helper.dart
@@ -79,7 +79,7 @@ web-app-CostBook/
 │   │   └── widgets/
 │   │       ├── atoms/
 │   │       ├── molecules/
-│   │       └── organisms/   เช่น page_layout.dart, screen_scaler.dart (ขยายทั้งแอปบนจอใหญ่)
+│   │       └── organisms/   page_layout.dart, app_side_menu.dart, screen_scaler.dart (ขยายทั้งแอปบนจอใหญ่)
 │   └── features/
 │       ├── auth/            bloc/auth_bloc.dart (+ event, state), repository/auth_repository.dart,
 │       │                    pages/login_page.dart, login_page_ext.dart, widgets/login_background.dart
@@ -336,9 +336,15 @@ class AppRoutes {
 final appRouter = GoRouter(
   initialLocation: AppRoutes.dashboard,
   routes: [
-    // ShellRoute = ทุกหน้ามีเมนูด้านข้าง + แถบบน เหมือนกัน
+    // ShellRoute = ทุกหน้ามีเมนูด้านข้าง + แถบบน เหมือนกัน (AppShell → PageLayout → AppSideMenu)
     ShellRoute(
-      builder: (context, state, child) => PageLayout(child: child),
+      pageBuilder: (context, state, child) => AppPageTransition.forward(
+        key: state.pageKey,
+        child: BlocProvider(
+          create: _createAuthBloc,
+          child: AppShell(currentPath: state.uri.path, child: child),
+        ),
+      ),
       routes: [
         GoRoute(
           path: AppRoutes.dashboard,
@@ -436,7 +442,9 @@ error code ที่ `ApiClient` โยนออกมาเป็น `ApiExcept
 3. สี / ขนาด ใช้จาก `AppColors`, `AppSizes` ห้าม hardcode — ตัวอักษรใช้ `Theme.of(context).textTheme.xxx` ห้ามใส่ `fontSize` / `fontFamily` เอง
 4. ข้อความรับเข้ามาจากข้างนอก (คนเรียกใช้ใส่ `.tr` เอง)
 5. หน้าจอต้องใช้ widget กลางก่อนเสมอ ถ้าไม่มี → สร้างเพิ่มใน shared ถ้าใช้ ≥ 2 feature
-6. `PageLayout`: จอ `mobile` / `tablet` ให้เมนูข้างเป็น Drawer, จอ `desktop` แสดงเมนูข้างตลอด (ดูหัวข้อ "รองรับทุกขนาดจอ" ด้านล่าง)
+6. `PageLayout`: จอ `mobile` / `tablet` ให้เมนูข้างเป็น Drawer (ปุ่ม ☰), จอ `desktop` แสดงเมนูข้างกว้าง `AppSizes.sideMenuWidth` และมีปุ่ม ☰ หด / กางเมนูแบบ animation (`PageLayout.menuAnimationDuration`) — หดแล้วเหลือแถบไอคอน `AppSizes.sideMenuCollapsedWidth` (ชี้แล้วเห็นชื่อเมนู) — `AppSideMenu` เลือกแบบไอคอนอย่างเดียวเองเมื่อกว้างไม่ถึง `AppSizes.sideMenuCompactBreak` (ดูหัวข้อ "รองรับทุกขนาดจอ" ด้านล่าง)
+7. เมนูทั้งหมดอยู่ใน `AppMenu.items` (`core/routes/app_menu.dart`) — เพิ่มหน้าใหม่ในเมนู = เพิ่ม `AppMenuItem` 1 บรรทัด + route ใน `ShellRoute`
+8. หน้าที่ยังไม่ได้ทำใช้ `ComingSoonView` (molecules) บอกว่าหน้านั้นจะทำอะไร
 
 ```dart
 // lib/shared/widgets/atoms/app_button.dart

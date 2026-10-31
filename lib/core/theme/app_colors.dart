@@ -7,6 +7,9 @@ class AppColors {
   static const Color darkLight = Color(0xFF29323C);
   static const Color onDark = Color(0xFFFFFFFF);
   static const Color onDarkSecondary = Color(0xB3FFFFFF);
+  static const Color primarySoft = Color(0x1FFD7402);
+  static const Color menuHover = Color(0x14FFFFFF);
+  static const Color transparent = Color(0x00000000);
 
   static const Color background = Color(0xFFF5F5F6);
   static const Color surface = Color(0xFFFFFFFF);

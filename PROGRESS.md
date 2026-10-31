@@ -5,7 +5,7 @@
 ## สถานะตอนนี้
 
 - **เสร็จแล้ว:** Phase 0, Phase 1 (เหลือ package intl / pdf / printing), theme + responsive + ภาษา ของ Phase 2, **login ต่อ API จริงแล้ว** (route `/login` ↔ `/`, จดจำการเข้าสู่ระบบ, ปุ่มออกจากระบบ), โลโก้ร้านจาก API ในหน้า login + favicon
-- **งานถัดไป:** รอผู้ใช้สั่ง — เช่น หน้าแรก / `PageLayout` (เมนูข้าง + แถบบน ย้ายปุ่มออกจากระบบไปไว้ในนั้น), จัดการ 401 `unauthorized` (token หมดอายุ)
+- **งานถัดไป:** รอผู้ใช้สั่ง — เช่น ทำหน้าจริงของแต่ละเมนู (ตอนนี้เป็นหน้า "กำลังพัฒนา"), จัดการ 401 `unauthorized` (token หมดอายุ)
 
 ---
 
@@ -32,7 +32,7 @@
 - [x] ภาษา: `AppLang` + `.tr` + `th.json` / `en.json`
 - [ ] `LanguageBloc`
 - [x] route: `AppRoutes` + `appRouter` (`/login`, `/` + redirect ตาม token)
-- [ ] route: ShellRoute + `PageLayout`
+- [x] route: ShellRoute + `AppShell` + `PageLayout` + เมนู 7 หน้า (`AppMenu`) + แอนิเมชันซูม (`AppPageTransition`)
 - [x] `ApiClient` (`post` + แนบ token ให้เอง + `ApiException`) + test — `get` / `put` / `delete` เพิ่มตอนมี feature ที่ใช้
 - [x] utils + test: `ValidatorUtil` (required, email)
 - [ ] utils + test: `MoneyUtil`, `TaxUtil`, `CostUtil`, `DateUtil`
@@ -44,7 +44,10 @@
 - [x] atoms: `AppButton` (มี `isLoading`), `AppTextField` (มีปุ่มแสดง / ซ่อนรหัสผ่าน)
 - [ ] atoms: `AppDropdown`, `AppLoading`, `AppBadge`, `MoneyText`
 - [ ] molecules: `SearchField`, `StatCard`, `AmountRow`, `EmptyView`, `ErrorView`
-- [ ] organisms: `PageLayout`, `AppSideMenu`, `AppTopBar`, `AppDataTable`, `FormCard`
+- [x] atoms: `ShopLogo` (โลโก้ร้านจาก API ใช้ทั้งหน้า login และเมนู)
+- [x] molecules: `ComingSoonView` (หน้าที่ยังไม่ได้ทำ)
+- [x] organisms: `PageLayout`, `AppSideMenu` (แถบบนใช้ `AppBar` + `appBarTheme` แทน `AppTopBar`)
+- [ ] organisms: `AppDataTable`, `FormCard`
 
 ## Phase 4 — Features
 
@@ -58,7 +61,8 @@
 - [ ] stock — รับเข้า / เบิกออก / ใกล้หมด
 - [ ] transaction — รายรับ-รายจ่าย + สรุปรายเดือน
 - [ ] invoice — ใบกำกับภาษี + VAT 7% + PDF (ฟอนต์ไทย)
-- [ ] dashboard — สรุปภาพรวม (ตอนนี้มีแค่หน้าเปล่า + ปุ่มออกจากระบบ)
+- [ ] dashboard — สรุปภาพรวม (ตอนนี้เป็นหน้าต้อนรับ ปุ่มออกจากระบบย้ายไปอยู่ในเมนูแล้ว)
+- [x] ทุกเมนูมีหน้าแล้ว (product / cost / stock / transaction / invoice / settings เป็นหน้า "กำลังพัฒนา" + บอกว่าจะทำอะไร)
 - [ ] settings — ข้อมูลบริษัท + โลโก้ร้าน (แต่ละร้านต่างกัน ไม่ฝังในแอป) + เปลี่ยนภาษา
 
 ## Phase 5 — ส่งงาน
@@ -84,6 +88,8 @@
 
 | วันที่ | ทำอะไร | หมายเหตุ |
 |---|---|---|
+| 2026-10-31 | ปุ่ม ☰ หด / กางเมนูข้างบนจอคอมแบบ smooth (`AnimatedContainer` 250ms): หดเหลือแถบไอคอน 76px + tooltip ชื่อเมนู, ไอคอนปุ่มสลับ ☰ / เมนูเปิด แบบจาง, มือถือ-แท็บเล็ตใช้ปุ่ม ☰ เปิด Drawer (มี tooltip `common.toggle_menu`) | test 114 ผ่าน (มี test ระหว่าง animation ไม่ล้นจอ), ดูภาพจริงใน Chrome ทั้งตอนกางและหดแล้ว |
+| 2026-10-31 | เมนูข้าง (sidebar) 7 หน้า: `AppMenu` + `AppShell` + `PageLayout` + `AppSideMenu` ใน `ShellRoute`, จอคอมเมนูอยู่ซ้ายตลอด / มือถือ-แท็บเล็ตเป็น Drawer (☰), ปุ่มออกจากระบบย้ายไปล่างสุดของเมนู, แยก `ShopLogo` เป็น widget กลาง (ใช้ทั้ง login และเมนู), หน้าที่ยังไม่ได้ทำใช้ `ComingSoonView`, เพิ่ม `appBarTheme` | test 109 ผ่าน, ดูภาพจริงใน Chrome 375 (ปิด / เปิดเมนู) / 768 / 1440 แล้ว |
 | 2026-10-31 | แอนิเมชันเปลี่ยนหน้าแบบซูมแทนการเลื่อน: `AppPageTransition.forward` (หน้าทั่วไป: ขยายเข้า / หดออก) และ `.backward` (หน้า login: ย่อเข้า / ขยายออก) ใช้ผ่าน `pageBuilder` ใน `appRouter` + `ColoredBox` พื้นหลังใน `app.dart` | test 88 ผ่าน (มี test ยืนยันว่า `go` แล้วหน้าเก่าซูมออกจริง), อัดเฟรมตอน logout ใน Chrome แล้ว (เครื่องทดสอบเรนเดอร์ช้า เห็นแค่บางเฟรม) |
 | 2026-10-31 | ออกจากระบบแล้วหน้า login แสดงอีเมลเดิม: `AuthRepository` เก็บอีเมลล่าสุด (`last_email`) ทุกครั้งที่ login สำเร็จ, logout ลบแค่ token, เพิ่ม event `SavedEmailRequested` + `AuthState.savedEmail`, หน้า login ขออีเมลตอนเปิดแล้วใส่ช่องอีเมล (ถ้ายังว่าง) | เก็บอีเมลเสมอไม่ขึ้นกับติ๊กจดจำ, test 80 ผ่าน |
 | 2026-10-31 | โลโก้ร้านจาก API: เพิ่ม `ApiConstants.companyLogoUrl`, หน้า login แสดงโลโก้ (`Image.network` ในกรอบขาวมุมโค้ง 96 px เหนือชื่อแอป แทนไอคอนส้มเดิม — โหลดไม่ได้แสดงไอคอน CostBook ขนาดเดียวกัน), favicon ใน `web/index.html` ชี้ไปที่ `http://localhost:8080/api/v1/company/logo` (ไม่เพิ่ม package), `AppSizes.logoSize` + test (`api_constants_test` 2, login_page เพิ่ม 2) | analyze ผ่าน, test 72 ผ่าน, build web ผ่าน, ดูภาพจริงใน Chrome 375x667 / 1280x800 แล้ว โลโก้ MAKEHUB ขึ้น + favicon โหลดจาก API ได้ 200 — ร้านไม่มีโลโก้ favicon จะเป็นไอคอนว่างของ browser / `apple-touch-icon` และไอคอนใน `manifest.json` ยังเป็นของ Flutter เดิม |
