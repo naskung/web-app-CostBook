@@ -1,6 +1,7 @@
 {
   "app.name": "CostBook",
   "app.tagline": "ระบบจัดการต้นทุน สต็อก และใบกำกับภาษี",
+  "common.logout": "ออกจากระบบ",
   "login.title": "เข้าสู่ระบบ",
   "login.subtitle": "กรอกอีเมลและรหัสผ่านเพื่อใช้งาน",
   "login.email": "อีเมล",
@@ -9,6 +10,13 @@
   "login.password_hint": "กรอกรหัสผ่าน",
   "login.remember_me": "จดจำการเข้าสู่ระบบ",
   "login.submit": "เข้าสู่ระบบ",
+  "dashboard.welcome": "ยินดีต้อนรับสู่ CostBook",
   "validation.required": "กรุณากรอกข้อมูล",
-  "validation.email_invalid": "รูปแบบอีเมลไม่ถูกต้อง"
+  "validation.email_invalid": "รูปแบบอีเมลไม่ถูกต้อง",
+  "error.email_required": "กรุณากรอกอีเมล",
+  "error.password_required": "กรุณากรอกรหัสผ่าน",
+  "error.invalid_credentials": "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+  "error.server_error": "ระบบขัดข้อง กรุณาลองใหม่ภายหลัง",
+  "error.network_error": "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่อีกครั้ง",
+  "error.unknown_error": "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง"
 }

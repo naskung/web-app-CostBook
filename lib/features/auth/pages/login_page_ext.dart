@@ -85,9 +85,38 @@ extension _LoginPageExt on _LoginPageState {
             const SizedBox(height: AppSizes.spaceMedium),
             _rememberMeTile(context),
             const SizedBox(height: AppSizes.spaceLarge),
-            AppButton(text: 'login.submit'.tr, onPressed: _onLogin),
+            _submitArea(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _submitArea() {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (state.status == AppStatus.failure) _errorText(context, state.errorCode),
+            AppButton(
+              text: 'login.submit'.tr,
+              isLoading: state.status == AppStatus.loading,
+              onPressed: _onLogin,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _errorText(BuildContext context, String errorCode) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSizes.spaceMedium),
+      child: Text(
+        'error.$errorCode'.tr,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.danger),
+        textAlign: TextAlign.center,
       ),
     );
   }

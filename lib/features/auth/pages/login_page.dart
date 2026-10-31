@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:costbook/core/constants/app_status.dart';
 import 'package:costbook/core/constants/screen_type.dart';
 import 'package:costbook/core/helpers/responsive_helper.dart';
 import 'package:costbook/core/lang/app_lang.dart';
+import 'package:costbook/core/routes/app_routes.dart';
 import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
 import 'package:costbook/core/theme/app_theme.dart';
 import 'package:costbook/core/utils/validator_util.dart';
+import 'package:costbook/features/auth/bloc/auth_bloc.dart';
 import 'package:costbook/features/auth/widgets/login_background.dart';
 import 'package:costbook/shared/widgets/atoms/app_button.dart';
 import 'package:costbook/shared/widgets/atoms/app_text_field.dart';
@@ -38,25 +43,41 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _onLogin() {
-    _formKey.currentState?.validate();
+    final authBloc = context.read<AuthBloc>();
+    if (authBloc.state.status == AppStatus.loading) return;
+
+    final isValid = _formKey.currentState?.validate() ?? false;
+    if (!isValid) return;
+
+    authBloc.add(
+      LoginSubmitted(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        rememberMe: _rememberMe,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          const LoginBackground(),
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(_pagePadding(context)),
-                child: _content(context),
+    return BlocListener<AuthBloc, AuthState>(
+      listenWhen: (previous, current) => current.status == AppStatus.success,
+      listener: (context, state) => context.go(AppRoutes.dashboard),
+      child: Scaffold(
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            const LoginBackground(),
+            SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(_pagePadding(context)),
+                  child: _content(context),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

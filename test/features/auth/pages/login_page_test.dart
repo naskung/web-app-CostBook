@@ -1,30 +1,79 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mocktail/mocktail.dart';
 
 import 'package:costbook/core/lang/app_lang.dart';
+import 'package:costbook/core/network/api_exception.dart';
+import 'package:costbook/core/routes/app_routes.dart';
 import 'package:costbook/core/theme/app_theme.dart';
+import 'package:costbook/features/auth/bloc/auth_bloc.dart';
 import 'package:costbook/features/auth/pages/login_page.dart';
+import 'package:costbook/features/auth/repository/auth_repository.dart';
 import 'package:costbook/shared/widgets/atoms/app_button.dart';
 import 'package:costbook/shared/widgets/organisms/screen_scaler.dart';
 
+class MockAuthRepository extends Mock implements AuthRepository {}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  late MockAuthRepository repository;
 
   setUpAll(() async {
     await AppLang.load('th');
   });
 
+  setUp(() {
+    repository = MockAuthRepository();
+  });
+
+  void whenLogin(Future<void> Function() answer) {
+    when(
+      () => repository.login(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+        rememberMe: any(named: 'rememberMe'),
+      ),
+    ).thenAnswer((_) => answer());
+  }
+
   Future<void> pumpLoginPage(WidgetTester tester, Size screenSize) async {
     tester.view.physicalSize = screenSize;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
+    final router = GoRouter(
+      initialLocation: AppRoutes.login,
+      routes: [
+        GoRoute(
+          path: AppRoutes.login,
+          builder: (context, state) => BlocProvider(
+            create: (_) => AuthBloc(repository),
+            child: const LoginPage(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.dashboard,
+          builder: (context, state) => const Text('dashboard-page'),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
     await tester.pumpWidget(
-      MaterialApp(
+      MaterialApp.router(
         theme: AppTheme.light,
         builder: (context, child) => ScreenScaler(child: child ?? const SizedBox()),
-        home: const LoginPage(),
+        routerConfig: router,
       ),
     );
+  }
+
+  Future<void> fillForm(WidgetTester tester) async {
+    await tester.enterText(find.byType(TextFormField).first, '  admin@costbook.com  ');
+    await tester.enterText(find.byType(TextFormField).last, '1234');
   }
 
   Future<void> tapLoginButton(WidgetTester tester) async {
@@ -92,5 +141,70 @@ void main() {
     await tester.tap(find.byIcon(Icons.visibility_outlined));
     await tester.pump();
     expect(find.byIcon(Icons.visibility_off_outlined), findsOneWidget);
+  });
+
+  testWidgets('กรอกครบแล้วกดเข้าสู่ระบบ ส่งอีเมล (ตัดช่องว่าง) รหัสผ่าน และค่าจดจำ ไปที่ repository', (tester) async {
+    whenLogin(() async {});
+    await pumpLoginPage(tester, const Size(375, 667));
+    await fillForm(tester);
+    await tester.ensureVisible(find.text('login.remember_me'.tr));
+    await tester.tap(find.text('login.remember_me'.tr));
+    await tapLoginButton(tester);
+    verify(() => repository.login(email: 'admin@costbook.com', password: '1234', rememberMe: true)).called(1);
+  });
+
+  testWidgets('กรอกไม่ครบ ไม่เรียก repository', (tester) async {
+    whenLogin(() async {});
+    await pumpLoginPage(tester, const Size(375, 667));
+    await tapLoginButton(tester);
+    verifyNever(
+      () => repository.login(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+        rememberMe: any(named: 'rememberMe'),
+      ),
+    );
+  });
+
+  testWidgets('กำลัง login ปุ่มแสดงวงกลมหมุน และกดซ้ำไม่ได้', (tester) async {
+    final loginResult = Completer<void>();
+    whenLogin(() => loginResult.future);
+    await pumpLoginPage(tester, const Size(375, 667));
+    await fillForm(tester);
+    await tapLoginButton(tester);
+    await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    final button = tester.widget<ElevatedButton>(find.byType(ElevatedButton));
+    expect(button.onPressed, isNull);
+    loginResult.complete();
+    await tester.pump();
+  });
+
+  testWidgets('รหัสผ่านผิด แสดงข้อความ อีเมลหรือรหัสผ่านไม่ถูกต้อง', (tester) async {
+    whenLogin(() async => throw ApiException('invalid_credentials'));
+    await pumpLoginPage(tester, const Size(375, 667));
+    await fillForm(tester);
+    await tapLoginButton(tester);
+    await tester.pump();
+    expect(find.text('error.invalid_credentials'.tr), findsOneWidget);
+  });
+
+  testWidgets('ต่อ server ไม่ได้ แสดงข้อความเชื่อมต่อไม่ได้', (tester) async {
+    whenLogin(() async => throw ApiException('network_error'));
+    await pumpLoginPage(tester, const Size(375, 667));
+    await fillForm(tester);
+    await tapLoginButton(tester);
+    await tester.pump();
+    expect(find.text('error.network_error'.tr), findsOneWidget);
+  });
+
+  testWidgets('login สำเร็จ ไปหน้าแรก', (tester) async {
+    whenLogin(() async {});
+    await pumpLoginPage(tester, const Size(375, 667));
+    await fillForm(tester);
+    await tapLoginButton(tester);
+    await tester.pumpAndSettle();
+    expect(find.text('dashboard-page'), findsOneWidget);
+    expect(find.byType(LoginPage), findsNothing);
   });
 }

@@ -4,8 +4,8 @@
 
 ## สถานะตอนนี้
 
-- **เสร็จแล้ว:** Phase 0, Phase 1 (เหลือเพิ่ม package), theme + responsive + ภาษา ของ Phase 2, UI หน้า login
-- **งานถัดไป:** เพิ่ม package (flutter_bloc, go_router, http ฯลฯ) → route `/login` + `LoginBloc` + ต่อ API login
+- **เสร็จแล้ว:** Phase 0, Phase 1 (เหลือ package intl / pdf / printing), theme + responsive + ภาษา ของ Phase 2, **login ต่อ API จริงแล้ว** (route `/login` ↔ `/`, จดจำการเข้าสู่ระบบ, ปุ่มออกจากระบบ)
+- **งานถัดไป:** รอผู้ใช้สั่ง — เช่น หน้าแรก / `PageLayout` (เมนูข้าง + แถบบน ย้ายปุ่มออกจากระบบไปไว้ในนั้น), จัดการ 401 `unauthorized` (token หมดอายุ)
 
 ---
 
@@ -20,18 +20,20 @@
 ## Phase 1 — ตั้งค่าโปรเจกต์
 
 - [x] `flutter create --platforms web --project-name costbook .`
-- [ ] เพิ่ม package (flutter_bloc, equatable, go_router, http, intl, pdf, printing, bloc_test, mocktail)
+- [x] เพิ่ม package สำหรับ login: flutter_bloc, equatable, http, go_router, shared_preferences, bloc_test, mocktail
+- [ ] เพิ่ม package ที่เหลือ: intl, pdf, printing (เพิ่มตอนทำ feature ที่ใช้)
 - [x] สร้างโฟลเดอร์ตาม `docs/ARCHITECTURE.md` (โฟลเดอร์ว่างมี `.gitkeep` ลบได้เมื่อมีไฟล์จริง)
 
 ## Phase 2 — Core
 
 - [x] theme: `AppColors`, `AppSizes`, `AppTheme` + ฟอนต์ LINESeedSansTH
 - [x] รองรับทุกขนาดจอ: `ScreenType`, `ResponsiveUtil` + test, `ResponsiveHelper`, `ScreenScaler` (จอใหญ่ขยายทั้งแอป) + test
-- [ ] `AppStatus`
+- [x] `AppStatus`
 - [x] ภาษา: `AppLang` + `.tr` + `th.json` / `en.json`
-- [ ] `LanguageBloc` (รอเพิ่ม package flutter_bloc)
-- [ ] route: `AppRoutes` + `appRouter` (ShellRoute)
-- [ ] `ApiClient`
+- [ ] `LanguageBloc`
+- [x] route: `AppRoutes` + `appRouter` (`/login`, `/` + redirect ตาม token)
+- [ ] route: ShellRoute + `PageLayout`
+- [x] `ApiClient` (`post` + แนบ token ให้เอง + `ApiException`) + test — `get` / `put` / `delete` เพิ่มตอนมี feature ที่ใช้
 - [x] utils + test: `ValidatorUtil` (required, email)
 - [ ] utils + test: `MoneyUtil`, `TaxUtil`, `CostUtil`, `DateUtil`
 - [ ] helpers: `DialogHelper`, `SnackbarHelper`
@@ -39,7 +41,7 @@
 
 ## Phase 3 — Widget กลาง
 
-- [x] atoms: `AppButton`, `AppTextField` (มีปุ่มแสดง / ซ่อนรหัสผ่าน)
+- [x] atoms: `AppButton` (มี `isLoading`), `AppTextField` (มีปุ่มแสดง / ซ่อนรหัสผ่าน)
 - [ ] atoms: `AppDropdown`, `AppLoading`, `AppBadge`, `MoneyText`
 - [ ] molecules: `SearchField`, `StatCard`, `AmountRow`, `EmptyView`, `ErrorView`
 - [ ] organisms: `PageLayout`, `AppSideMenu`, `AppTopBar`, `AppDataTable`, `FormCard`
@@ -48,13 +50,14 @@
 
 แต่ละ feature: model + test → repository → bloc + test → pages → widgets
 
-- [ ] auth — login: UI เสร็จแล้ว (ธีมส้ม-เทาเข้ม, ทุกขนาดจอ, เช็คอีเมล / รหัสผ่านว่าง, checkbox จดจำการเข้าสู่ระบบ) เหลือ bloc + repository + ต่อ API `POST /auth/login` + route `/login` + เก็บ token เมื่อติ๊กจดจำ (ต้องใช้ package เช่น shared_preferences)
+- [x] auth — login: UI + `AuthBloc` + `AuthRepository` + ต่อ API `POST /auth/login` + route `/login` + จดจำ token (`shared_preferences`) + logout + test
+- [ ] auth — ได้ 401 `unauthorized` → ลบ token แล้วไปหน้า login (ทำตอนมี API ที่ต้อง login)
 - [ ] product — จัดการสินค้า
 - [ ] cost — คำนวณต้นทุน / ราคาขาย
 - [ ] stock — รับเข้า / เบิกออก / ใกล้หมด
 - [ ] transaction — รายรับ-รายจ่าย + สรุปรายเดือน
 - [ ] invoice — ใบกำกับภาษี + VAT 7% + PDF (ฟอนต์ไทย)
-- [ ] dashboard — สรุปภาพรวม
+- [ ] dashboard — สรุปภาพรวม (ตอนนี้มีแค่หน้าเปล่า + ปุ่มออกจากระบบ)
 - [ ] settings — ข้อมูลบริษัท + โลโก้ร้าน (แต่ละร้านต่างกัน ไม่ฝังในแอป) + เปลี่ยนภาษา
 
 ## Phase 5 — ส่งงาน
@@ -80,6 +83,9 @@
 
 | วันที่ | ทำอะไร | หมายเหตุ |
 |---|---|---|
+| 2026-10-31 | **ต่อ API login**: เพิ่ม package flutter_bloc, equatable, http, go_router, shared_preferences, bloc_test, mocktail / `ApiConstants`, `AppStatus`, `ApiClient` + `ApiException`, `AuthRepository` (login / logout / loadSavedToken), `AuthBloc` (`LoginSubmitted`, `LogoutRequested`), `AppRoutes` + `appRouter` (redirect: ไม่มี token → `/login`), `DashboardPage` (หน้าแรกเปล่า + ปุ่มออกจากระบบ), `AppButton.isLoading`, หน้า login แสดง error `'error.<code>'.tr` + ปุ่มหมุนตอนรอ, key ภาษา `common.logout`, `dashboard.welcome`, `error.*` (invalid_credentials, email_required, password_required, server_error, network_error, unknown_error) | analyze ผ่าน, test 68 ผ่าน (เพิ่ม api_client 8, auth_repository 6, auth_bloc 4, login_page 6, dashboard_page 2), `flutter build web` ผ่าน, ลองเรียก API จริงด้วย `ApiClient`: รหัสถูกได้ token / รหัสผิด + ไม่มีอีเมลได้ `invalid_credentials`, CORS preflight 204 — **ยังไม่ได้ดูภาพจริงใน Chrome** / ยังไม่จัดการ token หมดอายุ (`error.unauthorized` ยังไม่เพิ่ม) |
+| 2026-10-31 | **(จาก api-Costbook) API ข้อมูลร้าน + โลโก้ พร้อมใช้** (1 ระบบ = 1 ร้าน แก้ข้อมูลร้านผ่าน API หน้าเว็บไม่ต้องแก้): `GET /api/v1/company` → `{"name","address","tax_id","branch","phone","has_logo"}` (ไม่ต้อง login) / `PUT /api/v1/company` (ต้อง login) ส่งครบทุกช่อง → 400 `company_name_required`, `company_tax_id_invalid` / `GET /api/v1/company/logo` → รูปตรง ๆ ใช้ `Image.network` ได้ (ไม่ต้อง login) 404 `logo_not_found` = แสดงโลโก้ CostBook แทน / `PUT /api/v1/company/logo` multipart ช่อง `logo` PNG / JPG / WebP ≤ 1 MB → 400 `logo_required`, `logo_too_large`, `logo_type_invalid` / `DELETE /api/v1/company/logo` → 204 | ยังไม่ได้แก้โค้ด Flutter — ใช้ในหน้า settings + หน้า login + PDF ใบกำกับ, เพิ่ม key `error.<code>` ข้างบนใน `th.json` / `en.json`, หลังอัปโหลดโลโก้ใหม่ต้องล้าง cache รูป (`imageCache` / ใส่ key ใหม่) — รายละเอียด: `../api-Costbook/docs/ARCHITECTURE.md` หัวข้อ 7 หรือ `http://localhost:8080/docs` |
+| 2026-10-31 | ปิดแถบ DEBUG มุมขวาบน (`debugShowCheckedModeBanner: false` ใน `app.dart`) | |
 | 2026-10-31 | กลับไปใช้พื้นหลังแบบแบ่งบน-ล่าง แล้วตกแต่งครึ่งบน: ไล่สีเทาเข้ม, ขอบล่างโค้ง, แถบเฉียงสีส้มมุมขวาบน (ตำแหน่งตามสัดส่วนจอ ไม่ทับตัวหนังสือบนมือถือ), แสงส้มมุมขวาบน / ซ้ายล่าง, ลายจุดจาง ๆ | ผู้ใช้ชอบแบบแบ่ง แค่อยากให้ครึ่งบนสวยขึ้น, test 42 ผ่าน, ดูภาพจริงใน Chrome 375 / 768 / 1072x1782 / 1440 / 2560 แล้ว |
 | 2026-10-31 | พื้นหลังหน้า login ใหม่: เทาเข้มเต็มจอ + แสงส้มมุมซ้ายบน / ขวาล่าง + ลายจุดจาง ๆ แยกเป็น `LoginBackground` (features/auth/widgets) แทนแบบแบ่งครึ่งบน-ล่าง | test 42 ผ่าน, ดูภาพจริงใน Chrome 375 / 768 / 1072x1782 / 1440 / 2560 แล้ว |
 | 2026-10-31 | ออกแบบหน้า login ใหม่ทั้งหมด: เอาแถบรูปด้านข้าง + โลโก้ / รูป MakeHub ออก, ใช้หน้าเดียวทุกขนาดจอ (ครึ่งบนเทาเข้ม + แสงส้ม, ชื่อแอป CostBook, การ์ดฟอร์มกลางจอ), ชื่อช่องอยู่เหนือช่องกรอก + ตัวอย่างในช่อง, Enter ไปช่องถัดไป, autofill รหัสผ่าน, ปุ่มส้มตัวหนังสือเข้ม (อ่านชัด) | โลโก้ขึ้นกับแต่ละร้าน → ย้ายไปทำในหน้า settings, ลบ `assets/images/*` + `AppImages`, test 42 ผ่าน, ดูภาพจริงใน Chrome 320–2560 แล้ว |

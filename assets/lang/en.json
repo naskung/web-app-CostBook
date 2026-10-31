@@ -1,6 +1,7 @@
 {
   "app.name": "CostBook",
   "app.tagline": "Manage costs, stock and tax invoices",
+  "common.logout": "Sign out",
   "login.title": "Sign in",
   "login.subtitle": "Enter your email and password to continue",
   "login.email": "Email",
@@ -9,6 +10,13 @@
   "login.password_hint": "Enter your password",
   "login.remember_me": "Remember me",
   "login.submit": "Sign in",
+  "dashboard.welcome": "Welcome to CostBook",
   "validation.required": "This field is required",
-  "validation.email_invalid": "Invalid email format"
+  "validation.email_invalid": "Invalid email format",
+  "error.email_required": "Please enter your email",
+  "error.password_required": "Please enter your password",
+  "error.invalid_credentials": "Incorrect email or password",
+  "error.server_error": "Server error. Please try again later",
+  "error.network_error": "Cannot connect to the server. Please try again",
+  "error.unknown_error": "Something went wrong. Please try again"
 }

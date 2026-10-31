@@ -34,9 +34,12 @@ Backend อยู่ที่ repo `../api-Costbook` — ระหว่าง�
 | `equatable` | เปรียบเทียบ state / model (จำเป็นตอนเขียน test) |
 | `go_router` | route และ URL ของเว็บ |
 | `http` | เรียก API |
+| `shared_preferences` | เก็บ token ไว้ในเครื่องเมื่อติ๊ก "จดจำการเข้าสู่ระบบ" (บนเว็บคือ localStorage ของ browser) |
 | `intl` | format ตัวเลข / เงิน / วันที่ |
 | `pdf`, `printing` | สร้างและพิมพ์ใบกำกับภาษี |
 | `bloc_test`, `mocktail` (dev) | เขียน unit test ของ bloc |
+
+เพิ่มแล้ว (2026-10-31): `flutter_bloc`, `equatable`, `http`, `go_router`, `shared_preferences`, `bloc_test`, `mocktail` — ยังไม่เพิ่ม: `intl`, `pdf`, `printing` (เพิ่มตอนทำ feature ที่ใช้)
 
 **ไม่ใช้:** GetX, get_it, freezed, json_serializable, build_runner (เหตุผล: อยากให้โค้ดง่าย)
 ภาษาแบบ `.tr` เราเขียนเอง ไม่ต้องใช้ GetX (ดูหัวข้อ 10)
@@ -45,7 +48,7 @@ Backend อยู่ที่ repo `../api-Costbook` — ระหว่าง�
 # สร้างโปรเจกต์ในโฟลเดอร์นี้ (ชื่อโฟลเดอร์มี - จึงต้องกำหนด project-name เอง)
 flutter create --platforms web --project-name costbook .
 
-flutter pub add flutter_bloc equatable go_router http intl pdf printing
+flutter pub add flutter_bloc equatable go_router http shared_preferences intl pdf printing
 flutter pub add dev:bloc_test dev:mocktail
 ```
 
@@ -60,12 +63,12 @@ web-app-CostBook/
 │   ├── fonts/             LINESeedSansTH (ฟอนต์หลักของแอป ลงทะเบียนใน pubspec.yaml)
 │   └── images/            รูปที่ใช้ทุกร้าน (โลโก้ร้านไม่ฝังในแอป — แต่ละร้านต่างกัน มาจากข้อมูลร้านในหน้า settings)
 ├── lib/
-│   ├── main.dart          จุดเริ่มแอป: โหลดภาษา แล้ว runApp
+│   ├── main.dart          จุดเริ่มแอป: โหลดภาษา + อ่าน token ที่จดจำไว้ แล้ว runApp
 │   ├── app.dart           MaterialApp.router + theme + bloc ที่ใช้ทั้งแอป
 │   ├── core/
 │   │   ├── constants/     app_status.dart, screen_type.dart, api_constants.dart
 │   │   ├── lang/          app_lang.dart (.tr), language_bloc.dart
-│   │   ├── network/       api_client.dart
+│   │   ├── network/       api_client.dart (เรียก API + เก็บ token), api_exception.dart (error code จาก API)
 │   │   ├── routes/        app_routes.dart (ชื่อ route), app_router.dart (GoRouter)
 │   │   ├── theme/         app_colors.dart (สี), app_sizes.dart (ขนาดตัวอักษร / ระยะห่าง), app_theme.dart (ฟอนต์ + รวมเป็น ThemeData)
 │   │   ├── utils/         money_util.dart, tax_util.dart, cost_util.dart, date_util.dart, validator_util.dart, responsive_util.dart
@@ -76,8 +79,9 @@ web-app-CostBook/
 │   │       ├── molecules/
 │   │       └── organisms/   เช่น page_layout.dart, screen_scaler.dart (ขยายทั้งแอปบนจอใหญ่)
 │   └── features/
-│       ├── auth/            pages/login_page.dart, login_page_ext.dart, widgets/login_background.dart
-│       ├── dashboard/
+│       ├── auth/            bloc/auth_bloc.dart (+ event, state), repository/auth_repository.dart,
+│       │                    pages/login_page.dart, login_page_ext.dart, widgets/login_background.dart
+│       ├── dashboard/       pages/dashboard_page.dart (ตอนนี้เป็นหน้าแรกเปล่า + ปุ่มออกจากระบบ)
 │       ├── product/
 │       │   ├── bloc/        product_bloc.dart, product_event.dart, product_state.dart
 │       │   ├── models/      product_model.dart
@@ -307,6 +311,7 @@ class ProductRepository {
 // lib/core/routes/app_routes.dart
 class AppRoutes {
   static const dashboard = '/';
+  static const login = '/login';
   static const products = '/products';
   static const productAdd = '/products/add';
   static const productEdit = '/products/:id/edit';
@@ -366,6 +371,32 @@ context.push(AppRoutes.productEditPath(product.id)); // เปิดหน้า
 context.pop(); // ย้อนกลับ
 ```
 
+### Login และ token (ทำแล้ว)
+
+```
+LoginPage ──LoginSubmitted──▶ AuthBloc ──▶ AuthRepository.login ──▶ ApiClient.post('/auth/login')
+                                                │
+                                                ├─ ใส่ token ใน ApiClient.token (ทุก request แนบ Authorization: Bearer <token> ให้เอง)
+                                                └─ ติ๊ก "จดจำ" → เก็บ token ใน shared_preferences ด้วย
+```
+
+| เรื่อง | ทำยังไง |
+|---|---|
+| เปิดแอป | `main()` เรียก `AuthRepository(ApiClient()).loadSavedToken()` → มี token ที่จดจำไว้ก็เข้าหน้าแรกได้เลย |
+| กันเข้าหน้าที่ต้อง login | `redirect` ใน `appRouter`: ไม่มี token → ไป `/login`, มี token แล้วเปิด `/login` → ไป `/` |
+| login สำเร็จ | `AuthState.status == success` → `LoginPage` ไป `AppRoutes.dashboard` |
+| login ไม่ผ่าน | แสดง `'error.${state.errorCode}'.tr` เหนือปุ่ม |
+| ไม่ติ๊กจดจำ | token อยู่แค่ในหน่วยความจำ → กด refresh / ปิดเว็บ ต้อง login ใหม่ |
+| logout | `LogoutRequested` → ลบ token ทั้ง 2 ที่ → กลับ `/login` |
+
+error code ที่ `ApiClient` โยนออกมาเป็น `ApiException(code)`:
+- code จาก API ตรง ๆ เช่น `invalid_credentials`
+- `network_error` = ต่อ server ไม่ได้ (API ไม่ได้เปิด / เน็ตหลุด / CORS ไม่ผ่าน)
+- `server_error` = API ตอบ error แต่ไม่มี `{"error": ...}`
+- bloc เจอ error อื่นที่ไม่ใช่ `ApiException` → `unknown_error`
+
+ยังไม่ได้ทำ: token หมดอายุ (7 วัน) แต่ยังจดจำไว้ → ตอนนี้ยังเข้าหน้าแรกได้ — ต้องจัดการตอนมี API ที่ต้อง login: ได้ 401 `unauthorized` → ลบ token แล้วไป `/login`
+
 ---
 
 ## 8. Widget แบบ Atomic Design
@@ -404,9 +435,15 @@ class AppButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton(
       onPressed: isLoading ? null : onPressed,
-      child: isLoading
-          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-          : Text(text),
+      child: _label(),
+    );
+  }
+
+  Widget _label() {
+    if (!isLoading) return Text(text);
+    return const SizedBox.square(
+      dimension: AppSizes.loadingSize,
+      child: CircularProgressIndicator(strokeWidth: AppSizes.loadingStroke),
     );
   }
 }
@@ -697,6 +734,7 @@ class App extends StatelessWidget {
           return MaterialApp.router(
             key: ValueKey(langCode), // เปลี่ยนภาษา -> สร้างหน้าใหม่ ข้อความ .tr อัปเดตทั้งแอป
             title: 'CostBook',
+            debugShowCheckedModeBanner: false,
             theme: AppTheme.light,
             builder: (context, child) => ScreenScaler(child: child ?? const SizedBox()), // จอใหญ่ → ขยายทั้งแอป
             routerConfig: appRouter,
