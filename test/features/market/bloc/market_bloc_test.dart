@@ -4,6 +4,7 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:costbook/core/constants/app_status.dart';
 import 'package:costbook/core/network/api_exception.dart';
+import 'package:costbook/features/assistant/models/ai_status_model.dart';
 import 'package:costbook/features/assistant/repository/ai_repository.dart';
 import 'package:costbook/features/market/bloc/market_bloc.dart';
 import 'package:costbook/features/market/models/market_check_model.dart';
@@ -25,7 +26,7 @@ void main() {
   const phoneCase = ProductModel(id: 'p1', name: 'เคสโทรศัพท์', costPrice: 52.8, sellPrice: 250);
   const oldCheck = MarketCheckModel(id: 'm1', productId: 'p1', retailTypical: 259);
   const newCheck = MarketCheckModel(id: 'm2', productId: 'p1', retailTypical: 279);
-  const loaded = MarketState(status: AppStatus.success, product: phoneCase, check: oldCheck, aiEnabled: true);
+  const loaded = MarketState(status: AppStatus.success, product: phoneCase, check: oldCheck, canCheck: true);
 
   setUp(() {
     repository = MockMarketRepository();
@@ -40,7 +41,7 @@ void main() {
     build: () {
       when(() => productRepository.getProduct('p1')).thenAnswer((_) async => phoneCase);
       when(() => repository.getLatest('p1')).thenAnswer((_) async => oldCheck);
-      when(() => aiRepository.isEnabled()).thenAnswer((_) async => true);
+      when(() => aiRepository.getStatus()).thenAnswer((_) async => const AiStatusModel(enabled: true, webSearch: true));
       return buildBloc();
     },
     act: (bloc) => bloc.add(MarketOpened()),
@@ -48,11 +49,13 @@ void main() {
   );
 
   blocTest<MarketBloc, MarketState>(
-    'ยังไม่เคยเช็ค ได้ check เป็น null (ไม่ใช่ error)',
+    'ยังไม่เคยเช็ค ได้ check เป็น null และ AI ฟรีค้นเว็บไม่ได้ → canCheck false',
     build: () {
       when(() => productRepository.getProduct('p1')).thenAnswer((_) async => phoneCase);
       when(() => repository.getLatest('p1')).thenAnswer((_) async => null);
-      when(() => aiRepository.isEnabled()).thenAnswer((_) async => false);
+      when(
+        () => aiRepository.getStatus(),
+      ).thenAnswer((_) async => const AiStatusModel(enabled: true, provider: 'gemini'));
       return buildBloc();
     },
     act: (bloc) => bloc.add(MarketOpened()),

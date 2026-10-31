@@ -10,7 +10,6 @@ class AppRoutes {
   static const String invoiceCreate = '/invoices/create';
   static const String invoiceDetail = '/invoices/:id';
   static const String settings = '/settings';
-  static const String assistant = '/assistant';
   static const String market = '/products/:id/market';
 
   static String invoiceDetailPath(String id) => '/invoices/$id';

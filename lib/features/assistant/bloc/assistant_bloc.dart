@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:costbook/core/constants/app_status.dart';
 import 'package:costbook/core/utils/error_util.dart';
 import 'package:costbook/features/assistant/models/ai_action_model.dart';
+import 'package:costbook/features/assistant/models/ai_status_model.dart';
 import 'package:costbook/features/assistant/models/chat_message_model.dart';
 import 'package:costbook/features/assistant/repository/ai_repository.dart';
 import 'package:costbook/features/market/repository/market_repository.dart';
@@ -25,11 +26,15 @@ class AssistantBloc extends Bloc<AssistantEvent, AssistantState> {
     required this.marketRepository,
   }) : super(const AssistantState()) {
     on<AssistantOpened>(_onOpened);
+    on<AssistantPanelOpened>(_onPanelOpened);
+    on<AssistantPanelClosed>(_onPanelClosed);
     on<AssistantMessageSent>(_onMessageSent);
     on<AssistantRetried>(_onRetried);
     on<AssistantActionConfirmed>(_onActionConfirmed);
     on<AssistantActionCancelled>(_onActionCancelled);
     on<AssistantCleared>(_onCleared);
+    on<AssistantKeySaved>(_onKeySaved);
+    on<AssistantKeyRemoved>(_onKeyRemoved);
   }
 
   final AiRepository aiRepository;
@@ -42,11 +47,19 @@ class AssistantBloc extends Bloc<AssistantEvent, AssistantState> {
     if (state.status == AppStatus.success) return;
     emit(state.copyWith(status: AppStatus.loading));
     try {
-      final enabled = await aiRepository.isEnabled();
-      emit(state.copyWith(status: AppStatus.success, aiEnabled: enabled));
+      final ai = await aiRepository.getStatus();
+      emit(state.copyWith(status: AppStatus.success, ai: ai));
     } catch (error) {
       emit(state.copyWith(status: AppStatus.failure, errorCode: ErrorUtil.codeOf(error)));
     }
+  }
+
+  void _onPanelOpened(AssistantPanelOpened event, Emitter<AssistantState> emit) {
+    emit(state.copyWith(isOpen: true, hasUnread: false));
+  }
+
+  void _onPanelClosed(AssistantPanelClosed event, Emitter<AssistantState> emit) {
+    emit(state.copyWith(isOpen: false));
   }
 
   Future<void> _onMessageSent(AssistantMessageSent event, Emitter<AssistantState> emit) async {
@@ -65,7 +78,9 @@ class AssistantBloc extends Bloc<AssistantEvent, AssistantState> {
     emit(state.copyWith(messages: messages, sendStatus: AppStatus.loading, errorCode: ''));
     try {
       final reply = await aiRepository.chat(messages);
-      emit(state.copyWith(messages: [...state.messages, reply], sendStatus: AppStatus.success));
+      emit(
+        state.copyWith(messages: [...state.messages, reply], sendStatus: AppStatus.success, hasUnread: !state.isOpen),
+      );
     } catch (error) {
       emit(state.copyWith(sendStatus: AppStatus.failure, errorCode: ErrorUtil.codeOf(error)));
     }
@@ -91,6 +106,24 @@ class AssistantBloc extends Bloc<AssistantEvent, AssistantState> {
 
   void _onCleared(AssistantCleared event, Emitter<AssistantState> emit) {
     emit(state.copyWith(messages: [], sendStatus: AppStatus.initial, errorCode: ''));
+  }
+
+  Future<void> _onKeySaved(AssistantKeySaved event, Emitter<AssistantState> emit) async {
+    await _changeKey(emit, () => aiRepository.saveKey(event.apiKey.trim()));
+  }
+
+  Future<void> _onKeyRemoved(AssistantKeyRemoved event, Emitter<AssistantState> emit) async {
+    await _changeKey(emit, aiRepository.removeKey);
+  }
+
+  Future<void> _changeKey(Emitter<AssistantState> emit, Future<AiStatusModel> Function() change) async {
+    emit(state.copyWith(keyStatus: AppStatus.loading, keyErrorCode: ''));
+    try {
+      final ai = await change();
+      emit(state.copyWith(keyStatus: AppStatus.success, ai: ai, status: AppStatus.success));
+    } catch (error) {
+      emit(state.copyWith(keyStatus: AppStatus.failure, keyErrorCode: ErrorUtil.codeOf(error)));
+    }
   }
 
   void _finish(Emitter<AssistantState> emit, AiActionModel action) {

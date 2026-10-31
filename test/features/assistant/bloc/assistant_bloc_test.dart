@@ -6,6 +6,7 @@ import 'package:costbook/core/constants/app_status.dart';
 import 'package:costbook/core/network/api_exception.dart';
 import 'package:costbook/features/assistant/bloc/assistant_bloc.dart';
 import 'package:costbook/features/assistant/models/ai_action_model.dart';
+import 'package:costbook/features/assistant/models/ai_status_model.dart';
 import 'package:costbook/features/assistant/models/chat_message_model.dart';
 import 'package:costbook/features/assistant/repository/ai_repository.dart';
 import 'package:costbook/features/market/models/market_check_model.dart';
@@ -42,8 +43,16 @@ void main() {
     data: {'product_id': 'p1', 'quantity': 10, 'unit_cost': 50, 'supplier': 'ร้านเส้น', 'note': ''},
   );
   const reply = ChatMessageModel(role: ChatMessageModel.assistant, text: 'กดยืนยันได้เลย', actions: [stockIn]);
-  const ready = AssistantState(status: AppStatus.success, aiEnabled: true);
-  const proposed = AssistantState(status: AppStatus.success, aiEnabled: true, messages: [ask, reply]);
+  const free = AiStatusModel(enabled: true, provider: AiStatusModel.gemini, freeAvailable: true);
+  const claude = AiStatusModel(
+    enabled: true,
+    provider: AiStatusModel.claude,
+    webSearch: true,
+    hasOwnKey: true,
+    keyHint: '…a1B2',
+  );
+  const ready = AssistantState(status: AppStatus.success, ai: free);
+  const proposed = AssistantState(status: AppStatus.success, ai: free, messages: [ask, reply]);
 
   setUpAll(() {
     registerFallbackValue(<ChatMessageModel>[]);
@@ -87,7 +96,7 @@ void main() {
   blocTest<AssistantBloc, AssistantState>(
     'AssistantOpened เช็คว่าเปิด AI ได้ไหม',
     build: () {
-      when(() => aiRepository.isEnabled()).thenAnswer((_) async => true);
+      when(() => aiRepository.getStatus()).thenAnswer((_) async => free);
       return buildBloc();
     },
     act: (bloc) => bloc.add(AssistantOpened()),
@@ -97,7 +106,7 @@ void main() {
   blocTest<AssistantBloc, AssistantState>(
     'AssistantOpened ต่อ server ไม่ได้ ได้ failure',
     build: () {
-      when(() => aiRepository.isEnabled()).thenThrow(ApiException('network_error'));
+      when(() => aiRepository.getStatus()).thenThrow(ApiException('network_error'));
       return buildBloc();
     },
     act: (bloc) => bloc.add(AssistantOpened()),
@@ -127,7 +136,7 @@ void main() {
     expect:
         () => [
           ready.copyWith(messages: [ask], sendStatus: AppStatus.loading),
-          ready.copyWith(messages: [ask, reply], sendStatus: AppStatus.success),
+          ready.copyWith(messages: [ask, reply], sendStatus: AppStatus.success, hasUnread: true),
         ],
     verify: (_) => verify(() => aiRepository.chat([ask])).called(1),
   );
@@ -154,7 +163,7 @@ void main() {
           ready.copyWith(messages: [ask], sendStatus: AppStatus.loading),
           ready.copyWith(messages: [ask], sendStatus: AppStatus.failure, errorCode: 'ai_busy'),
           ready.copyWith(messages: [ask], sendStatus: AppStatus.loading),
-          ready.copyWith(messages: [ask, reply], sendStatus: AppStatus.success),
+          ready.copyWith(messages: [ask, reply], sendStatus: AppStatus.success, hasUnread: true),
         ],
   );
 
@@ -339,5 +348,71 @@ void main() {
     seed: () => proposed,
     act: (bloc) => bloc.add(AssistantCleared()),
     expect: () => [ready],
+  );
+
+  blocTest<AssistantBloc, AssistantState>(
+    'เปิดหน้าต่างแชท ล้างจุดแดง (ข้อความใหม่) / ย่อหน้าต่าง แชทเดิมยังอยู่',
+    build: buildBloc,
+    seed: () => proposed.copyWith(hasUnread: true),
+    act:
+        (bloc) =>
+            bloc
+              ..add(AssistantPanelOpened())
+              ..add(AssistantPanelClosed()),
+    expect: () => [proposed.copyWith(isOpen: true), proposed],
+  );
+
+  blocTest<AssistantBloc, AssistantState>(
+    'หน้าต่างเปิดอยู่ตอนได้คำตอบ ไม่ขึ้นจุดแดง',
+    build: () {
+      when(() => aiRepository.chat(any())).thenAnswer((_) async => reply);
+      return buildBloc();
+    },
+    seed: () => ready.copyWith(isOpen: true),
+    act: (bloc) => bloc.add(AssistantMessageSent('รับเคสเข้า 10 ชิ้น')),
+    skip: 1,
+    expect:
+        () => [
+          ready.copyWith(isOpen: true, messages: [ask, reply], sendStatus: AppStatus.success),
+        ],
+  );
+
+  blocTest<AssistantBloc, AssistantState>(
+    'ใส่ key ของ Claude สำเร็จ เปลี่ยนเป็น Claude (ตัดช่องว่างก่อนส่ง)',
+    build: () {
+      when(() => aiRepository.saveKey('sk-ant-api03-key')).thenAnswer((_) async => claude);
+      return buildBloc();
+    },
+    seed: () => ready,
+    act: (bloc) => bloc.add(AssistantKeySaved('  sk-ant-api03-key  ')),
+    expect:
+        () => [ready.copyWith(keyStatus: AppStatus.loading), ready.copyWith(keyStatus: AppStatus.success, ai: claude)],
+  );
+
+  blocTest<AssistantBloc, AssistantState>(
+    'key ใช้ไม่ได้ ได้ keyStatus failure พร้อม code AI เดิมไม่เปลี่ยน',
+    build: () {
+      when(() => aiRepository.saveKey(any())).thenThrow(ApiException('ai_key_invalid'));
+      return buildBloc();
+    },
+    seed: () => ready,
+    act: (bloc) => bloc.add(AssistantKeySaved('sk-ant-wrong')),
+    expect:
+        () => [
+          ready.copyWith(keyStatus: AppStatus.loading),
+          ready.copyWith(keyStatus: AppStatus.failure, keyErrorCode: 'ai_key_invalid'),
+        ],
+  );
+
+  blocTest<AssistantBloc, AssistantState>(
+    'ลบ key กลับไปใช้ AI ฟรี',
+    build: () {
+      when(() => aiRepository.removeKey()).thenAnswer((_) async => free);
+      return buildBloc();
+    },
+    seed: () => ready.copyWith(ai: claude),
+    act: (bloc) => bloc.add(AssistantKeyRemoved()),
+    expect:
+        () => [ready.copyWith(ai: claude, keyStatus: AppStatus.loading), ready.copyWith(keyStatus: AppStatus.success)],
   );
 }

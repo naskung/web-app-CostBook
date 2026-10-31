@@ -18,7 +18,12 @@ class PageContent extends StatelessWidget {
     return CustomScrollView(
       slivers: [
         SliverPadding(
-          padding: EdgeInsets.fromLTRB(padding, padding, padding, hasCenterChild ? 0 : padding),
+          padding: EdgeInsets.fromLTRB(
+            padding,
+            padding,
+            padding,
+            hasCenterChild ? 0 : padding + AppSizes.chatLauncherSpace,
+          ),
           sliver: SliverToBoxAdapter(
             child: _limitWidth(Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children)),
           ),
@@ -27,7 +32,7 @@ class PageContent extends StatelessWidget {
           SliverFillRemaining(
             hasScrollBody: false,
             child: Padding(
-              padding: EdgeInsets.only(bottom: padding),
+              padding: EdgeInsets.only(bottom: padding + AppSizes.chatLauncherSpace),
               child: _limitWidth(centerChild ?? const SizedBox()),
             ),
           ),

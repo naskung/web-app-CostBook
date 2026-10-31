@@ -29,8 +29,8 @@ class MarketBloc extends Bloc<MarketEvent, MarketState> {
     try {
       final product = await productRepository.getProduct(productId);
       final check = await repository.getLatest(productId);
-      final enabled = await aiRepository.isEnabled();
-      emit(MarketState(status: AppStatus.success, product: product, check: check, aiEnabled: enabled));
+      final ai = await aiRepository.getStatus();
+      emit(MarketState(status: AppStatus.success, product: product, check: check, canCheck: ai.webSearch));
     } catch (error) {
       emit(state.copyWith(status: AppStatus.failure, errorCode: ErrorUtil.codeOf(error)));
     }

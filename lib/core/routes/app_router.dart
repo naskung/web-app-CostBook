@@ -7,7 +7,6 @@ import 'package:costbook/core/routes/app_page_transition.dart';
 import 'package:costbook/core/routes/app_routes.dart';
 import 'package:costbook/core/routes/app_shell.dart';
 import 'package:costbook/features/assistant/bloc/assistant_bloc.dart';
-import 'package:costbook/features/assistant/pages/assistant_page.dart';
 import 'package:costbook/features/assistant/repository/ai_repository.dart';
 import 'package:costbook/features/auth/bloc/auth_bloc.dart';
 import 'package:costbook/features/auth/pages/login_page.dart';
@@ -62,7 +61,7 @@ final appRouter = GoRouter(
               providers: [
                 BlocProvider(create: _createAuthBloc),
                 BlocProvider(create: (_) => SettingsBloc(SettingsRepository(ApiClient()))..add(SettingsRequested())),
-                BlocProvider(create: _createAssistantBloc),
+                BlocProvider(create: (context) => _createAssistantBloc(context)..add(AssistantOpened())),
               ],
               child: AppShell(currentPath: state.uri.path, child: child),
             ),
@@ -78,7 +77,6 @@ final appRouter = GoRouter(
         _menuRoute(AppRoutes.invoices, _invoiceListPage),
         _menuRoute(AppRoutes.invoiceCreate, _invoiceFormPage),
         _menuRoute(AppRoutes.invoiceDetail, _invoiceDetailPage),
-        _menuRoute(AppRoutes.assistant, _assistantPage),
         _menuRoute(AppRoutes.settings, _settingsPage),
       ],
     ),
@@ -137,10 +135,6 @@ Widget _marketPage(GoRouterState state) {
         )..add(MarketOpened()),
     child: const MarketPage(),
   );
-}
-
-Widget _assistantPage(GoRouterState state) {
-  return const AssistantPage();
 }
 
 Widget _costPage(GoRouterState state) {

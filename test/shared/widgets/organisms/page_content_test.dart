@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:costbook/core/theme/app_sizes.dart';
 import 'package:costbook/shared/widgets/organisms/page_content.dart';
 
 void main() {
@@ -26,7 +27,7 @@ void main() {
     await pumpPage(tester, centerChild: const Text('ยังไม่มีสินค้า'));
     final toolbarBottom = tester.getBottomLeft(find.byType(SizedBox).first).dy;
     final emptyCenter = tester.getCenter(find.text('ยังไม่มีสินค้า')).dy;
-    final remainingCenter = (toolbarBottom + 800) / 2;
+    final remainingCenter = (toolbarBottom + 800 - AppSizes.chatLauncherSpace) / 2;
     expect(emptyCenter, closeTo(remainingCenter, 30));
   });
 

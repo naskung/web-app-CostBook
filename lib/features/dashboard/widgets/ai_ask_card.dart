@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import 'package:costbook/core/lang/app_lang.dart';
-import 'package:costbook/core/routes/app_routes.dart';
 import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
 import 'package:costbook/features/assistant/bloc/assistant_bloc.dart';
@@ -28,9 +26,10 @@ class _AiAskCardState extends State<AiAskCard> {
   void _ask() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
-    context.read<AssistantBloc>().add(AssistantMessageSent(text));
+    context.read<AssistantBloc>()
+      ..add(AssistantMessageSent(text))
+      ..add(AssistantPanelOpened());
     _controller.clear();
-    context.go(AppRoutes.assistant);
   }
 
   @override
@@ -40,7 +39,7 @@ class _AiAskCardState extends State<AiAskCard> {
       title: 'dashboard.ai_title'.tr,
       trailing: IconButton(
         tooltip: 'dashboard.ai_open'.tr,
-        onPressed: () => context.go(AppRoutes.assistant),
+        onPressed: () => context.read<AssistantBloc>().add(AssistantPanelOpened()),
         icon: const Icon(Icons.open_in_full, size: AppSizes.iconSmall, color: AppColors.textSecondary),
       ),
       child: Column(

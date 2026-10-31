@@ -84,15 +84,16 @@ web-app-CostBook/
 │   │       ├── atoms/       app_button, app_text_field, app_dropdown, app_loading, app_badge, money_text, shop_logo
 │   │       ├── molecules/   empty_view, error_view, stat_card, kpi_card (ตัวเลข + % เทียบเดือนก่อน), month_switcher, search_field, section_card, notice_banner,
 │   │       │                chart_legend, ranked_bar_list (แท่งแนวนอนเรียงมากไปน้อย), market_range_bar (ราคาเรา vs ช่วงราคาตลาด)
-│   │       └── organisms/   page_layout, app_side_menu, screen_scaler, page_content (ขอบ + ความกว้างหน้า), page_toolbar,
+│   │       └── organisms/   page_layout, app_side_menu, screen_scaler, page_content (ขอบ + ความกว้างหน้า + เว้นที่ล่างให้ปุ่มแชท), page_toolbar,
 │   │                        app_data_table (จอคอม = ตาราง / มือถือ = การ์ด), form_dialog (กล่องฟอร์ม), stat_grid
 │   └── features/          ทุก feature: models → repository → bloc → pages (+ _ext ถ้ายาว) → widgets
 │       ├── auth/            login + จดจำ token / อีเมล
 │       ├── dashboard/       หน้าภาพรวม (pages: dashboard_page + _ext + _charts)
 │       │                    widgets: dashboard_panel (กล่อง), sales_trend_chart, weekday_chart, monthly_trend_chart,
-│       │                    category_split, top_products_table, margin_gauge, ai_ask_card (พิมพ์ถาม → ไปหน้าแชท)
+│       │                    category_split, top_products_table, margin_gauge, ai_ask_card (พิมพ์ถาม → เปิดหน้าต่างแชท)
 │       ├── market/          เช็คราคาตลาดด้วย AI ของสินค้า 1 ตัว (หน้า /products/:id/market)
-│       ├── assistant/       แชทผู้ช่วย AI (AiRepository ใช้ร่วมกับ market) + widgets/chat_bubble, ai_action_card
+│       ├── assistant/       แชทผู้ช่วย AI แบบลอยทุกหน้า (AiRepository + AiStatusModel ใช้ร่วมกับ market / settings) ไม่มีหน้าของตัวเอง
+│       │                    widgets/chat_launcher (ปุ่มมุมขวาล่าง / หน้าต่าง), chat_panel (+ _ext), chat_bubble, ai_action_card
 │       ├── sell/            หน้าขายด่วน (ใช้ InvoiceFormBloc ของ invoice) + widgets/sell_product_tile.dart
 │       ├── product/         รายการ / ค้นหา / หมวด / เพิ่ม / แก้ / ลบสินค้า (widgets/product_form_dialog.dart, custom_field_input.dart)
 │       ├── cost/            ใบต้นทุนของสินค้า + markup → ราคาขาย (widgets/cost_item_dialog.dart, cost_presets_dialog.dart)
@@ -101,7 +102,7 @@ web-app-CostBook/
 │       ├── invoice/         bloc 3 ตัว: invoice_list / invoice_form / invoice_detail
 │       │                    pages: invoice_list_page, invoice_form_page (+ _ext), invoice_detail_page
 │       │                    widgets: invoice_item_row.dart (บรรทัดสินค้าในฟอร์ม), invoice_paper.dart (กระดาษใบกำกับ A4)
-│       └── settings/        ข้อมูลร้าน + รูปแบบร้าน + ช่องข้อมูลเพิ่มเติม (widgets/product_field_dialog.dart) + โลโก้ + เปลี่ยนภาษา
+│       └── settings/        ข้อมูลร้าน + รูปแบบร้าน + ช่องข้อมูลเพิ่มเติม (widgets/product_field_dialog.dart) + key AI (widgets/ai_key_section.dart) + โลโก้ + เปลี่ยนภาษา
 └── test/                  โครงเหมือน lib/ ทุกอย่าง เช่น test/core/utils/tax_util_test.dart
 ```
 
@@ -443,8 +444,26 @@ token หมดอายุ (7 วัน) / ถูกปฏิเสธ: API ต
 | สต็อก | `/stock` | `StockBloc` | โหลดคงเหลือทุกสินค้าครั้งเดียว กรอง "ใกล้หมด" ในเครื่อง, แท็บประวัติโหลดเมื่อเปิด, รับเข้าใส่ต้นทุนต่อหน่วย + ผู้ขายได้ (API คิดต้นทุนเฉลี่ย) — สินค้าไม่นับสต็อกไม่โชว์ |
 | รายรับ-รายจ่าย | `/transactions` | `TransactionBloc` | หมวดเป็นรหัส (`TransactionModel.incomeCategories / expenseCategories`) แสดงด้วย `'transaction.category.<code>'.tr` |
 | เอกสารขาย | `/invoices`, `/invoices/create`, `/invoices/:id` | `InvoiceListBloc`, `InvoiceFormBloc`, `InvoiceDetailBloc` | ออกใบสำเร็จ → ไปหน้าดูใบ (`AppRoutes.invoiceDetailPath(id)`), ร้านจด VAT ได้ใบกำกับภาษี ไม่จด ได้ใบเสร็จรับเงิน |
-| ผู้ช่วย AI | `/assistant` | `AssistantBloc` (จาก shell) | ส่งประวัติแชททั้งหมดทุกครั้ง (`ChatMessageModel.toApi`) งานที่ AI เสนอขึ้นเป็นการ์ด กด "ยืนยัน ทำเลย" → bloc เรียก repository เส้นเดิม (สินค้า / สต็อก / รายรับ-รายจ่าย / เช็คตลาด) แล้วจดผล (`note`) ส่งให้ AI รู้ในคำถามถัดไป |
-| ตั้งค่า | `/settings` | `SettingsBloc` (จาก shell) + `LanguageBloc` | ข้อมูลร้าน, รูปแบบร้าน, ช่องข้อมูลเพิ่มเติมของสินค้า, โลโก้, ภาษา — ร้านจด VAT ต้องกรอกเลขผู้เสียภาษีก่อนออกใบกำกับ |
+| ตั้งค่า | `/settings` | `SettingsBloc` (จาก shell) + `LanguageBloc` + `AssistantBloc` (key AI) | ข้อมูลร้าน, รูปแบบร้าน, ช่องข้อมูลเพิ่มเติมของสินค้า, key ของ Claude, โลโก้, ภาษา — ร้านจด VAT ต้องกรอกเลขผู้เสียภาษีก่อนออกใบกำกับ |
+
+**แชทผู้ช่วย AI (ลอยทุกหน้า เหมือน Messenger)** — ไม่มี route ของตัวเอง:
+
+- `AppShell` = `Stack(PageLayout, ChatLauncher)` → ปุ่มแชทอยู่ทุกหน้าที่อยู่ใน `ShellRoute` (หน้า login ไม่อยู่ใน shell → ไม่มีปุ่ม)
+- `ChatLauncher`: ปิดอยู่ = ปุ่มกลมสีส้มมุมขวาล่าง (มีจุดแดงเมื่อ AI ตอบตอนย่ออยู่ `hasUnread`) / เปิด = หน้าต่าง `ChatPanel` 400 × 620 มุมขวาล่าง (จอใหญ่) หรือเต็มจอ (มือถือ)
+- เปิด / ย่อด้วย event `AssistantPanelOpened` / `AssistantPanelClosed` (state `isOpen`) — แชทอยู่ใน `AssistantBloc` ที่ shell เปลี่ยนหน้าแล้วยังอยู่ (หายเมื่อ refresh / logout)
+- ส่งประวัติแชททั้งหมดทุกครั้ง (`ChatMessageModel.toApi`) งานที่ AI เสนอขึ้นเป็นการ์ด กด "ยืนยัน ทำเลย" → bloc เรียก repository เส้นเดิม (สินค้า / สต็อก / รายรับ-รายจ่าย / เช็คตลาด) แล้วจดผล (`note`) ส่งให้ AI รู้ในคำถามถัดไป
+- `PageContent` เว้นที่ด้านล่างเพิ่ม `AppSizes.chatLauncherSpace` → ปุ่มแชทไม่บังปุ่ม / ข้อมูลแถวสุดท้าย
+
+**AI ตัวไหน** (`GET /ai/status` → `AiStatusModel`, โหลดตอนเปิด shell):
+
+| `provider` | มาจาก | แชท | เช็คราคาตลาด (`webSearch`) |
+|---|---|---|---|
+| `claude` | key ที่ร้านใส่ในตั้งค่า (`hasOwnKey`, โชว์ 4 ตัวท้าย `keyHint`) หรือ `ANTHROPIC_API_KEY` ของ API | ได้ | ได้ |
+| `gemini` | `GEMINI_API_KEY` ของ API = **AI ฟรี ค่าเริ่มต้น** (`isFree`) | ได้ | ไม่ได้ → `MarketBloc.canCheck` = false ปิดปุ่มเช็คใหม่ (ผลเก่ายังดูได้) |
+| `none` | ไม่มี key เลย | ไม่ได้ (ปิดช่องพิมพ์ + ขึ้นคำแนะนำ) | ไม่ได้ |
+
+- ตั้งค่า → `AiKeySection`: บันทึก (`AssistantKeySaved` → `PUT /ai/key`) / ลบ (`AssistantKeyRemoved` → `DELETE /ai/key`, ถามยืนยันก่อน) → API ตอบสถานะใหม่กลับมา bloc ใช้ค่านั้นเลย ไม่ต้องโหลดใหม่ (`keyStatus` / `keyErrorCode`)
+- key ไม่เคยเก็บในเครื่อง ไม่แสดงกลับ (API ส่งมาแค่ 4 ตัวท้าย)
 
 **รูปแบบร้าน** (ตั้งในหน้าตั้งค่า เก็บใน `CompanyModel`) — ทุกหน้าที่เกี่ยวกับเงินต้องดูค่านี้:
 

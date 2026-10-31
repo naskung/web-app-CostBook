@@ -57,7 +57,12 @@ class AppSizes {
   static const double rangeTickWidth = 2;
   static const double rangeRowHeight = 28;
   static const double halfColumnBreak = 900;
-  static const double chatMaxWidth = 900;
+  static const double chatPanelWidth = 400;
+  static const double chatPanelHeight = 620;
+  static const double chatPanelElevation = 12;
+  static const double chatAvatarSize = 32;
+  static const double unreadDotSize = 12;
+  static const double chatLauncherSpace = 88;
   static const double panelRadius = 16;
   static const double panelPadding = 20;
   static const double dashboardWideBreak = 960;

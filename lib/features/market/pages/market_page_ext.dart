@@ -55,7 +55,7 @@ extension _MarketPageExt on MarketPage {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (!state.aiEnabled) NoticeBanner(message: 'market.ai_off'.tr),
+          if (!state.canCheck) NoticeBanner(message: 'market.ai_off'.tr),
           Wrap(
             spacing: AppSizes.spaceSmall,
             runSpacing: AppSizes.spaceSmall,
@@ -63,7 +63,7 @@ extension _MarketPageExt on MarketPage {
             children: [
               FilledButton.icon(
                 onPressed:
-                    state.aiEnabled && !state.isChecking
+                    state.canCheck && !state.isChecking
                         ? () => context.read<MarketBloc>().add(MarketCheckRequested())
                         : null,
                 icon: const Icon(Icons.travel_explore),

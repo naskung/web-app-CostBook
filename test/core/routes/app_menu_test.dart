@@ -9,7 +9,7 @@ void main() {
     return AppMenu.items.firstWhere((item) => item.route == route);
   }
 
-  test('มีเมนูครบ 9 หน้า ตามลำดับ', () {
+  test('มีเมนูครบ 8 หน้า ตามลำดับ (ผู้ช่วย AI เป็นปุ่มลอยมุมขวาล่าง ไม่ใช่เมนู)', () {
     final routes = AppMenu.items.map((item) => item.route).toList();
     expect(routes, [
       AppRoutes.dashboard,
@@ -19,7 +19,6 @@ void main() {
       AppRoutes.stock,
       AppRoutes.transactions,
       AppRoutes.invoices,
-      AppRoutes.assistant,
       AppRoutes.settings,
     ]);
   });

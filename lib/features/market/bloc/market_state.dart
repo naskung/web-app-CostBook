@@ -5,7 +5,7 @@ class MarketState extends Equatable {
     this.status = AppStatus.initial,
     this.product,
     this.check,
-    this.aiEnabled = false,
+    this.canCheck = false,
     this.errorCode = '',
     this.checkStatus = AppStatus.initial,
     this.checkErrorCode = '',
@@ -14,7 +14,7 @@ class MarketState extends Equatable {
   final AppStatus status;
   final ProductModel? product;
   final MarketCheckModel? check;
-  final bool aiEnabled;
+  final bool canCheck;
   final String errorCode;
   final AppStatus checkStatus;
   final String checkErrorCode;
@@ -25,7 +25,7 @@ class MarketState extends Equatable {
     AppStatus? status,
     ProductModel? product,
     MarketCheckModel? check,
-    bool? aiEnabled,
+    bool? canCheck,
     String? errorCode,
     AppStatus? checkStatus,
     String? checkErrorCode,
@@ -34,7 +34,7 @@ class MarketState extends Equatable {
       status: status ?? this.status,
       product: product ?? this.product,
       check: check ?? this.check,
-      aiEnabled: aiEnabled ?? this.aiEnabled,
+      canCheck: canCheck ?? this.canCheck,
       errorCode: errorCode ?? this.errorCode,
       checkStatus: checkStatus ?? this.checkStatus,
       checkErrorCode: checkErrorCode ?? this.checkErrorCode,
@@ -42,5 +42,5 @@ class MarketState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [status, product, check, aiEnabled, errorCode, checkStatus, checkErrorCode];
+  List<Object?> get props => [status, product, check, canCheck, errorCode, checkStatus, checkErrorCode];
 }

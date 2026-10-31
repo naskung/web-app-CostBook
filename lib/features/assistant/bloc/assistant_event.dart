@@ -4,6 +4,10 @@ abstract class AssistantEvent {}
 
 class AssistantOpened extends AssistantEvent {}
 
+class AssistantPanelOpened extends AssistantEvent {}
+
+class AssistantPanelClosed extends AssistantEvent {}
+
 class AssistantMessageSent extends AssistantEvent {
   AssistantMessageSent(this.text);
 
@@ -25,3 +29,11 @@ class AssistantActionCancelled extends AssistantEvent {
 }
 
 class AssistantCleared extends AssistantEvent {}
+
+class AssistantKeySaved extends AssistantEvent {
+  AssistantKeySaved(this.apiKey);
+
+  final String apiKey;
+}
+
+class AssistantKeyRemoved extends AssistantEvent {}
