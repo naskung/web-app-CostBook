@@ -56,7 +56,7 @@ extension _ProductListPageExt on ProductListPage {
         AppDataColumn(label: 'product.cost_price'.tr, flex: 2, alignEnd: true),
         AppDataColumn(label: 'product.sell_price'.tr, flex: 2, alignEnd: true),
         AppDataColumn(label: 'product.stock'.tr, flex: 2, alignEnd: true),
-        const AppDataColumn(label: '', flex: 2, alignEnd: true),
+        const AppDataColumn(label: '', flex: 3, alignEnd: true),
       ],
       onRowTap: (index) => ProductFormDialog.show(context, products[index], settings.fields),
       rows: [for (final product in products) _row(context, product, listFields, settings.fields)],
@@ -120,6 +120,11 @@ extension _ProductListPageExt on ProductListPage {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        IconButton(
+          tooltip: 'market.check_tooltip'.tr,
+          onPressed: () => context.go(AppRoutes.marketPath(product.id)),
+          icon: const Icon(Icons.travel_explore),
+        ),
         IconButton(
           tooltip: 'common.edit'.tr,
           onPressed: () => ProductFormDialog.show(context, product, fields),

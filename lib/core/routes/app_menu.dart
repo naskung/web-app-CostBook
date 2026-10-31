@@ -32,6 +32,7 @@ class AppMenu {
       labelKey: 'menu.transactions',
     ),
     AppMenuItem(route: AppRoutes.invoices, icon: Icons.receipt_long_outlined, labelKey: 'menu.invoices'),
+    AppMenuItem(route: AppRoutes.assistant, icon: Icons.auto_awesome_outlined, labelKey: 'menu.assistant'),
     AppMenuItem(route: AppRoutes.settings, icon: Icons.settings_outlined, labelKey: 'menu.settings'),
   ];
 

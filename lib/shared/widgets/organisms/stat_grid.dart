@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
 
 class StatGrid extends StatelessWidget {
-  const StatGrid({super.key, required this.children, this.maxColumns = 3});
+  const StatGrid({super.key, required this.children, this.maxColumns = 3, this.minCardWidth = AppSizes.statCardWidth});
 
   final List<Widget> children;
   final int maxColumns;
+  final double minCardWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +15,7 @@ class StatGrid extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSizes.spaceMedium),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final columns = (constraints.maxWidth / AppSizes.statCardWidth).floor().clamp(1, maxColumns);
+          final columns = (constraints.maxWidth / minCardWidth).floor().clamp(1, maxColumns);
           final cardWidth = (constraints.maxWidth - AppSizes.spaceMedium * (columns - 1)) / columns;
           return Wrap(
             spacing: AppSizes.spaceMedium,

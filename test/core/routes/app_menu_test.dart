@@ -9,7 +9,7 @@ void main() {
     return AppMenu.items.firstWhere((item) => item.route == route);
   }
 
-  test('มีเมนูครบ 8 หน้า ตามลำดับ', () {
+  test('มีเมนูครบ 9 หน้า ตามลำดับ', () {
     final routes = AppMenu.items.map((item) => item.route).toList();
     expect(routes, [
       AppRoutes.dashboard,
@@ -19,6 +19,7 @@ void main() {
       AppRoutes.stock,
       AppRoutes.transactions,
       AppRoutes.invoices,
+      AppRoutes.assistant,
       AppRoutes.settings,
     ]);
   });

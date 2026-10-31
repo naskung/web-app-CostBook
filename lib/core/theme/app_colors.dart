@@ -33,4 +33,16 @@ class AppColors {
   static const Color dangerSoft = Color(0x1FDC2626);
   static const Color warningSoft = Color(0x29F59E0B);
   static const Color neutralSoft = Color(0x146B7280);
+
+  static const Color chartIncome = Color(0xFF2A78D6);
+  static const Color chartExpense = Color(0xFFEB6834);
+  static const Color chartProfit = Color(0xFF1BAF7A);
+  static const Color chartMuted = Color(0xFFC9CDD3);
+  static const Color chartGrid = Color(0xFFEEF0F2);
+  static const Color chartTrack = Color(0xFFF1F2F4);
+  static const Color tooltip = Color(0xFF1B2228);
+  static const Color onTooltip = Color(0xFFFFFFFF);
+  static const Color orbLight = Color(0xFFBFD9FF);
+  static const Color orbDark = Color(0xFF123E8C);
+  static const Color orbGlow = Color(0x592A78D6);
 }

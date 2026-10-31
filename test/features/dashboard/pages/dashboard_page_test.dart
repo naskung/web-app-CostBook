@@ -10,8 +10,28 @@ import 'package:costbook/features/dashboard/bloc/dashboard_bloc.dart';
 import 'package:costbook/features/dashboard/models/dashboard_model.dart';
 import 'package:costbook/features/dashboard/pages/dashboard_page.dart';
 import 'package:costbook/features/dashboard/repository/dashboard_repository.dart';
+import 'package:costbook/features/assistant/bloc/assistant_bloc.dart';
+import 'package:costbook/features/assistant/repository/ai_repository.dart';
+import 'package:costbook/features/market/repository/market_repository.dart';
+import 'package:costbook/features/product/repository/product_repository.dart';
+import 'package:costbook/features/settings/bloc/settings_bloc.dart';
+import 'package:costbook/features/settings/repository/settings_repository.dart';
+import 'package:costbook/features/stock/repository/stock_repository.dart';
+import 'package:costbook/features/transaction/repository/transaction_repository.dart';
 
 class MockDashboardRepository extends Mock implements DashboardRepository {}
+
+class MockSettingsRepository extends Mock implements SettingsRepository {}
+
+class MockAiRepository extends Mock implements AiRepository {}
+
+class MockProductRepository extends Mock implements ProductRepository {}
+
+class MockStockRepository extends Mock implements StockRepository {}
+
+class MockTransactionRepository extends Mock implements TransactionRepository {}
+
+class MockMarketRepository extends Mock implements MarketRepository {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -35,8 +55,23 @@ void main() {
       MaterialApp(
         theme: AppTheme.light,
         home: Scaffold(
-          body: BlocProvider(
-            create: (_) => DashboardBloc(repository, month: DateTime(2026, 10))..add(DashboardRequested()),
+          body: MultiBlocProvider(
+            providers: [
+              BlocProvider(create: (_) => SettingsBloc(MockSettingsRepository())),
+              BlocProvider(
+                create:
+                    (_) => AssistantBloc(
+                      aiRepository: MockAiRepository(),
+                      productRepository: MockProductRepository(),
+                      stockRepository: MockStockRepository(),
+                      transactionRepository: MockTransactionRepository(),
+                      marketRepository: MockMarketRepository(),
+                    ),
+              ),
+              BlocProvider(
+                create: (_) => DashboardBloc(repository, month: DateTime(2026, 10))..add(DashboardRequested()),
+              ),
+            ],
             child: const DashboardPage(),
           ),
         ),
@@ -65,7 +100,8 @@ void main() {
       when(() => repository.getDashboard(any())).thenAnswer((_) async => dashboard);
       await pumpDashboard(tester, size);
       expect(tester.takeException(), isNull);
-      expect(find.text('12,500.00'), findsOneWidget);
+      expect(find.text('8,199.50'), findsOneWidget);
+      expect(find.text('4,300.50'), findsOneWidget);
       expect(find.text('กาแฟเย็น'), findsOneWidget);
       expect(find.text('ตุลาคม 2569'), findsOneWidget);
     });

@@ -1,18 +1,41 @@
 part of 'dashboard_page.dart';
 
 extension _DashboardPageExt on DashboardPage {
-  Widget _toolbar(BuildContext context, DashboardState state) {
+  Widget _header(BuildContext context, DashboardState state) {
     final bloc = context.read<DashboardBloc>();
-    return PageToolbar(
-      children: [
-        MonthSwitcher(
-          label: DateUtil.monthLabel(state.month),
-          previousTooltip: 'common.previous_month'.tr,
-          nextTooltip: 'common.next_month'.tr,
-          onPrevious: () => bloc.add(DashboardMonthChanged(-1)),
-          onNext: () => bloc.add(DashboardMonthChanged(1)),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSizes.spaceMedium),
+      child: Wrap(
+        spacing: AppSizes.spaceSmall,
+        runSpacing: AppSizes.spaceSmall,
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          MonthSwitcher(
+            label: DateUtil.monthLabel(state.month),
+            previousTooltip: 'common.previous_month'.tr,
+            nextTooltip: 'common.next_month'.tr,
+            onPrevious: () => bloc.add(DashboardMonthChanged(-1)),
+            onNext: () => bloc.add(DashboardMonthChanged(1)),
+          ),
+          Wrap(
+            spacing: AppSizes.spaceSmall,
+            runSpacing: AppSizes.spaceSmall,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => context.go(AppRoutes.invoiceCreate),
+                icon: const Icon(Icons.receipt_long_outlined),
+                label: Text('dashboard.new_invoice'.tr),
+              ),
+              FilledButton.icon(
+                onPressed: () => context.go(AppRoutes.sell),
+                icon: const Icon(Icons.point_of_sale_outlined),
+                label: Text('dashboard.sell'.tr),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -28,130 +51,93 @@ extension _DashboardPageExt on DashboardPage {
     return null;
   }
 
-  Widget _stats(DashboardModel dashboard) {
-    final isLoss = dashboard.profit < 0;
-    return StatGrid(
-      children: [
-        StatCard(
-          label: 'dashboard.income'.tr,
-          value: MoneyUtil.format(dashboard.income),
-          icon: Icons.south_west,
-          color: AppColors.success,
-          backgroundColor: AppColors.successSoft,
-        ),
-        StatCard(
-          label: 'dashboard.expense'.tr,
-          value: MoneyUtil.format(dashboard.expense),
-          icon: Icons.north_east,
-          color: AppColors.danger,
-          backgroundColor: AppColors.dangerSoft,
-        ),
-        StatCard(
-          label: 'dashboard.profit'.tr,
-          value: MoneyUtil.format(dashboard.profit),
-          icon: Icons.savings_outlined,
-          color: isLoss ? AppColors.danger : AppColors.primary,
-          backgroundColor: AppColors.primarySoft,
-        ),
-        StatCard(
-          label: 'dashboard.invoices'.tr,
-          value: MoneyUtil.format(dashboard.invoiceTotal),
-          caption: 'dashboard.invoice_caption'.trParams({'count': '${dashboard.invoiceCount}'}),
-          icon: Icons.receipt_long_outlined,
-          color: AppColors.textPrimary,
-          backgroundColor: AppColors.neutralSoft,
-        ),
-        StatCard(
-          label: 'dashboard.products'.tr,
-          value: '${dashboard.productCount}',
-          icon: Icons.inventory_2_outlined,
-          color: AppColors.textPrimary,
-          backgroundColor: AppColors.neutralSoft,
-        ),
-        StatCard(
-          label: 'dashboard.low_stock'.tr,
-          value: '${dashboard.lowStockCount}',
-          icon: Icons.warning_amber_rounded,
-          color: dashboard.lowStockCount > 0 ? AppColors.danger : AppColors.success,
-          backgroundColor: dashboard.lowStockCount > 0 ? AppColors.dangerSoft : AppColors.successSoft,
-        ),
-      ],
-    );
-  }
+  Widget _body(BuildContext context, DashboardState state) {
+    final dashboard = state.dashboard;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= AppSizes.dashboardWideBreak;
+        final rowHeight = isWide ? AppSizes.dashboardRowHeight : null;
+        const gap = SizedBox(width: AppSizes.spaceMedium, height: AppSizes.spaceMedium);
+        Widget row(Widget left, Widget right, {int leftFlex = 3, int rightFlex = 2}) {
+          if (!isWide) return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [left, gap, right]);
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [Expanded(flex: leftFlex, child: left), gap, Expanded(flex: rightFlex, child: right)],
+          );
+        }
 
-  Widget _quickActions(BuildContext context) {
-    return SectionCard(
-      title: 'dashboard.quick_actions'.tr,
-      child: Wrap(
-        spacing: AppSizes.spaceSmall,
-        runSpacing: AppSizes.spaceSmall,
-        children: [
-          FilledButton.icon(
-            onPressed: () => context.go(AppRoutes.sell),
-            icon: const Icon(Icons.point_of_sale_outlined),
-            label: Text('dashboard.sell'.tr),
-          ),
-          OutlinedButton.icon(
-            onPressed: () => context.go(AppRoutes.invoiceCreate),
-            icon: const Icon(Icons.receipt_long_outlined),
-            label: Text('dashboard.new_invoice'.tr),
-          ),
-          OutlinedButton.icon(
-            onPressed: () => context.go(AppRoutes.transactions),
-            icon: const Icon(Icons.account_balance_wallet_outlined),
-            label: Text('dashboard.new_transaction'.tr),
-          ),
-          OutlinedButton.icon(
-            onPressed: () => context.go(AppRoutes.stock),
-            icon: const Icon(Icons.add_box_outlined),
-            label: Text('dashboard.stock_in'.tr),
-          ),
-          OutlinedButton.icon(
-            onPressed: () => context.go(AppRoutes.products),
-            icon: const Icon(Icons.inventory_2_outlined),
-            label: Text('dashboard.new_product'.tr),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _lowStock(BuildContext context, DashboardModel dashboard) {
-    final textTheme = Theme.of(context).textTheme;
-    return SectionCard(
-      title: 'dashboard.low_stock_title'.tr,
-      trailing: TextButton(onPressed: () => context.go(AppRoutes.stock), child: Text('common.view_all'.tr)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (dashboard.lowStock.isEmpty)
-            Text('dashboard.low_stock_empty'.tr, style: textTheme.bodyMedium?.copyWith(color: AppColors.success)),
-          for (final item in dashboard.lowStock)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSizes.spaceXSmall),
-              child: Row(
-                children: [
-                  Expanded(child: Text(item.name, style: textTheme.titleSmall)),
-                  const SizedBox(width: AppSizes.spaceSmall),
-                  Flexible(
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: AppBadge(
-                        text: 'dashboard.remaining'.trParams({
-                          'stock': '${item.stock}',
-                          'unit': item.unit,
-                          'min': '${item.minStock}',
-                        }),
-                        color: AppColors.danger,
-                        backgroundColor: AppColors.dangerSoft,
-                      ),
-                    ),
-                  ),
-                ],
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _kpis(dashboard, constraints.maxWidth),
+            gap,
+            row(_salesPanel(context, state, rowHeight, isWide), _weekdayPanel(context, dashboard, rowHeight)),
+            gap,
+            row(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [_topProductsPanel(context, dashboard), gap, _expensePanel(dashboard)],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [_marginPanel(context, dashboard), gap, const AiAskCard()],
               ),
             ),
-        ],
+            gap,
+            _trendPanel(context, dashboard),
+            gap,
+            row(_marketPanel(context, dashboard), _stockPanel(context, dashboard)),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _kpis(DashboardModel dashboard, double width) {
+    final previous = dashboard.previous;
+    final columns = width >= AppSizes.kpiFourColumnBreak ? 4 : (width >= AppSizes.kpiTwoColumnBreak ? 2 : 1);
+    final cardWidth = (width - AppSizes.spaceMedium * (columns - 1)) / columns;
+    String last(String value) => 'dashboard.last_month_value'.trParams({'value': value});
+    final cards = [
+      KpiCard(
+        label: 'dashboard.gross_profit'.tr,
+        value: MoneyUtil.format(dashboard.sales.grossProfit),
+        icon: Icons.trending_up,
+        iconColor: AppColors.primary,
+        change: PercentUtil.change(current: dashboard.sales.grossProfit, previous: previous.grossProfit),
+        caption: last(MoneyUtil.format(previous.grossProfit)),
       ),
+      KpiCard(
+        label: 'dashboard.profit'.tr,
+        value: MoneyUtil.format(dashboard.profit),
+        valueColor: dashboard.profit < 0 ? AppColors.danger : AppColors.textPrimary,
+        icon: Icons.savings_outlined,
+        iconColor: AppColors.success,
+        change: PercentUtil.change(current: dashboard.profit, previous: previous.profit),
+        caption: last(MoneyUtil.format(previous.profit)),
+      ),
+      KpiCard(
+        label: 'dashboard.bills'.tr,
+        value: '${dashboard.invoiceCount}',
+        icon: Icons.receipt_long_outlined,
+        iconColor: AppColors.chartIncome,
+        change: PercentUtil.change(current: dashboard.invoiceCount.toDouble(), previous: previous.bills.toDouble()),
+        caption: last('${previous.bills}'),
+      ),
+      KpiCard(
+        label: 'dashboard.expense'.tr,
+        value: MoneyUtil.format(dashboard.expense),
+        icon: Icons.north_east,
+        iconColor: AppColors.chartExpense,
+        change: PercentUtil.change(current: dashboard.expense, previous: previous.expense),
+        upIsGood: false,
+        caption: last(MoneyUtil.format(previous.expense)),
+      ),
+    ];
+    return Wrap(
+      spacing: AppSizes.spaceMedium,
+      runSpacing: AppSizes.spaceMedium,
+      children: [for (final card in cards) SizedBox(width: cardWidth, child: card)],
     );
   }
 }

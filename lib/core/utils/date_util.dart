@@ -21,6 +21,10 @@ class DateUtil {
     return '${'month.${month.month}'.tr} ${_displayYear(month.year)}';
   }
 
+  static String shortMonthLabel(DateTime month) {
+    return 'month_short.${month.month}'.tr;
+  }
+
   static DateTime addMonths(DateTime month, int count) {
     return DateTime(month.year, month.month + count);
   }

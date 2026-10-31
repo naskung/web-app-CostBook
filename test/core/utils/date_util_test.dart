@@ -35,6 +35,10 @@ void main() {
       expect(DateUtil.monthLabel(DateTime(2026, 10)), 'ตุลาคม 2569');
     });
 
+    test('ชื่อเดือนแบบสั้นในกราฟ ต.ค.', () {
+      expect(DateUtil.shortMonthLabel(DateTime(2026, 10)), 'ต.ค.');
+    });
+
     test('ภาษาอังกฤษ แสดงปี ค.ศ.', () async {
       await AppLang.load('en');
       expect(DateUtil.toDisplayDate(DateTime(2026, 10, 31)), '31/10/2026');

@@ -54,4 +54,14 @@ void main() {
       expect(MoneyUtil.sum([]), 0);
     });
   });
+
+  group('MoneyUtil.formatShort', () {
+    test('เลขกลม ไม่มีทศนิยม 199 → 199', () {
+      expect(MoneyUtil.formatShort(199), '199');
+    });
+
+    test('มีเศษ แสดง 2 ตำแหน่ง 1355.14 → 1,355.14', () {
+      expect(MoneyUtil.formatShort(1355.14), '1,355.14');
+    });
+  });
 }

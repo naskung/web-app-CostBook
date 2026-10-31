@@ -39,6 +39,7 @@ Backend อยู่ที่ repo `../api-Costbook` — ระหว่าง�
 | `shared_preferences` | เก็บ token ไว้ในเครื่องเมื่อติ๊ก "จดจำการเข้าสู่ระบบ" (บนเว็บคือ localStorage ของ browser) |
 | `intl` | format ตัวเลข / เงิน / วันที่ |
 | `pdf`, `printing` | สร้างและพิมพ์ใบกำกับภาษี |
+| `fl_chart` | กราฟในหน้าภาพรวม (แท่งรายวัน, เส้นย้อนหลัง 6 เดือน) — ผู้ใช้อนุญาต 2026-10-31 |
 | `bloc_test`, `mocktail` (dev) | เขียน unit test ของ bloc |
 
 เพิ่มครบทุกตัวแล้ว (2026-10-31)
@@ -75,17 +76,23 @@ web-app-CostBook/
 │   │   ├── network/       api_client.dart (get / post / put / delete + token + 401), api_exception.dart (error code จาก API)
 │   │   ├── routes/        app_routes.dart (ชื่อ route), app_router.dart (GoRouter + สร้าง bloc ของแต่ละหน้า), app_menu.dart, app_shell.dart, app_page_transition.dart
 │   │   ├── theme/         app_colors.dart (สี), app_sizes.dart (ขนาดตัวอักษร / ระยะห่าง), app_theme.dart (ฟอนต์ + รวมเป็น ThemeData)
-│   │   ├── utils/         money_util, tax_util, cost_util, date_util, validator_util, error_util, responsive_util
+│   │   ├── utils/         money_util, tax_util, cost_util, date_util, validator_util, error_util, responsive_util,
+│   │   │                  percent_util (% เทียบเดือนก่อน), market_util (เทียบราคาตลาด), chart_util (สเกลแกนกราฟ)
 │   │   └── helpers/       dialog_helper.dart (ถามยืนยัน), snackbar_helper.dart, pdf_helper.dart (พิมพ์ / ดาวน์โหลด PDF), responsive_helper.dart
 │   ├── shared/
 │   │   └── widgets/
 │   │       ├── atoms/       app_button, app_text_field, app_dropdown, app_loading, app_badge, money_text, shop_logo
-│   │       ├── molecules/   empty_view, error_view, stat_card, month_switcher, search_field, section_card, notice_banner
+│   │       ├── molecules/   empty_view, error_view, stat_card, kpi_card (ตัวเลข + % เทียบเดือนก่อน), month_switcher, search_field, section_card, notice_banner,
+│   │       │                chart_legend, ranked_bar_list (แท่งแนวนอนเรียงมากไปน้อย), market_range_bar (ราคาเรา vs ช่วงราคาตลาด)
 │   │       └── organisms/   page_layout, app_side_menu, screen_scaler, page_content (ขอบ + ความกว้างหน้า), page_toolbar,
 │   │                        app_data_table (จอคอม = ตาราง / มือถือ = การ์ด), form_dialog (กล่องฟอร์ม), stat_grid
 │   └── features/          ทุก feature: models → repository → bloc → pages (+ _ext ถ้ายาว) → widgets
 │       ├── auth/            login + จดจำ token / อีเมล
-│       ├── dashboard/       ตัวเลขสรุปของเดือน + สินค้าใกล้หมด + ทางลัด
+│       ├── dashboard/       หน้าภาพรวม (pages: dashboard_page + _ext + _charts)
+│       │                    widgets: dashboard_panel (กล่อง), sales_trend_chart, weekday_chart, monthly_trend_chart,
+│       │                    category_split, top_products_table, margin_gauge, ai_ask_card (พิมพ์ถาม → ไปหน้าแชท)
+│       ├── market/          เช็คราคาตลาดด้วย AI ของสินค้า 1 ตัว (หน้า /products/:id/market)
+│       ├── assistant/       แชทผู้ช่วย AI (AiRepository ใช้ร่วมกับ market) + widgets/chat_bubble, ai_action_card
 │       ├── sell/            หน้าขายด่วน (ใช้ InvoiceFormBloc ของ invoice) + widgets/sell_product_tile.dart
 │       ├── product/         รายการ / ค้นหา / หมวด / เพิ่ม / แก้ / ลบสินค้า (widgets/product_form_dialog.dart, custom_field_input.dart)
 │       ├── cost/            ใบต้นทุนของสินค้า + markup → ราคาขาย (widgets/cost_item_dialog.dart, cost_presets_dialog.dart)
@@ -299,7 +306,7 @@ class ProductRepository {
 | Bloc แบบไหน | สร้างที่ |
 |---|---|
 | ใช้ทั้งแอป (ภาษา) | `app.dart` |
-| ใช้ทุกหน้าหลัง login (`AuthBloc`, `SettingsBloc` = ข้อมูลร้าน + รูปแบบร้าน + ช่องข้อมูลเพิ่มเติม) | `ShellRoute` ใน `app_router.dart` — หน้าไหนอยากรู้รูปแบบร้านใช้ `context.watch<SettingsBloc>()` |
+| ใช้ทุกหน้าหลัง login (`AuthBloc`, `SettingsBloc` = ข้อมูลร้าน + รูปแบบร้าน + ช่องข้อมูลเพิ่มเติม, `AssistantBloc` = แชท AI) | `ShellRoute` ใน `app_router.dart` — หน้าไหนอยากรู้รูปแบบร้านใช้ `context.watch<SettingsBloc>()` / แชทอยู่ที่ shell → เปลี่ยนหน้าแล้วกลับมา แชทยังอยู่ (หายเมื่อ refresh / logout) |
 | ใช้หน้าเดียว | ใน `builder` ของ route นั้น (ดูหัวข้อ 7) |
 
 ไม่ใช้ get_it — สร้าง object ตรง ๆ เช่น `ProductBloc(ProductRepository(ApiClient()))`
@@ -428,13 +435,15 @@ token หมดอายุ (7 วัน) / ถูกปฏิเสธ: API ต
 
 | เมนู | Route | Bloc | หมายเหตุ |
 |---|---|---|---|
-| ภาพรวม | `/` | `DashboardBloc` | เลือกเดือนได้ (`MonthSwitcher`) |
+| ภาพรวม | `/` | `DashboardBloc` | หน้าตาตามตัวอย่างที่ผู้ใช้ส่งมา: แถวบน `KpiCard` 4 ช่อง (กำไรขั้นต้น / กำไรสุทธิ / จำนวนบิล / รายจ่าย + `DeltaPill` เทียบเดือนก่อน) → ยอดขาย (ตัวเลขใหญ่ + เส้นยอดสะสมเดือนนี้ vs เดือนก่อน + 3 หมวดแรก) คู่กับวันที่ขายดี (แท่งตามวันในสัปดาห์ เน้นวันที่ขายดีสุด) → สินค้าขายดี + รายจ่ายตามหมวด คู่กับ margin (เกจ) + ช่องถาม AI → ย้อนหลัง 6 เดือน → เทียบราคาตลาด คู่กับสต็อก — จอกว้าง ≥ 960 เป็น 2 คอลัมน์ (3 : 2) แคบกว่านั้นเรียงลงมา |
+| เช็คราคาตลาด | `/products/:id/market` | `MarketBloc` | เปิดจากปุ่มรูปลูกโลกในหน้าสินค้า หรือชื่อสินค้าในภาพรวม — ดูผลเดิมฟรี กด "เช็คใหม่" = ค่าใช้จ่าย AI |
 | ขายด่วน | `/sell` | `InvoiceFormBloc` (ตัวเดียวกับฟอร์มเอกสารขาย) | หน้าขายหน้าร้าน: ค้นหา / สแกนรหัสแล้วกด Enter (`InvoiceCodeScanned`) → ลงบิล → รับเงิน → "ขายบิลต่อไป" (`InvoiceFormReset` ล้างบิล + โหลดสต็อกใหม่) |
 | สินค้า | `/products` | `ProductBloc` | ค้นหาในเครื่อง (`visibleProducts` ค้นจากชื่อ / รหัส / หมวด / ช่องเพิ่มเติม) + เลือกหมวด, column ของช่องเพิ่มเติมที่ `showInList`, ลบสินค้าที่อยู่ในใบกำกับไม่ได้ |
 | คำนวณต้นทุน | `/cost` | `CostBloc` | แก้ใบต้นทุนในเครื่องก่อน (`isDirty`) แล้วกด "บันทึก" ส่งทั้งใบ, บรรทัดแบบ จำนวน × ราคา หรือ %, รายการที่ใช้บ่อย (`presets`) — ร้านปิด `useCostPage` → ซ่อนเมนูนี้ |
 | สต็อก | `/stock` | `StockBloc` | โหลดคงเหลือทุกสินค้าครั้งเดียว กรอง "ใกล้หมด" ในเครื่อง, แท็บประวัติโหลดเมื่อเปิด, รับเข้าใส่ต้นทุนต่อหน่วย + ผู้ขายได้ (API คิดต้นทุนเฉลี่ย) — สินค้าไม่นับสต็อกไม่โชว์ |
 | รายรับ-รายจ่าย | `/transactions` | `TransactionBloc` | หมวดเป็นรหัส (`TransactionModel.incomeCategories / expenseCategories`) แสดงด้วย `'transaction.category.<code>'.tr` |
 | เอกสารขาย | `/invoices`, `/invoices/create`, `/invoices/:id` | `InvoiceListBloc`, `InvoiceFormBloc`, `InvoiceDetailBloc` | ออกใบสำเร็จ → ไปหน้าดูใบ (`AppRoutes.invoiceDetailPath(id)`), ร้านจด VAT ได้ใบกำกับภาษี ไม่จด ได้ใบเสร็จรับเงิน |
+| ผู้ช่วย AI | `/assistant` | `AssistantBloc` (จาก shell) | ส่งประวัติแชททั้งหมดทุกครั้ง (`ChatMessageModel.toApi`) งานที่ AI เสนอขึ้นเป็นการ์ด กด "ยืนยัน ทำเลย" → bloc เรียก repository เส้นเดิม (สินค้า / สต็อก / รายรับ-รายจ่าย / เช็คตลาด) แล้วจดผล (`note`) ส่งให้ AI รู้ในคำถามถัดไป |
 | ตั้งค่า | `/settings` | `SettingsBloc` (จาก shell) + `LanguageBloc` | ข้อมูลร้าน, รูปแบบร้าน, ช่องข้อมูลเพิ่มเติมของสินค้า, โลโก้, ภาษา — ร้านจด VAT ต้องกรอกเลขผู้เสียภาษีก่อนออกใบกำกับ |
 
 **รูปแบบร้าน** (ตั้งในหน้าตั้งค่า เก็บใน `CompanyModel`) — ทุกหน้าที่เกี่ยวกับเงินต้องดูค่านี้:
@@ -578,6 +587,15 @@ return ProductTable(products: products);
 
 ---
 
+### กราฟ (หน้าภาพรวม)
+
+- ใช้ `fl_chart` 3 กราฟ: เส้นยอดขายสะสม (เดือนนี้เส้นทึบ + พื้นจาง / เดือนก่อนเส้นประสีเทา), แท่งวันในสัปดาห์ (วันที่ขายดีสุดสีน้ำเงิน ที่เหลือสีเทา), เส้นย้อนหลัง 6 เดือน — ส่วนแท่งตามหมวด / แถบราคาตลาด / เกจ margin เป็น widget ธรรมดา (`RankedBarList`, `MarketRangeBar`, `MarginGauge` วาดด้วย `CustomPaint`)
+- ยอดรายวันมีหลายวันที่เป็น 0 → กราฟยอดขายใช้ยอด **สะสม** (`ChartUtil.cumulative`) อ่านง่ายกว่า และเทียบเดือนก่อน ณ วันเดียวกันได้ / เดือนปัจจุบันวาดถึงวันนี้
+- สีกราฟอยู่ใน `AppColors.chart*`: รายรับ / ยอดขาย = น้ำเงิน, รายจ่าย = ส้ม, กำไร = เขียวอมฟ้า (ผ่านตัวตรวจสีสำหรับคนตาบอดสี) — สีเดียวกันหมายถึงเรื่องเดียวกันทุกกราฟ
+- เส้นสีเขียวอมฟ้าตัดกับพื้นขาวน้อย → ใต้กราฟย้อนหลังต้องมีตารางตัวเลข (บนมือถือพับไว้ "ดูตัวเลขรายเดือน")
+- แกน y ใช้ `ChartUtil.range` (เริ่มที่ 0 มีค่าติดลบได้ ปัดเป็นเลขกลม) + `ChartUtil.axisLabel` (ถึง 10,000 ใช้ K ทั้งแกน)
+- ชี้ที่แท่ง / จุด มีกล่องบอกตัวเลข (tooltip ของ fl_chart) / ข้อความในกราฟใช้สีตัวหนังสือ ไม่ใช้สีของเส้น
+
 ## 9. Utils และ Helpers
 
 | | Utils (`core/utils`) | Helpers (`core/helpers`) |
@@ -585,7 +603,7 @@ return ProductTable(products: products);
 | คืออะไร | ฟังก์ชันคำนวณ / แปลงค่า | ฟังก์ชันช่วยงาน UI / plugin |
 | ใช้ BuildContext | ไม่ใช้ | ใช้ได้ |
 | เขียน test | **บังคับ** | ไม่บังคับ |
-| ตัวอย่าง | `MoneyUtil`, `TaxUtil`, `CostUtil`, `DateUtil`, `ValidatorUtil` | `DialogHelper`, `SnackbarHelper`, `PdfHelper` |
+| ตัวอย่าง | `MoneyUtil`, `TaxUtil`, `CostUtil`, `DateUtil`, `ValidatorUtil`, `PercentUtil`, `MarketUtil`, `ChartUtil` | `DialogHelper`, `SnackbarHelper`, `PdfHelper` |
 
 เขียนเป็น `class` ที่มีแต่ `static` function
 
@@ -830,6 +848,9 @@ error จาก API มาเป็น code เช่น `{"error": "product_nam
 | กำไรต่อหน่วย | ราคาขาย (ก่อน VAT) − ต้นทุนต่อหน่วย — ราคารวม VAT ต้องถอด VAT ออกก่อน (`CostSheetModel.netSellPrice`) เพราะ VAT ไม่ใช่เงินของร้าน |
 | VAT | ราคาก่อน VAT × 7 ÷ 100 |
 | ถอด VAT จากราคารวม | ราคารวม × 100 ÷ 107 |
+| % เทียบเดือนก่อน | (เดือนนี้ − เดือนก่อน) ÷ \|เดือนก่อน\| × 100 (`PercentUtil.change`) เดือนก่อนเป็น 0 = เทียบไม่ได้ |
+| กำไรขั้นต้น / margin | ยอดขายก่อน VAT − ต้นทุน ณ วันที่ขาย / ÷ ยอดขาย × 100 (API คิดให้) |
+| เทียบราคาตลาด | ราคาที่ลูกค้าจ่าย (`MarketUtil.customerPrice`: จด VAT + ราคาไม่รวม VAT → บวก VAT) เทียบช่วงราคาปลีก → ถูกกว่า / อยู่ในช่วง / แพงกว่า |
 | ยอดในเอกสารขาย | `TaxUtil.documentAmounts`: รวมสินค้า − ส่วนลด → ใบเสร็จ: ไม่มี VAT / ราคารวม VAT: ถอด VAT / ราคาไม่รวม VAT: บวก VAT (คิดทั้งใบ ไม่คิดทีละบรรทัด ตรงกับ API) |
 | stock คงเหลือ | รับเข้า − เบิกออก |
 | ใกล้หมด | คงเหลือ ≤ จำนวนขั้นต่ำ (minStock) |

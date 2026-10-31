@@ -6,6 +6,9 @@ import 'package:costbook/core/network/api_client.dart';
 import 'package:costbook/core/routes/app_page_transition.dart';
 import 'package:costbook/core/routes/app_routes.dart';
 import 'package:costbook/core/routes/app_shell.dart';
+import 'package:costbook/features/assistant/bloc/assistant_bloc.dart';
+import 'package:costbook/features/assistant/pages/assistant_page.dart';
+import 'package:costbook/features/assistant/repository/ai_repository.dart';
 import 'package:costbook/features/auth/bloc/auth_bloc.dart';
 import 'package:costbook/features/auth/pages/login_page.dart';
 import 'package:costbook/features/auth/repository/auth_repository.dart';
@@ -22,6 +25,9 @@ import 'package:costbook/features/invoice/pages/invoice_detail_page.dart';
 import 'package:costbook/features/invoice/pages/invoice_form_page.dart';
 import 'package:costbook/features/invoice/pages/invoice_list_page.dart';
 import 'package:costbook/features/invoice/repository/invoice_repository.dart';
+import 'package:costbook/features/market/bloc/market_bloc.dart';
+import 'package:costbook/features/market/pages/market_page.dart';
+import 'package:costbook/features/market/repository/market_repository.dart';
 import 'package:costbook/features/product/bloc/product_bloc.dart';
 import 'package:costbook/features/product/pages/product_list_page.dart';
 import 'package:costbook/features/product/repository/product_repository.dart';
@@ -56,6 +62,7 @@ final appRouter = GoRouter(
               providers: [
                 BlocProvider(create: _createAuthBloc),
                 BlocProvider(create: (_) => SettingsBloc(SettingsRepository(ApiClient()))..add(SettingsRequested())),
+                BlocProvider(create: _createAssistantBloc),
               ],
               child: AppShell(currentPath: state.uri.path, child: child),
             ),
@@ -64,12 +71,14 @@ final appRouter = GoRouter(
         _menuRoute(AppRoutes.dashboard, _dashboardPage),
         _menuRoute(AppRoutes.sell, _sellPage),
         _menuRoute(AppRoutes.products, _productPage),
+        _menuRoute(AppRoutes.market, _marketPage),
         _menuRoute(AppRoutes.cost, _costPage),
         _menuRoute(AppRoutes.stock, _stockPage),
         _menuRoute(AppRoutes.transactions, _transactionPage),
         _menuRoute(AppRoutes.invoices, _invoiceListPage),
         _menuRoute(AppRoutes.invoiceCreate, _invoiceFormPage),
         _menuRoute(AppRoutes.invoiceDetail, _invoiceDetailPage),
+        _menuRoute(AppRoutes.assistant, _assistantPage),
         _menuRoute(AppRoutes.settings, _settingsPage),
       ],
     ),
@@ -85,6 +94,16 @@ GoRoute _menuRoute(String path, Widget Function(GoRouterState state) buildPage) 
 
 AuthBloc _createAuthBloc(BuildContext context) {
   return AuthBloc(AuthRepository(ApiClient()));
+}
+
+AssistantBloc _createAssistantBloc(BuildContext context) {
+  return AssistantBloc(
+    aiRepository: AiRepository(ApiClient()),
+    productRepository: ProductRepository(ApiClient()),
+    stockRepository: StockRepository(ApiClient()),
+    transactionRepository: TransactionRepository(ApiClient()),
+    marketRepository: MarketRepository(ApiClient()),
+  );
 }
 
 DateTime _thisMonth() {
@@ -104,6 +123,24 @@ Widget _productPage(GoRouterState state) {
     create: (_) => ProductBloc(ProductRepository(ApiClient()))..add(ProductsRequested()),
     child: const ProductListPage(),
   );
+}
+
+Widget _marketPage(GoRouterState state) {
+  final productId = state.pathParameters['id'] ?? '';
+  return BlocProvider(
+    create:
+        (_) => MarketBloc(
+          MarketRepository(ApiClient()),
+          ProductRepository(ApiClient()),
+          AiRepository(ApiClient()),
+          productId: productId,
+        )..add(MarketOpened()),
+    child: const MarketPage(),
+  );
+}
+
+Widget _assistantPage(GoRouterState state) {
+  return const AssistantPage();
 }
 
 Widget _costPage(GoRouterState state) {

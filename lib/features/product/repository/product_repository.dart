@@ -11,6 +11,11 @@ class ProductRepository {
     return data.map((item) => ProductModel.fromJson(item as Map<String, dynamic>)).toList();
   }
 
+  Future<ProductModel> getProduct(String id) async {
+    final data = await api.get('/products/$id') as Map<String, dynamic>;
+    return ProductModel.fromJson(data);
+  }
+
   Future<ProductModel> saveProduct(ProductModel product) async {
     if (product.isNew) {
       final data = await api.post('/products', product.toJson()) as Map<String, dynamic>;
