@@ -4,8 +4,8 @@
 
 ## สถานะตอนนี้
 
-- **เสร็จแล้ว:** Phase 0 — เอกสารและกติกา, Phase 1 (เหลือเพิ่ม package), theme ของ Phase 2
-- **งานถัดไป:** เพิ่ม package ของ Phase 1 แล้วทำ Phase 2 ต่อ (`AppStatus`, ภาษา, route)
+- **เสร็จแล้ว:** Phase 0, Phase 1 (เหลือเพิ่ม package), theme + responsive + ภาษา ของ Phase 2, UI หน้า login
+- **งานถัดไป:** เพิ่ม package (flutter_bloc, go_router, http ฯลฯ) → route `/login` + `LoginBloc` + ต่อ API login
 
 ---
 
@@ -28,16 +28,19 @@
 - [x] theme: `AppColors`, `AppSizes`, `AppTheme` + ฟอนต์ LINESeedSansTH
 - [x] รองรับทุกขนาดจอ: `ScreenType`, `ResponsiveUtil` + test, `ResponsiveHelper`, `ScreenScaler` (จอใหญ่ขยายทั้งแอป) + test
 - [ ] `AppStatus`
-- [ ] ภาษา: `AppLang` + `.tr` + `th.json` / `en.json` + `LanguageBloc`
+- [x] ภาษา: `AppLang` + `.tr` + `th.json` / `en.json`
+- [ ] `LanguageBloc` (รอเพิ่ม package flutter_bloc)
 - [ ] route: `AppRoutes` + `appRouter` (ShellRoute)
 - [ ] `ApiClient`
-- [ ] utils + test: `MoneyUtil`, `TaxUtil`, `CostUtil`, `DateUtil`, `ValidatorUtil`
+- [x] utils + test: `ValidatorUtil` (required, email)
+- [ ] utils + test: `MoneyUtil`, `TaxUtil`, `CostUtil`, `DateUtil`
 - [ ] helpers: `DialogHelper`, `SnackbarHelper`
-- [ ] test เช็ค key ภาษา th / en ตรงกัน
+- [x] test เช็ค key ภาษา th / en ตรงกัน
 
 ## Phase 3 — Widget กลาง
 
-- [ ] atoms: `AppButton`, `AppTextField`, `AppDropdown`, `AppLoading`, `AppBadge`, `MoneyText`
+- [x] atoms: `AppButton`, `AppTextField` (มีปุ่มแสดง / ซ่อนรหัสผ่าน)
+- [ ] atoms: `AppDropdown`, `AppLoading`, `AppBadge`, `MoneyText`
 - [ ] molecules: `SearchField`, `StatCard`, `AmountRow`, `EmptyView`, `ErrorView`
 - [ ] organisms: `PageLayout`, `AppSideMenu`, `AppTopBar`, `AppDataTable`, `FormCard`
 
@@ -45,13 +48,14 @@
 
 แต่ละ feature: model + test → repository → bloc + test → pages → widgets
 
+- [ ] auth — login: UI เสร็จแล้ว (ธีมส้ม-เทาเข้ม, ทุกขนาดจอ, เช็คอีเมล / รหัสผ่านว่าง, checkbox จดจำการเข้าสู่ระบบ) เหลือ bloc + repository + ต่อ API `POST /auth/login` + route `/login` + เก็บ token เมื่อติ๊กจดจำ (ต้องใช้ package เช่น shared_preferences)
 - [ ] product — จัดการสินค้า
 - [ ] cost — คำนวณต้นทุน / ราคาขาย
 - [ ] stock — รับเข้า / เบิกออก / ใกล้หมด
 - [ ] transaction — รายรับ-รายจ่าย + สรุปรายเดือน
 - [ ] invoice — ใบกำกับภาษี + VAT 7% + PDF (ฟอนต์ไทย)
 - [ ] dashboard — สรุปภาพรวม
-- [ ] settings — ข้อมูลบริษัท + เปลี่ยนภาษา
+- [ ] settings — ข้อมูลบริษัท + โลโก้ร้าน (แต่ละร้านต่างกัน ไม่ฝังในแอป) + เปลี่ยนภาษา
 
 ## Phase 5 — ส่งงาน
 
@@ -65,7 +69,8 @@
 ## เรื่องที่ยังต้องตัดสินใจ
 
 - [ ] deploy ที่ไหน (Firebase Hosting / Vercel / server เอง)
-- [ ] ต้องมี login / ผู้ใช้หลายคนไหม
+- [x] ต้องมี login ไหม → มี (อีเมล + รหัสผ่าน ตาม API)
+- [ ] มีผู้ใช้หลายคน / แบ่งสิทธิ์ไหม
 - [ ] ออกใบกำกับแล้วให้ตัด stock และบันทึกรายรับอัตโนมัติไหม (แนะนำให้ API ทำ)
 - [ ] รูปแบบเลขที่ใบกำกับ (แนะนำให้ API รันเลข)
 
@@ -75,6 +80,13 @@
 
 | วันที่ | ทำอะไร | หมายเหตุ |
 |---|---|---|
+| 2026-10-31 | กลับไปใช้พื้นหลังแบบแบ่งบน-ล่าง แล้วตกแต่งครึ่งบน: ไล่สีเทาเข้ม, ขอบล่างโค้ง, แถบเฉียงสีส้มมุมขวาบน (ตำแหน่งตามสัดส่วนจอ ไม่ทับตัวหนังสือบนมือถือ), แสงส้มมุมขวาบน / ซ้ายล่าง, ลายจุดจาง ๆ | ผู้ใช้ชอบแบบแบ่ง แค่อยากให้ครึ่งบนสวยขึ้น, test 42 ผ่าน, ดูภาพจริงใน Chrome 375 / 768 / 1072x1782 / 1440 / 2560 แล้ว |
+| 2026-10-31 | พื้นหลังหน้า login ใหม่: เทาเข้มเต็มจอ + แสงส้มมุมซ้ายบน / ขวาล่าง + ลายจุดจาง ๆ แยกเป็น `LoginBackground` (features/auth/widgets) แทนแบบแบ่งครึ่งบน-ล่าง | test 42 ผ่าน, ดูภาพจริงใน Chrome 375 / 768 / 1072x1782 / 1440 / 2560 แล้ว |
+| 2026-10-31 | ออกแบบหน้า login ใหม่ทั้งหมด: เอาแถบรูปด้านข้าง + โลโก้ / รูป MakeHub ออก, ใช้หน้าเดียวทุกขนาดจอ (ครึ่งบนเทาเข้ม + แสงส้ม, ชื่อแอป CostBook, การ์ดฟอร์มกลางจอ), ชื่อช่องอยู่เหนือช่องกรอก + ตัวอย่างในช่อง, Enter ไปช่องถัดไป, autofill รหัสผ่าน, ปุ่มส้มตัวหนังสือเข้ม (อ่านชัด) | โลโก้ขึ้นกับแต่ละร้าน → ย้ายไปทำในหน้า settings, ลบ `assets/images/*` + `AppImages`, test 42 ผ่าน, ดูภาพจริงใน Chrome 320–2560 แล้ว |
+| 2026-10-31 | **(จาก api-Costbook) API login พร้อมใช้:** `POST /api/v1/auth/login` ส่ง `{"email","password"}` → 200 `{"token","user":{"id","email","first_name","last_name"}}` / 400 `invalid_json`, `email_required`, `password_required` / 401 `invalid_credentials` — `GET /api/v1/auth/me` ส่ง header `Authorization: Bearer <token>` → 200 user / 401 `unauthorized` (ให้ลบ token แล้วไปหน้า login) — token อายุ 7 วัน, ผู้ใช้ทดสอบ `admin@costbook.com` / `1234` | ยังไม่ได้แก้โค้ด Flutter — ต้องเพิ่ม key `error.invalid_credentials`, `error.email_required`, `error.password_required`, `error.unauthorized` ใน `th.json` / `en.json` ตอนต่อ API — รายละเอียด: `../api-Costbook/docs/ARCHITECTURE.md` หัวข้อ 7 |
+| 2026-10-31 | หน้า login จอคอม: เพิ่มโลโก้ด้านบนฟอร์ม (รวมเป็น `_logoAndForm` ใช้ร่วมกับการ์ดของแท็บเล็ต) + test โลโก้ทุกขนาดจอ | test 45 ผ่าน, ดูภาพจริงที่ 1100 และ 1440 แล้ว |
+| 2026-10-31 | ออกแบบหน้า login ใหม่ด้วยโลโก้และสีของ MakeHub (ส้ม `#FD7402` + เทาเข้ม `#1B2228`) + checkbox จดจำการเข้าสู่ระบบ, เพิ่ม `assets/images/` (logo.png, logo_light.png, login_photo.jpg) + `AppImages` | โลโก้พื้นใส 2 แบบทำจากไฟล์ที่ผู้ใช้ส่งมา ตัดบรรทัดหมวดหมู่ออก (แสดงเป็นข้อความแทน), รูปพื้นหลังตัดจากแบนเนอร์ส่วนที่ไม่มีตัวหนังสือ, ดูภาพจริงใน Chrome ทุกขนาด, test 42 ผ่าน |
+| 2026-10-31 | หน้า login (UI): `LoginPage` + `_ext.dart`, ระบบภาษา `AppLang` + `.tr` + `th.json` / `en.json`, `ValidatorUtil`, atoms `AppButton` / `AppTextField`, theme ปุ่ม / ช่องกรอก / การ์ด + test | มือถือ = ฟอร์มเต็มจอ, แท็บเล็ต = การ์ดกลางจอ, จอคอม = แถบแบรนด์ซ้าย + การ์ด, จอใหญ่ = ขยายตามสัดส่วน — ดูภาพจริงใน Chrome ที่ 320 / 375 / 768 / 1280 / 1440 / 2560 แล้ว, test 39 ผ่าน |
 | 2026-10-31 | ลบคอมเมนต์ทั้งหมดในโค้ด (`lib/`, `test/`, `pubspec.yaml`) และเปลี่ยนกฎใน skill `simple-code` เป็น "ไม่เขียนคอมเมนต์ในโค้ด" | ยกเว้น `// TODO: ต่อ API` ใน repository |
 | 2026-10-31 | รองรับทุกขนาดจอ: breakpoint mobile < 600 / tablet < 1024 / desktop, จอกว้างกว่า 1440 ขยายทั้งแอปตามสัดส่วนด้วย `ScreenScaler` (สูงสุด 2 เท่า) + กฎใน skill `simple-code` และ `docs/ARCHITECTURE.md` หัวข้อ 8 | ใช้ `fvm flutter` (global flutter 3.29 ทำ `pubspec.lock` ถอยเวอร์ชัน), analyze / test 18 ผ่าน |
 | 2026-10-31 | `flutter create` + สร้างโฟลเดอร์ตาม `docs/ARCHITECTURE.md`, เพิ่มฟอนต์ LINESeedSansTH (5 น้ำหนัก) และ theme ใน `lib/core/theme/` (`AppColors`, `AppSizes`, `AppTheme`) + test | ย้าย `app_colors` / `app_sizes` จาก `constants/` ไป `theme/`, ลบ test counter ของ flutter create, analyze / test / build web ผ่าน |

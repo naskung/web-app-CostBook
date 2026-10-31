@@ -1,0 +1,14 @@
+{
+  "app.name": "CostBook",
+  "app.tagline": "Manage costs, stock and tax invoices",
+  "login.title": "Sign in",
+  "login.subtitle": "Enter your email and password to continue",
+  "login.email": "Email",
+  "login.email_hint": "name@example.com",
+  "login.password": "Password",
+  "login.password_hint": "Enter your password",
+  "login.remember_me": "Remember me",
+  "login.submit": "Sign in",
+  "validation.required": "This field is required",
+  "validation.email_invalid": "Invalid email format"
+}

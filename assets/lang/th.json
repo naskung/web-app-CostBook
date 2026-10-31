@@ -1,0 +1,14 @@
+{
+  "app.name": "CostBook",
+  "app.tagline": "ระบบจัดการต้นทุน สต็อก และใบกำกับภาษี",
+  "login.title": "เข้าสู่ระบบ",
+  "login.subtitle": "กรอกอีเมลและรหัสผ่านเพื่อใช้งาน",
+  "login.email": "อีเมล",
+  "login.email_hint": "name@example.com",
+  "login.password": "รหัสผ่าน",
+  "login.password_hint": "กรอกรหัสผ่าน",
+  "login.remember_me": "จดจำการเข้าสู่ระบบ",
+  "login.submit": "เข้าสู่ระบบ",
+  "validation.required": "กรุณากรอกข้อมูล",
+  "validation.email_invalid": "รูปแบบอีเมลไม่ถูกต้อง"
+}

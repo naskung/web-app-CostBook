@@ -10,6 +10,7 @@
 
 | Feature | ทำอะไร | Route |
 |---|---|---|
+| auth | เข้าสู่ระบบด้วยอีเมล + รหัสผ่าน (API `POST /api/v1/auth/login`) | `/login` |
 | dashboard | สรุปรายรับ-รายจ่าย กำไร และสินค้าใกล้หมด | `/` |
 | product | จัดการสินค้า (ชื่อ, หน่วย, ราคาทุน, ราคาขาย, จำนวนขั้นต่ำ) | `/products` |
 | cost | คำนวณต้นทุนต่อหน่วย และราคาขายจาก % markup | `/cost` |
@@ -57,7 +58,7 @@ web-app-CostBook/
 ├── assets/
 │   ├── lang/              th.json, en.json
 │   ├── fonts/             LINESeedSansTH (ฟอนต์หลักของแอป ลงทะเบียนใน pubspec.yaml)
-│   └── images/
+│   └── images/            รูปที่ใช้ทุกร้าน (โลโก้ร้านไม่ฝังในแอป — แต่ละร้านต่างกัน มาจากข้อมูลร้านในหน้า settings)
 ├── lib/
 │   ├── main.dart          จุดเริ่มแอป: โหลดภาษา แล้ว runApp
 │   ├── app.dart           MaterialApp.router + theme + bloc ที่ใช้ทั้งแอป
@@ -75,6 +76,7 @@ web-app-CostBook/
 │   │       ├── molecules/
 │   │       └── organisms/   เช่น page_layout.dart, screen_scaler.dart (ขยายทั้งแอปบนจอใหญ่)
 │   └── features/
+│       ├── auth/            pages/login_page.dart, login_page_ext.dart, widgets/login_background.dart
 │       ├── dashboard/
 │       ├── product/
 │       │   ├── bloc/        product_bloc.dart, product_event.dart, product_state.dart
