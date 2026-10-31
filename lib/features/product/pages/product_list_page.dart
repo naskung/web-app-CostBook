@@ -18,6 +18,7 @@ import 'package:costbook/features/settings/models/product_field_model.dart';
 import 'package:costbook/shared/widgets/atoms/app_badge.dart';
 import 'package:costbook/shared/widgets/atoms/app_loading.dart';
 import 'package:costbook/shared/widgets/atoms/money_text.dart';
+import 'package:costbook/features/product/widgets/product_image.dart';
 import 'package:costbook/shared/widgets/molecules/empty_view.dart';
 import 'package:costbook/shared/widgets/molecules/error_view.dart';
 import 'package:costbook/shared/widgets/molecules/search_field.dart';
@@ -38,7 +39,14 @@ class ProductListPage extends StatelessWidget {
           listenWhen:
               (previous, current) =>
                   previous.saveStatus == AppStatus.loading && current.saveStatus == AppStatus.success,
-          listener: (context, state) => SnackbarHelper.showSuccess(context, 'common.saved'.tr),
+          listener: (context, state) {
+            if (state.imageErrorCode.isEmpty) {
+              SnackbarHelper.showSuccess(context, 'common.saved'.tr);
+              return;
+            }
+            final reason = 'error.${state.imageErrorCode}'.tr;
+            SnackbarHelper.showError(context, 'product.image_failed'.trParams({'reason': reason}));
+          },
         ),
         BlocListener<ProductBloc, ProductState>(
           listenWhen:

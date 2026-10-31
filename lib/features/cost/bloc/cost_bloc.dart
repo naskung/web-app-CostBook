@@ -121,18 +121,19 @@ class CostBloc extends Bloc<CostEvent, CostState> {
     try {
       await repository.savePreset(event.preset);
       final presets = await repository.getPresets();
-      emit(state.copyWith(presets: presets));
+      emit(state.copyWith(presets: presets, presetErrorCode: ''));
     } catch (error) {
-      emit(state.copyWith(saveStatus: AppStatus.failure, saveErrorCode: ErrorUtil.codeOf(error)));
+      emit(state.copyWith(presetErrorCode: ErrorUtil.codeOf(error)));
     }
   }
 
   Future<void> _onPresetDeleted(CostPresetDeleted event, Emitter<CostState> emit) async {
     try {
       await repository.deletePreset(event.id);
-      emit(state.copyWith(presets: state.presets.where((preset) => preset.id != event.id).toList()));
+      final presets = state.presets.where((preset) => preset.id != event.id).toList();
+      emit(state.copyWith(presets: presets, presetErrorCode: ''));
     } catch (error) {
-      emit(state.copyWith(saveStatus: AppStatus.failure, saveErrorCode: ErrorUtil.codeOf(error)));
+      emit(state.copyWith(presetErrorCode: ErrorUtil.codeOf(error)));
     }
   }
 }

@@ -1,13 +1,30 @@
 part of 'cost_page.dart';
 
 extension _CostPageExt on _CostPageState {
-  Widget _noProducts(BuildContext context) {
+  // ยังไม่มีสินค้า ก็ตั้งรายการต้นทุนที่ใช้บ่อยไว้ก่อนได้
+  Widget _noProducts(BuildContext context, CostState state) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         EmptyView(message: 'cost.no_products'.tr, icon: Icons.calculate_outlined),
-        FilledButton(onPressed: () => context.go(AppRoutes.products), child: Text('cost.go_products'.tr)),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: AppSizes.spaceSmall,
+          runSpacing: AppSizes.spaceSmall,
+          children: [
+            FilledButton(onPressed: () => context.go(AppRoutes.products), child: Text('cost.go_products'.tr)),
+            _presetsButton(context, state),
+          ],
+        ),
       ],
+    );
+  }
+
+  Widget _presetsButton(BuildContext context, CostState state) {
+    return OutlinedButton.icon(
+      onPressed: () => CostPresetsDialog.show(context),
+      icon: const Icon(Icons.bookmark_border),
+      label: Text('cost.presets_button'.trParams({'count': '${state.presets.length}'})),
     );
   }
 
@@ -29,11 +46,7 @@ extension _CostPageExt on _CostPageState {
               onChanged: (productId) => context.read<CostBloc>().add(CostProductSelected(productId ?? '')),
             ),
           ),
-          OutlinedButton.icon(
-            onPressed: () => CostPresetsDialog.show(context),
-            icon: const Icon(Icons.bookmark_border),
-            label: Text('cost.presets_button'.trParams({'count': '${state.presets.length}'})),
-          ),
+          _presetsButton(context, state),
         ],
       ),
     );

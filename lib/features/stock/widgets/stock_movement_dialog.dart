@@ -77,6 +77,7 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
         final hasError = _isSubmitted && state.saveStatus == AppStatus.failure;
         return FormDialog(
           title: _isIn ? 'stock.stock_in_title'.tr : 'stock.stock_out_title'.tr,
+          icon: _isIn ? Icons.move_to_inbox_outlined : Icons.outbox_outlined,
           saveLabel: _isIn ? 'stock.stock_in'.tr : 'stock.stock_out'.tr,
           cancelLabel: 'common.cancel'.tr,
           isSaving: state.saveStatus == AppStatus.loading,

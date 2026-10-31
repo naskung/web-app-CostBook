@@ -37,6 +37,7 @@ class _AiKeySectionState extends State<AiKeySection> {
       title: 'settings.ai_remove_title'.tr,
       message: 'settings.ai_remove_message'.tr,
       confirmText: 'settings.ai_remove'.tr,
+      icon: Icons.key_off_outlined,
     );
     if (isConfirmed) bloc.add(AssistantKeyRemoved());
   }

@@ -18,20 +18,23 @@ class CostItemDialogResult {
   final bool remember;
 }
 
+// forPreset = true → ใช้เพิ่ม / แก้รายการที่ใช้บ่อย (ไม่มีช่องจำนวน ไม่มีปุ่มเลือกจากรายการที่ใช้บ่อย)
 class CostItemDialog extends StatefulWidget {
-  const CostItemDialog({super.key, required this.item, required this.presets});
+  const CostItemDialog({super.key, required this.item, required this.presets, this.forPreset = false});
 
   final CostItemModel item;
   final List<CostPresetModel> presets;
+  final bool forPreset;
 
   static Future<CostItemDialogResult?> show(
     BuildContext context, {
     required CostItemModel item,
     required List<CostPresetModel> presets,
+    bool forPreset = false,
   }) {
     return showDialog<CostItemDialogResult>(
       context: context,
-      builder: (_) => CostItemDialog(item: item, presets: presets),
+      builder: (_) => CostItemDialog(item: item, presets: presets, forPreset: forPreset),
     );
   }
 
@@ -53,6 +56,11 @@ class _CostItemDialogState extends State<CostItemDialog> {
   bool get _isNew => widget.item.name.isEmpty;
 
   bool get _isPercent => _kind == CostItemModel.percentKind;
+
+  String get _title {
+    if (widget.forPreset) return _isNew ? 'cost.preset_add_title'.tr : 'cost.preset_edit_title'.tr;
+    return _isNew ? 'cost.item_title'.tr : 'cost.item_edit_title'.tr;
+  }
 
   @override
   void dispose() {
@@ -90,7 +98,7 @@ class _CostItemDialogState extends State<CostItemDialog> {
       type: _type,
       kind: _kind,
       name: _nameController.text.trim(),
-      quantity: _isPercent ? 1 : MoneyUtil.parse(_quantityController.text),
+      quantity: _isPercent || widget.forPreset ? 1 : MoneyUtil.parse(_quantityController.text),
       unit: _isPercent ? '' : _unitController.text.trim(),
       unitPrice: _isPercent ? 0 : MoneyUtil.parse(_unitPriceController.text),
       percent: _isPercent ? MoneyUtil.parse(_percentController.text) : 0,
@@ -101,7 +109,8 @@ class _CostItemDialogState extends State<CostItemDialog> {
   @override
   Widget build(BuildContext context) {
     return FormDialog(
-      title: _isNew ? 'cost.item_title'.tr : 'cost.item_edit_title'.tr,
+      title: _title,
+      icon: widget.forPreset ? Icons.bookmark_border : Icons.calculate_outlined,
       saveLabel: _isNew ? 'common.add'.tr : 'common.save'.tr,
       cancelLabel: 'common.cancel'.tr,
       onSave: _onSave,
@@ -110,7 +119,7 @@ class _CostItemDialogState extends State<CostItemDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (_isNew && widget.presets.isNotEmpty) ...[
+            if (_isNew && !widget.forPreset && widget.presets.isNotEmpty) ...[
               AppDropdown<String>(
                 label: 'cost.from_preset'.tr,
                 hint: 'cost.choose_preset'.tr,
@@ -144,7 +153,7 @@ class _CostItemDialogState extends State<CostItemDialog> {
             ),
             const SizedBox(height: AppSizes.spaceMedium),
             if (_isPercent) _percentField() else _fixedFields(context),
-            if (_isNew)
+            if (_isNew && !widget.forPreset)
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
                 controlAffinity: ListTileControlAffinity.leading,
@@ -169,7 +178,32 @@ class _CostItemDialogState extends State<CostItemDialog> {
     );
   }
 
+  Widget _unitField() {
+    return AppTextField(label: 'common.unit'.tr, hint: 'cost.unit_hint'.tr, controller: _unitController);
+  }
+
+  Widget _unitPriceField() {
+    return AppTextField(
+      label: 'cost.unit_price'.tr,
+      controller: _unitPriceController,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      validator: ValidatorUtil.zeroOrMore,
+      suffixText: 'common.baht'.tr,
+      onChanged: (_) => setState(() {}),
+    );
+  }
+
   Widget _fixedFields(BuildContext context) {
+    if (widget.forPreset) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: _unitField()),
+          const SizedBox(width: AppSizes.spaceMedium),
+          Expanded(child: _unitPriceField()),
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -186,20 +220,11 @@ class _CostItemDialogState extends State<CostItemDialog> {
               ),
             ),
             const SizedBox(width: AppSizes.spaceMedium),
-            Expanded(
-              child: AppTextField(label: 'common.unit'.tr, hint: 'cost.unit_hint'.tr, controller: _unitController),
-            ),
+            Expanded(child: _unitField()),
           ],
         ),
         const SizedBox(height: AppSizes.spaceMedium),
-        AppTextField(
-          label: 'cost.unit_price'.tr,
-          controller: _unitPriceController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          validator: ValidatorUtil.zeroOrMore,
-          suffixText: 'common.baht'.tr,
-          onChanged: (_) => setState(() {}),
-        ),
+        _unitPriceField(),
         const SizedBox(height: AppSizes.spaceSmall),
         Text(
           'cost.line_result'.trParams({

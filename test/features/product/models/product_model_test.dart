@@ -29,6 +29,17 @@ void main() {
       expect(ProductModel.fromJson(json), product);
     });
 
+    test('ไม่มี image_version = ไม่มีรูป imageUrl ว่าง', () {
+      expect(product.hasImage, false);
+      expect(product.imageUrl, '');
+    });
+
+    test('มี image_version = มีรูป imageUrl มี ?v= ตามเวอร์ชัน', () {
+      final withImage = ProductModel.fromJson({'id': 'p1', 'name': 'เคส', 'image_version': 1793466948000});
+      expect(withImage.hasImage, true);
+      expect(withImage.imageUrl, endsWith('/products/p1/image?v=1793466948000'));
+    });
+
     test('toJson แล้ว fromJson กลับมา ได้ค่าเดิม', () {
       expect(ProductModel.fromJson(product.toJson()), product);
     });

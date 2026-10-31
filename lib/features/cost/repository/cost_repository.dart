@@ -22,8 +22,13 @@ class CostRepository {
     return data.map((item) => CostPresetModel.fromJson(item as Map<String, dynamic>)).toList();
   }
 
+  // ไม่มี id = เพิ่มใหม่, มี id = แก้รายการเดิม
   Future<void> savePreset(CostPresetModel preset) async {
-    await api.post('/cost-presets', preset.toJson());
+    if (preset.id.isEmpty) {
+      await api.post('/cost-presets', preset.toJson());
+      return;
+    }
+    await api.put('/cost-presets/${preset.id}', preset.toJson());
   }
 
   Future<void> deletePreset(String id) async {

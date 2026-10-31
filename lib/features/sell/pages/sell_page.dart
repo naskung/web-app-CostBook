@@ -17,6 +17,7 @@ import 'package:costbook/features/invoice/models/invoice_draft_model.dart';
 import 'package:costbook/features/invoice/models/invoice_model.dart';
 import 'package:costbook/features/invoice/widgets/invoice_item_row.dart';
 import 'package:costbook/features/product/models/product_model.dart';
+import 'package:costbook/features/product/widgets/product_image.dart';
 import 'package:costbook/features/sell/widgets/sell_product_tile.dart';
 import 'package:costbook/shared/widgets/atoms/app_button.dart';
 import 'package:costbook/shared/widgets/atoms/app_loading.dart';
@@ -25,6 +26,7 @@ import 'package:costbook/shared/widgets/molecules/empty_view.dart';
 import 'package:costbook/shared/widgets/molecules/error_view.dart';
 import 'package:costbook/shared/widgets/molecules/notice_banner.dart';
 import 'package:costbook/shared/widgets/molecules/section_card.dart';
+import 'package:costbook/shared/widgets/organisms/app_alert_dialog.dart';
 import 'package:costbook/shared/widgets/organisms/page_content.dart';
 
 part 'sell_page_ext.dart';

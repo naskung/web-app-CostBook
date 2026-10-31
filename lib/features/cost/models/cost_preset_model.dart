@@ -13,8 +13,9 @@ class CostPresetModel extends Equatable {
     this.percent = 0,
   });
 
-  factory CostPresetModel.fromItem(CostItemModel item) {
+  factory CostPresetModel.fromItem(CostItemModel item, {String id = ''}) {
     return CostPresetModel(
+      id: id,
       type: item.type,
       kind: item.kind,
       name: item.name,

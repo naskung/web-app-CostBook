@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -19,6 +21,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(const ProductModel(name: ''));
+    registerFallbackValue(Uint8List(0));
   });
 
   setUp(() {
@@ -76,6 +79,75 @@ void main() {
         () => [
           const ProductState(status: AppStatus.success, products: [coffee], saveStatus: AppStatus.loading),
           const ProductState(status: AppStatus.success, products: [coffee, tea], saveStatus: AppStatus.success),
+        ],
+  );
+
+  final photo = Uint8List.fromList([1, 2, 3]);
+  const teaWithImage = ProductModel(id: '2', name: 'ชาไทย', sellPrice: 40, imageVersion: 5);
+
+  blocTest<ProductBloc, ProductState>(
+    'ProductSaved มีรูปใหม่ บันทึกสินค้าแล้วอัปโหลดรูปของสินค้านั้น',
+    build: () {
+      when(() => repository.saveProduct(any())).thenAnswer((_) async => tea);
+      when(() => repository.uploadImage('2', photo)).thenAnswer((_) async => teaWithImage);
+      when(() => repository.getProducts()).thenAnswer((_) async => [teaWithImage]);
+      return ProductBloc(repository);
+    },
+    act: (bloc) => bloc.add(ProductSaved(const ProductModel(name: 'ชาไทย'), image: photo)),
+    expect:
+        () => [
+          const ProductState(saveStatus: AppStatus.loading),
+          const ProductState(products: [teaWithImage], saveStatus: AppStatus.success),
+        ],
+    verify: (_) => verify(() => repository.uploadImage('2', photo)).called(1),
+  );
+
+  blocTest<ProductBloc, ProductState>(
+    'ProductSaved กดลบรูป สินค้ามีรูปอยู่ ลบรูปให้',
+    build: () {
+      when(() => repository.saveProduct(any())).thenAnswer((_) async => teaWithImage);
+      when(() => repository.deleteImage('2')).thenAnswer((_) async => tea);
+      when(() => repository.getProducts()).thenAnswer((_) async => [tea]);
+      return ProductBloc(repository);
+    },
+    act: (bloc) => bloc.add(ProductSaved(teaWithImage, removeImage: true)),
+    expect:
+        () => [
+          const ProductState(saveStatus: AppStatus.loading),
+          const ProductState(products: [tea], saveStatus: AppStatus.success),
+        ],
+    verify: (_) => verify(() => repository.deleteImage('2')).called(1),
+  );
+
+  blocTest<ProductBloc, ProductState>(
+    'ProductSaved กดลบรูป แต่สินค้าไม่มีรูป ไม่เรียกลบรูป',
+    build: () {
+      when(() => repository.saveProduct(any())).thenAnswer((_) async => tea);
+      when(() => repository.getProducts()).thenAnswer((_) async => [tea]);
+      return ProductBloc(repository);
+    },
+    act: (bloc) => bloc.add(ProductSaved(tea, removeImage: true)),
+    skip: 1,
+    expect:
+        () => [
+          const ProductState(products: [tea], saveStatus: AppStatus.success),
+        ],
+    verify: (_) => verifyNever(() => repository.deleteImage(any())),
+  );
+
+  blocTest<ProductBloc, ProductState>(
+    'ProductSaved อัปโหลดรูปไม่สำเร็จ สินค้ายังนับว่าบันทึกแล้ว + imageErrorCode',
+    build: () {
+      when(() => repository.saveProduct(any())).thenAnswer((_) async => tea);
+      when(() => repository.uploadImage(any(), any())).thenThrow(ApiException('product_image_too_large'));
+      when(() => repository.getProducts()).thenAnswer((_) async => [tea]);
+      return ProductBloc(repository);
+    },
+    act: (bloc) => bloc.add(ProductSaved(const ProductModel(name: 'ชาไทย'), image: photo)),
+    skip: 1,
+    expect:
+        () => [
+          const ProductState(products: [tea], saveStatus: AppStatus.success, imageErrorCode: 'product_image_too_large'),
         ],
   );
 

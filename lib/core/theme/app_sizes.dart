@@ -27,6 +27,16 @@ class AppSizes {
   static const double loadingStroke = 2;
   static const double formMaxWidth = 440;
   static const double dialogMaxWidth = 560;
+  static const double dialogRadius = 20;
+  static const double dialogIconBox = 40;
+  static const double dialogMobileInset = 12;
+  static const double dialogButtonMinWidth = 120;
+  static const double alertMaxWidth = 420;
+  static const double alertIconBox = 64;
+  static const double alertIcon = 32;
+  static const double productThumb = 40;
+  static const double productImagePreview = 112;
+  static const double sellTileImageHeight = 96;
   static const double contentMaxWidth = 1200;
   static const double statCardWidth = 260;
   static const double statCardCompactWidth = 220;

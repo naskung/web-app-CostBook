@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -137,6 +138,43 @@ void main() {
     test('ได้ 409 stock_not_enough ได้ ApiException code นั้น', () async {
       final api = recordingClient(409, '{"error":"stock_not_enough"}');
       expect(await errorCodeOf(api.get('/stock')), 'stock_not_enough');
+    });
+  });
+
+  group('ApiClient.putFile', () {
+    test('ส่งไฟล์แบบ multipart ช่องที่กำหนด พร้อม token', () async {
+      late http.Request sentRequest;
+      final api = ApiClient(
+        client: MockClient((request) async {
+          sentRequest = request;
+          return http.Response('{"id":"p1"}', 200);
+        }),
+      );
+      ApiClient.token = 'abc';
+
+      final data = await api.putFile('/products/p1/image', 'image', Uint8List.fromList([1, 2, 3]), 'product.jpg');
+
+      expect(sentRequest.method, 'PUT');
+      expect(sentRequest.url.toString(), '${ApiConstants.baseUrl}/products/p1/image');
+      expect(sentRequest.headers['Authorization'], 'Bearer abc');
+      expect(sentRequest.headers['content-type'], startsWith('multipart/form-data'));
+      expect(
+        utf8.decode(sentRequest.bodyBytes, allowMalformed: true),
+        contains('name="image"; filename="product.jpg"'),
+      );
+      expect(data, {'id': 'p1'});
+    });
+
+    test('ได้ 400 product_image_too_large ได้ ApiException code นั้น', () async {
+      final api = clientThatReplies(400, '{"error":"product_image_too_large"}');
+      final call = api.putFile('/products/p1/image', 'image', Uint8List(1), 'product.jpg');
+      expect(await errorCodeOf(call), 'product_image_too_large');
+    });
+
+    test('authHeaders ไม่มี token = ว่าง มี token = มี Authorization', () {
+      expect(ApiClient.authHeaders, isEmpty);
+      ApiClient.token = 'abc';
+      expect(ApiClient.authHeaders, {'Authorization': 'Bearer abc'});
     });
   });
 

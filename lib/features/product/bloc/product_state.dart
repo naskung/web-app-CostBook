@@ -11,6 +11,7 @@ class ProductState extends Equatable {
     this.saveErrorCode = '',
     this.deleteStatus = AppStatus.initial,
     this.deleteErrorCode = '',
+    this.imageErrorCode = '',
   });
 
   final AppStatus status;
@@ -22,6 +23,9 @@ class ProductState extends Equatable {
   final String saveErrorCode;
   final AppStatus deleteStatus;
   final String deleteErrorCode;
+
+  // บันทึกสินค้าแล้ว แต่อัปโหลด / ลบรูปไม่สำเร็จ ('' = ไม่มีปัญหา)
+  final String imageErrorCode;
 
   List<ProductModel> get visibleProducts {
     return products.where((product) {
@@ -46,6 +50,7 @@ class ProductState extends Equatable {
     String? saveErrorCode,
     AppStatus? deleteStatus,
     String? deleteErrorCode,
+    String? imageErrorCode,
   }) {
     return ProductState(
       status: status ?? this.status,
@@ -57,6 +62,7 @@ class ProductState extends Equatable {
       saveErrorCode: saveErrorCode ?? this.saveErrorCode,
       deleteStatus: deleteStatus ?? this.deleteStatus,
       deleteErrorCode: deleteErrorCode ?? this.deleteErrorCode,
+      imageErrorCode: imageErrorCode ?? this.imageErrorCode,
     );
   }
 
@@ -71,5 +77,6 @@ class ProductState extends Equatable {
     saveErrorCode,
     deleteStatus,
     deleteErrorCode,
+    imageErrorCode,
   ];
 }

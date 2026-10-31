@@ -60,6 +60,7 @@ extension _SellPageExt on _SellPageState {
         product.trackStock ? 'invoice.in_stock'.trParams({'stock': '${product.stock}'}) : 'product.no_stock'.tr;
     return SellProductTile(
       width: width,
+      image: ProductImage(product: product, height: AppSizes.sellTileImageHeight),
       name: product.name,
       price: product.sellPrice,
       stockText: stockText,
@@ -158,17 +159,15 @@ extension _SellPageExt on _SellPageState {
       context: context,
       barrierDismissible: false,
       builder:
-          (dialogContext) => AlertDialog(
-            icon: const Icon(Icons.check_circle, color: AppColors.success, size: AppSizes.iconBox),
-            title: Text('sell.sold_title'.tr),
-            content: Text(
-              'sell.sold_message'.trParams({'no': invoice.invoiceNo, 'total': MoneyUtil.format(invoice.total)}),
-              textAlign: TextAlign.center,
-            ),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(dialogContext, true), child: Text('sell.view_bill'.tr)),
-              FilledButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text('sell.next_sale'.tr)),
-            ],
+          (dialogContext) => AppAlertDialog(
+            isDanger: false,
+            icon: Icons.check_rounded,
+            title: 'sell.sold_title'.tr,
+            message: 'sell.sold_message'.trParams({'no': invoice.invoiceNo, 'total': MoneyUtil.format(invoice.total)}),
+            secondaryText: 'sell.view_bill'.tr,
+            onSecondary: () => Navigator.pop(dialogContext, true),
+            primaryText: 'sell.next_sale'.tr,
+            onPrimary: () => Navigator.pop(dialogContext, false),
           ),
     );
     return result ?? false;

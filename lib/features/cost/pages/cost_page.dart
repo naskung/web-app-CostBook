@@ -116,7 +116,7 @@ class _CostPageState extends State<CostPage> {
         onRetry: () => context.read<CostBloc>().add(CostPageOpened()),
       );
     }
-    if (state.products.isEmpty) return _noProducts(context);
+    if (state.products.isEmpty) return _noProducts(context, state);
     return PageContent(
       children: [
         _productPicker(context, state),

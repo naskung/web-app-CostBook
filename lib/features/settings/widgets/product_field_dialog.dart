@@ -83,6 +83,7 @@ class _ProductFieldDialogState extends State<ProductFieldDialog> {
         final hasError = _isSubmitted && state.fieldStatus == AppStatus.failure;
         return FormDialog(
           title: widget.field.isNew ? 'settings.field_add'.tr : 'settings.field_edit'.tr,
+          icon: Icons.tune,
           saveLabel: 'common.save'.tr,
           cancelLabel: 'common.cancel'.tr,
           isSaving: state.fieldStatus == AppStatus.loading,

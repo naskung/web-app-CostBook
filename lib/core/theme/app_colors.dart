@@ -13,6 +13,8 @@ class AppColors {
 
   static const Color background = Color(0xFFF5F5F6);
   static const Color surface = Color(0xFFFFFFFF);
+  static const Color surfaceMuted = Color(0xFFF9FAFB);
+  static const Color scrim = Color(0x991B2228);
   static const Color inputFill = Color(0xFFF9FAFB);
   static const Color border = Color(0xFFE5E7EB);
   static const Color inputBorder = Color(0xFFD1D5DB);

@@ -29,6 +29,26 @@ class AppTheme {
     elevatedButtonTheme: _buttonTheme,
     inputDecorationTheme: _inputTheme,
     appBarTheme: _appBarTheme,
+    dialogTheme: _dialogTheme,
+    datePickerTheme: _datePickerTheme,
+  );
+
+  static const RoundedRectangleBorder _dialogShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.all(Radius.circular(AppSizes.dialogRadius)),
+  );
+
+  // dialog พื้นขาว ไม่ย้อมสีส้มตามธีม + ฉากหลังมืดลงชัด ๆ
+  static const DialogThemeData _dialogTheme = DialogThemeData(
+    backgroundColor: AppColors.surface,
+    surfaceTintColor: AppColors.transparent,
+    barrierColor: AppColors.scrim,
+    shape: _dialogShape,
+  );
+
+  static const DatePickerThemeData _datePickerTheme = DatePickerThemeData(
+    backgroundColor: AppColors.surface,
+    surfaceTintColor: AppColors.transparent,
+    shape: _dialogShape,
   );
 
   static const AppBarTheme _appBarTheme = AppBarTheme(

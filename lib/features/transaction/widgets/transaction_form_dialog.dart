@@ -105,6 +105,7 @@ class _TransactionFormDialogState extends State<TransactionFormDialog> {
         final hasError = _isSubmitted && state.saveStatus == AppStatus.failure;
         return FormDialog(
           title: widget.transaction.isNew ? 'transaction.add_title'.tr : 'transaction.edit_title'.tr,
+          icon: Icons.account_balance_wallet_outlined,
           saveLabel: 'common.save'.tr,
           cancelLabel: 'common.cancel'.tr,
           isSaving: state.saveStatus == AppStatus.loading,

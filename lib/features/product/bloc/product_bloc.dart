@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -38,14 +40,35 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     emit(state.copyWith(category: event.category));
   }
 
+  // บันทึกสินค้าก่อน แล้วค่อยอัปโหลด / ลบรูป
+  // รูปพังแต่สินค้าบันทึกแล้ว → ยังนับว่าสำเร็จ (ปิดกล่องฟอร์ม กันกดบันทึกซ้ำจนได้สินค้าซ้ำ) แล้วบอกผ่าน imageErrorCode
   Future<void> _onProductSaved(ProductSaved event, Emitter<ProductState> emit) async {
-    emit(state.copyWith(saveStatus: AppStatus.loading));
+    emit(state.copyWith(saveStatus: AppStatus.loading, imageErrorCode: ''));
+    final ProductModel saved;
     try {
-      await repository.saveProduct(event.product);
-      final products = await repository.getProducts();
-      emit(state.copyWith(saveStatus: AppStatus.success, products: products));
+      saved = await repository.saveProduct(event.product);
     } catch (error) {
       emit(state.copyWith(saveStatus: AppStatus.failure, saveErrorCode: ErrorUtil.codeOf(error)));
+      return;
+    }
+
+    var imageErrorCode = '';
+    try {
+      final image = event.image;
+      if (image != null) {
+        await repository.uploadImage(saved.id, image);
+      } else if (event.removeImage && saved.hasImage) {
+        await repository.deleteImage(saved.id);
+      }
+    } catch (error) {
+      imageErrorCode = ErrorUtil.codeOf(error);
+    }
+
+    try {
+      final products = await repository.getProducts();
+      emit(state.copyWith(saveStatus: AppStatus.success, products: products, imageErrorCode: imageErrorCode));
+    } catch (error) {
+      emit(state.copyWith(saveStatus: AppStatus.success, imageErrorCode: imageErrorCode));
     }
   }
 

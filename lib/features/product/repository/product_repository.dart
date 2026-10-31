@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:costbook/core/network/api_client.dart';
 import 'package:costbook/features/product/models/product_model.dart';
 
@@ -27,5 +29,15 @@ class ProductRepository {
 
   Future<void> deleteProduct(String id) async {
     await api.delete('/products/$id');
+  }
+
+  Future<ProductModel> uploadImage(String id, Uint8List bytes) async {
+    final data = await api.putFile('/products/$id/image', 'image', bytes, 'product.jpg') as Map<String, dynamic>;
+    return ProductModel.fromJson(data);
+  }
+
+  Future<ProductModel> deleteImage(String id) async {
+    final data = await api.delete('/products/$id/image') as Map<String, dynamic>;
+    return ProductModel.fromJson(data);
   }
 }

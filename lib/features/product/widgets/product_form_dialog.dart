@@ -1,7 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:costbook/core/constants/app_status.dart';
+import 'package:costbook/core/helpers/image_pick_helper.dart';
 import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
@@ -10,7 +13,9 @@ import 'package:costbook/core/utils/validator_util.dart';
 import 'package:costbook/features/product/bloc/product_bloc.dart';
 import 'package:costbook/features/product/models/product_model.dart';
 import 'package:costbook/features/product/widgets/custom_field_input.dart';
+import 'package:costbook/features/product/widgets/product_image.dart';
 import 'package:costbook/features/settings/models/product_field_model.dart';
+import 'package:costbook/shared/widgets/atoms/app_image_box.dart';
 import 'package:costbook/shared/widgets/atoms/app_text_field.dart';
 import 'package:costbook/shared/widgets/organisms/form_dialog.dart';
 
@@ -46,6 +51,13 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   late final Map<String, String> _customValues = {...widget.product.customFields};
   bool _isSubmitted = false;
 
+  // รูปใหม่ที่เลือก (ยังไม่ได้ส่ง) / กดลบรูปเดิม / error ของรูปก่อนส่ง เช่น ใหญ่เกิน
+  Uint8List? _newImage;
+  bool _removeImage = false;
+  String _imageErrorCode = '';
+
+  bool get _showsImage => _newImage != null || (widget.product.hasImage && !_removeImage);
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -68,6 +80,28 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     _customValues[fieldId] = value;
   }
 
+  Future<void> _pickImage() async {
+    final bytes = await ImagePickHelper.pick();
+    if (bytes == null) return;
+    if (bytes.length > ImagePickHelper.maxBytes) {
+      setState(() => _imageErrorCode = 'product_image_too_large');
+      return;
+    }
+    setState(() {
+      _newImage = bytes;
+      _removeImage = false;
+      _imageErrorCode = '';
+    });
+  }
+
+  void _clearImage() {
+    setState(() {
+      _newImage = null;
+      _removeImage = true;
+      _imageErrorCode = '';
+    });
+  }
+
   void _onSave() {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) return;
@@ -85,7 +119,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
       trackStock: _trackStock,
       customFields: Map.fromEntries(_customValues.entries.where((entry) => entry.value.isNotEmpty)),
     );
-    context.read<ProductBloc>().add(ProductSaved(product));
+    context.read<ProductBloc>().add(ProductSaved(product, image: _newImage, removeImage: _removeImage));
   }
 
   @override
@@ -98,6 +132,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
         final hasError = _isSubmitted && state.saveStatus == AppStatus.failure;
         return FormDialog(
           title: widget.product.isNew ? 'product.add'.tr : 'product.edit'.tr,
+          icon: Icons.inventory_2_outlined,
           saveLabel: 'common.save'.tr,
           cancelLabel: 'common.cancel'.tr,
           isSaving: state.saveStatus == AppStatus.loading,
@@ -115,6 +150,8 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          _imageSection(context),
+          const SizedBox(height: AppSizes.spaceLarge),
           AppTextField(
             label: 'product.name'.tr,
             hint: 'product.name_hint'.tr,
@@ -155,6 +192,58 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
           ],
         ],
       ),
+    );
+  }
+
+  // รูปสินค้า: ตัวอย่างรูป + ปุ่มเลือก / ลบ (ส่งรูปตอนกดบันทึก)
+  Widget _imageSection(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final preview =
+        _newImage != null
+            ? AppImageBox(bytes: _newImage, width: AppSizes.productImagePreview, height: AppSizes.productImagePreview)
+            : ProductImage(
+              product: _removeImage ? const ProductModel(name: '') : widget.product,
+              width: AppSizes.productImagePreview,
+              height: AppSizes.productImagePreview,
+            );
+    return Row(
+      children: [
+        preview,
+        const SizedBox(width: AppSizes.spaceMedium),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('product.image'.tr, style: textTheme.titleSmall),
+              const SizedBox(height: AppSizes.spaceXSmall),
+              Text('product.image_hint'.tr, style: textTheme.bodySmall),
+              const SizedBox(height: AppSizes.spaceSmall),
+              Wrap(
+                spacing: AppSizes.spaceSmall,
+                runSpacing: AppSizes.spaceXSmall,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _pickImage,
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: Text(_showsImage ? 'product.image_change'.tr : 'product.image_pick'.tr),
+                  ),
+                  if (_showsImage)
+                    TextButton.icon(
+                      onPressed: _clearImage,
+                      style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+                      icon: const Icon(Icons.delete_outline),
+                      label: Text('product.image_remove'.tr),
+                    ),
+                ],
+              ),
+              if (_imageErrorCode.isNotEmpty) ...[
+                const SizedBox(height: AppSizes.spaceXSmall),
+                Text('error.$_imageErrorCode'.tr, style: textTheme.bodySmall?.copyWith(color: AppColors.danger)),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 

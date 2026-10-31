@@ -7,6 +7,7 @@ import 'package:costbook/core/utils/money_util.dart';
 class SellProductTile extends StatelessWidget {
   const SellProductTile({
     super.key,
+    required this.image,
     required this.name,
     required this.price,
     required this.stockText,
@@ -15,6 +16,7 @@ class SellProductTile extends StatelessWidget {
     required this.onTap,
   });
 
+  final Widget image;
   final String name;
   final double price;
   final String stockText;
@@ -40,8 +42,10 @@ class SellProductTile extends StatelessWidget {
               border: Border.all(color: AppColors.border),
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                image,
+                const SizedBox(height: AppSizes.spaceSmall),
                 Text(name, style: textTheme.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: AppSizes.spaceSmall),
                 Text(MoneyUtil.format(price), style: textTheme.titleMedium?.copyWith(color: AppColors.primary)),

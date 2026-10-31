@@ -35,6 +35,7 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
       title: 'invoice.cancel_title'.trParams({'no': invoice.invoiceNo}),
       message: 'invoice.cancel_message'.tr,
       confirmText: 'invoice.cancel_confirm'.tr,
+      icon: Icons.block,
     );
     if (isConfirmed) bloc.add(InvoiceCancelRequested());
   }

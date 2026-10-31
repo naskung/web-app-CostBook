@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'package:costbook/core/constants/api_constants.dart';
+
 class ProductModel extends Equatable {
   const ProductModel({
     this.id = '',
@@ -15,6 +17,7 @@ class ProductModel extends Equatable {
     this.batchQuantity = 1,
     this.trackStock = true,
     this.customFields = const {},
+    this.imageVersion = 0,
   });
 
   final String id;
@@ -31,7 +34,14 @@ class ProductModel extends Equatable {
   final bool trackStock;
   final Map<String, String> customFields;
 
+  // เวลาที่เปลี่ยนรูปล่าสุด (มาจาก API) 0 = ไม่มีรูป — แก้ผ่าน ProductRepository.uploadImage / deleteImage เท่านั้น
+  final int imageVersion;
+
   bool get isNew => id.isEmpty;
+
+  bool get hasImage => imageVersion > 0;
+
+  String get imageUrl => hasImage ? ApiConstants.productImageUrl(id, imageVersion) : '';
 
   bool get isLowStock => trackStock && stock <= minStock;
 
@@ -60,6 +70,7 @@ class ProductModel extends Equatable {
       batchQuantity: (json['batch_quantity'] as num? ?? 1).toInt(),
       trackStock: json['track_stock'] as bool? ?? true,
       customFields: customFields.map((key, value) => MapEntry(key.toString(), value.toString())),
+      imageVersion: (json['image_version'] as num? ?? 0).toInt(),
     );
   }
 
@@ -96,5 +107,6 @@ class ProductModel extends Equatable {
     batchQuantity,
     trackStock,
     customFields,
+    imageVersion,
   ];
 }

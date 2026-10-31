@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -13,6 +14,9 @@ class ApiClient {
 
   final http.Client _client;
 
+  // header ที่ต้องส่งตอนโหลดรูปที่ต้อง login (เช่น รูปสินค้า) ด้วย Image.network
+  static Map<String, String> get authHeaders => token.isEmpty ? const {} : {'Authorization': 'Bearer $token'};
+
   Future<dynamic> get(String path) => _send('GET', path);
 
   Future<dynamic> post(String path, Map<String, dynamic> body) => _send('POST', path, body);
@@ -21,11 +25,22 @@ class ApiClient {
 
   Future<dynamic> delete(String path) => _send('DELETE', path);
 
-  Future<dynamic> _send(String method, String path, [Map<String, dynamic>? body]) async {
+  // ส่งไฟล์แบบ multipart/form-data (PUT) ในช่องชื่อ field เช่น รูปสินค้า
+  Future<dynamic> putFile(String path, String field, Uint8List bytes, String filename) {
+    final request = http.MultipartRequest('PUT', Uri.parse('${ApiConstants.baseUrl}$path'));
+    request.headers.addAll(authHeaders);
+    request.files.add(http.MultipartFile.fromBytes(field, bytes, filename: filename));
+    return _sendRequest(request);
+  }
+
+  Future<dynamic> _send(String method, String path, [Map<String, dynamic>? body]) {
     final request = http.Request(method, Uri.parse('${ApiConstants.baseUrl}$path'));
     request.headers.addAll(_headers());
     if (body != null) request.body = jsonEncode(body);
+    return _sendRequest(request);
+  }
 
+  Future<dynamic> _sendRequest(http.BaseRequest request) async {
     final http.Response response;
     try {
       response = await http.Response.fromStream(await _client.send(request));
@@ -35,11 +50,7 @@ class ApiClient {
     return _readBody(response);
   }
 
-  Map<String, String> _headers() {
-    final headers = {'Content-Type': 'application/json'};
-    if (token.isNotEmpty) headers['Authorization'] = 'Bearer $token';
-    return headers;
-  }
+  Map<String, String> _headers() => {'Content-Type': 'application/json', ...authHeaders};
 
   dynamic _readBody(http.Response response) {
     final isSuccess = response.statusCode >= 200 && response.statusCode < 300;

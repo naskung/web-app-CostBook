@@ -11,6 +11,7 @@ class CostState extends Equatable {
     this.errorCode = '',
     this.saveStatus = AppStatus.initial,
     this.saveErrorCode = '',
+    this.presetErrorCode = '',
   });
 
   final AppStatus status;
@@ -22,6 +23,7 @@ class CostState extends Equatable {
   final String errorCode;
   final AppStatus saveStatus;
   final String saveErrorCode;
+  final String presetErrorCode;
 
   CostState copyWith({
     AppStatus? status,
@@ -33,6 +35,7 @@ class CostState extends Equatable {
     String? errorCode,
     AppStatus? saveStatus,
     String? saveErrorCode,
+    String? presetErrorCode,
   }) {
     return CostState(
       status: status ?? this.status,
@@ -44,6 +47,7 @@ class CostState extends Equatable {
       errorCode: errorCode ?? this.errorCode,
       saveStatus: saveStatus ?? this.saveStatus,
       saveErrorCode: saveErrorCode ?? this.saveErrorCode,
+      presetErrorCode: presetErrorCode ?? this.presetErrorCode,
     );
   }
 
@@ -58,5 +62,6 @@ class CostState extends Equatable {
     errorCode,
     saveStatus,
     saveErrorCode,
+    presetErrorCode,
   ];
 }

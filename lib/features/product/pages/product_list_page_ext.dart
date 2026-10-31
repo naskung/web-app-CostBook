@@ -88,11 +88,20 @@ extension _ProductListPageExt on ProductListPage {
   Widget _nameCell(BuildContext context, ProductModel product) {
     final textTheme = Theme.of(context).textTheme;
     final details = [product.code, product.category, product.unit].where((text) => text.isNotEmpty).join(' · ');
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(product.name, style: textTheme.titleSmall),
-        if (details.isNotEmpty) Text(details, style: textTheme.bodySmall),
+        ProductImage(product: product, width: AppSizes.productThumb, height: AppSizes.productThumb),
+        const SizedBox(width: AppSizes.spaceSmall + AppSizes.spaceXSmall),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(product.name, style: textTheme.titleSmall),
+              if (details.isNotEmpty) Text(details, style: textTheme.bodySmall),
+            ],
+          ),
+        ),
       ],
     );
   }

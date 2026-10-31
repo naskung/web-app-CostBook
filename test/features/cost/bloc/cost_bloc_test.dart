@@ -23,6 +23,7 @@ void main() {
   const coffee = ProductModel(id: 'p1', name: 'กาแฟเย็น');
   const beans = CostItemModel(type: 'material', name: 'เมล็ดกาแฟ', quantity: 1, unitPrice: 200);
   const preset = CostPresetModel(id: 'pr1', type: 'material', name: 'เมล็ดกาแฟ', unitPrice: 200);
+  const editedPreset = CostPresetModel(id: 'pr1', type: 'material', name: 'เมล็ดกาแฟ', unitPrice: 250);
   const sheet = CostSheetModel(productId: 'p1', productName: 'กาแฟเย็น', batchQuantity: 10);
 
   setUpAll(() {
@@ -226,6 +227,65 @@ void main() {
     expect:
         () => [
           const CostState(presets: [preset]),
+        ],
+  );
+
+  blocTest<CostBloc, CostState>(
+    'CostPresetSaved รายการที่มี id = แก้รายการเดิม แล้วได้ราคาใหม่',
+    build: () {
+      when(() => repository.savePreset(any())).thenAnswer((_) async {});
+      when(() => repository.getPresets()).thenAnswer((_) async => [editedPreset]);
+      return buildBloc();
+    },
+    seed: () => const CostState(presets: [preset]),
+    act: (bloc) => bloc.add(CostPresetSaved(editedPreset)),
+    expect:
+        () => [
+          const CostState(presets: [editedPreset]),
+        ],
+    verify: (_) => verify(() => repository.savePreset(editedPreset)).called(1),
+  );
+
+  blocTest<CostBloc, CostState>(
+    'CostPresetSaved ไม่สำเร็จ ได้ presetErrorCode รายการเดิมยังอยู่',
+    build: () {
+      when(() => repository.savePreset(any())).thenThrow(ApiException('cost_preset_not_found'));
+      return buildBloc();
+    },
+    seed: () => const CostState(presets: [preset]),
+    act: (bloc) => bloc.add(CostPresetSaved(preset)),
+    expect:
+        () => [
+          const CostState(presets: [preset], presetErrorCode: 'cost_preset_not_found'),
+        ],
+  );
+
+  blocTest<CostBloc, CostState>(
+    'CostPresetSaved สำเร็จหลังเคยพัง ล้าง presetErrorCode',
+    build: () {
+      when(() => repository.savePreset(any())).thenAnswer((_) async {});
+      when(() => repository.getPresets()).thenAnswer((_) async => [preset]);
+      return buildBloc();
+    },
+    seed: () => const CostState(presetErrorCode: 'server_error'),
+    act: (bloc) => bloc.add(CostPresetSaved(preset)),
+    expect:
+        () => [
+          const CostState(presets: [preset]),
+        ],
+  );
+
+  blocTest<CostBloc, CostState>(
+    'CostPresetDeleted ไม่สำเร็จ ได้ presetErrorCode รายการยังไม่หาย',
+    build: () {
+      when(() => repository.deletePreset('pr1')).thenThrow(ApiException('server_error'));
+      return buildBloc();
+    },
+    seed: () => const CostState(presets: [preset]),
+    act: (bloc) => bloc.add(CostPresetDeleted('pr1')),
+    expect:
+        () => [
+          const CostState(presets: [preset], presetErrorCode: 'server_error'),
         ],
   );
 

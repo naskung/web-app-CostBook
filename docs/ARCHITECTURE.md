@@ -40,6 +40,7 @@ Backend อยู่ที่ repo `../api-Costbook` — ระหว่าง�
 | `intl` | format ตัวเลข / เงิน / วันที่ |
 | `pdf`, `printing` | สร้างและพิมพ์ใบกำกับภาษี |
 | `fl_chart` | กราฟในหน้าภาพรวม (แท่งรายวัน, เส้นย้อนหลัง 6 เดือน) — ผู้ใช้อนุญาต 2026-10-31 |
+| `image_picker` | เลือกรูปสินค้าจากเครื่อง + ย่อรูปบนเว็บให้ (ใช้ผ่าน `ImagePickHelper` เท่านั้น) — ผู้ใช้อนุญาต 2026-11-01 |
 | `bloc_test`, `mocktail` (dev) | เขียน unit test ของ bloc |
 
 เพิ่มครบทุกตัวแล้ว (2026-10-31)
@@ -78,14 +79,16 @@ web-app-CostBook/
 │   │   ├── theme/         app_colors.dart (สี), app_sizes.dart (ขนาดตัวอักษร / ระยะห่าง), app_theme.dart (ฟอนต์ + รวมเป็น ThemeData)
 │   │   ├── utils/         money_util, tax_util, cost_util, date_util, validator_util, error_util, responsive_util,
 │   │   │                  percent_util (% เทียบเดือนก่อน), market_util (เทียบราคาตลาด), chart_util (สเกลแกนกราฟ)
-│   │   └── helpers/       dialog_helper.dart (ถามยืนยัน), snackbar_helper.dart, pdf_helper.dart (พิมพ์ / ดาวน์โหลด PDF), responsive_helper.dart
+│   │   └── helpers/       dialog_helper.dart (ถามยืนยัน), snackbar_helper.dart, pdf_helper.dart (พิมพ์ / ดาวน์โหลด PDF), responsive_helper.dart,
+│   │                      image_pick_helper.dart (เลือกรูป + ย่อเหลือด้านยาว 1200 px)
 │   ├── shared/
 │   │   └── widgets/
-│   │       ├── atoms/       app_button, app_text_field, app_dropdown, app_loading, app_badge, money_text, shop_logo
+│   │       ├── atoms/       app_button, app_text_field, app_dropdown, app_loading, app_badge, money_text, shop_logo, app_image_box (รูปมุมมน / ไม่มีรูป = กล่องไอคอน)
 │   │       ├── molecules/   empty_view, error_view, stat_card, kpi_card (ตัวเลข + % เทียบเดือนก่อน), month_switcher, search_field, section_card, notice_banner,
 │   │       │                chart_legend, ranked_bar_list (แท่งแนวนอนเรียงมากไปน้อย), market_range_bar (ราคาเรา vs ช่วงราคาตลาด)
 │   │       └── organisms/   page_layout, app_side_menu, screen_scaler, page_content (ขอบ + ความกว้างหน้า + เว้นที่ล่างให้ปุ่มแชท), page_toolbar,
-│   │                        app_data_table (จอคอม = ตาราง / มือถือ = การ์ด), form_dialog (กล่องฟอร์ม), stat_grid
+│   │                        app_data_table (จอคอม = ตาราง / มือถือ = การ์ด), app_dialog (โครง dialog กลาง), form_dialog (กล่องฟอร์ม),
+│   │                        app_alert_dialog (กล่องยืนยัน / แจ้งผล ไอคอนวงกลม), stat_grid
 │   └── features/          ทุก feature: models → repository → bloc → pages (+ _ext ถ้ายาว) → widgets
 │       ├── auth/            login + จดจำ token / อีเมล
 │       ├── dashboard/       หน้าภาพรวม (pages: dashboard_page + _ext + _charts)
@@ -95,8 +98,8 @@ web-app-CostBook/
 │       ├── assistant/       แชทผู้ช่วย AI แบบลอยทุกหน้า (AiRepository + AiStatusModel ใช้ร่วมกับ market / settings) ไม่มีหน้าของตัวเอง
 │       │                    widgets/chat_launcher (ปุ่มมุมขวาล่าง / หน้าต่าง), chat_panel (+ _ext), chat_bubble, ai_action_card
 │       ├── sell/            หน้าขายด่วน (ใช้ InvoiceFormBloc ของ invoice) + widgets/sell_product_tile.dart
-│       ├── product/         รายการ / ค้นหา / หมวด / เพิ่ม / แก้ / ลบสินค้า (widgets/product_form_dialog.dart, custom_field_input.dart)
-│       ├── cost/            ใบต้นทุนของสินค้า + markup → ราคาขาย (widgets/cost_item_dialog.dart, cost_presets_dialog.dart)
+│       ├── product/         รายการ / ค้นหา / หมวด / เพิ่ม / แก้ / ลบสินค้า + รูป (widgets/product_form_dialog.dart, custom_field_input.dart, product_image.dart)
+│       ├── cost/            ใบต้นทุนของสินค้า + markup → ราคาขาย (widgets/cost_item_dialog.dart = ฟอร์มบรรทัดต้นทุน / รายการที่ใช้บ่อย (`forPreset`), cost_presets_dialog.dart = จัดการรายการที่ใช้บ่อย)
 │       ├── stock/           คงเหลือ / ใกล้หมด / ประวัติ / รับเข้า / เบิกออก (widgets/stock_movement_dialog.dart)
 │       ├── transaction/     รายรับ-รายจ่ายรายเดือน + สรุป (widgets/transaction_form_dialog.dart)
 │       ├── invoice/         bloc 3 ตัว: invoice_list / invoice_form / invoice_detail
@@ -439,8 +442,16 @@ token หมดอายุ (7 วัน) / ถูกปฏิเสธ: API ต
 | ภาพรวม | `/` | `DashboardBloc` | หน้าตาตามตัวอย่างที่ผู้ใช้ส่งมา: แถวบน `KpiCard` 4 ช่อง (กำไรขั้นต้น / กำไรสุทธิ / จำนวนบิล / รายจ่าย + `DeltaPill` เทียบเดือนก่อน) → ยอดขาย (ตัวเลขใหญ่ + เส้นยอดสะสมเดือนนี้ vs เดือนก่อน + 3 หมวดแรก) คู่กับวันที่ขายดี (แท่งตามวันในสัปดาห์ เน้นวันที่ขายดีสุด) → สินค้าขายดี + รายจ่ายตามหมวด คู่กับ margin (เกจ) + ช่องถาม AI → ย้อนหลัง 6 เดือน → เทียบราคาตลาด คู่กับสต็อก — จอกว้าง ≥ 960 เป็น 2 คอลัมน์ (3 : 2) แคบกว่านั้นเรียงลงมา |
 | เช็คราคาตลาด | `/products/:id/market` | `MarketBloc` | เปิดจากปุ่มรูปลูกโลกในหน้าสินค้า หรือชื่อสินค้าในภาพรวม — ดูผลเดิมฟรี กด "เช็คใหม่" = ค่าใช้จ่าย AI |
 | ขายด่วน | `/sell` | `InvoiceFormBloc` (ตัวเดียวกับฟอร์มเอกสารขาย) | หน้าขายหน้าร้าน: ค้นหา / สแกนรหัสแล้วกด Enter (`InvoiceCodeScanned`) → ลงบิล → รับเงิน → "ขายบิลต่อไป" (`InvoiceFormReset` ล้างบิล + โหลดสต็อกใหม่) |
-| สินค้า | `/products` | `ProductBloc` | ค้นหาในเครื่อง (`visibleProducts` ค้นจากชื่อ / รหัส / หมวด / ช่องเพิ่มเติม) + เลือกหมวด, column ของช่องเพิ่มเติมที่ `showInList`, ลบสินค้าที่อยู่ในใบกำกับไม่ได้ |
-| คำนวณต้นทุน | `/cost` | `CostBloc` | แก้ใบต้นทุนในเครื่องก่อน (`isDirty`) แล้วกด "บันทึก" ส่งทั้งใบ, บรรทัดแบบ จำนวน × ราคา หรือ %, รายการที่ใช้บ่อย (`presets`) — ร้านปิด `useCostPage` → ซ่อนเมนูนี้ |
+| สินค้า | `/products` | `ProductBloc` | ค้นหาในเครื่อง (`visibleProducts` ค้นจากชื่อ / รหัส / หมวด / ช่องเพิ่มเติม) + เลือกหมวด, column ของช่องเพิ่มเติมที่ `showInList`, ลบสินค้าที่อยู่ในใบกำกับไม่ได้, รูปเล็กหน้าชื่อ |
+
+**รูปสินค้า** (1 รูป / สินค้า):
+
+- `ProductModel.imageVersion` (จาก API, 0 = ไม่มีรูป) → `hasImage`, `imageUrl` = `/products/{id}/image?v=<imageVersion>` (เปลี่ยนรูปแล้ว URL เปลี่ยน รูปเก่าไม่ค้าง)
+- แสดงด้วย `ProductImage` (ส่ง token ผ่าน `ApiClient.authHeaders` เพราะเส้นรูปต้อง login) — ตารางสินค้า / การ์ดมือถือ / การ์ดหน้าขายด่วน / ตัวอย่างในฟอร์ม
+- ฟอร์มสินค้า: เลือกรูป (`ImagePickHelper.pick` ย่อด้านยาว ≤ 1200 px คุณภาพ 85%) → เกิน 1 MB เตือนทันทีไม่ส่ง → กดบันทึก = `ProductSaved(product, image:, removeImage:)`
+- `ProductBloc`: บันทึกสินค้าก่อน แล้วอัปโหลด (`ApiClient.putFile`) / ลบรูป — รูปพังแต่สินค้าบันทึกแล้ว = ยังสำเร็จ (ปิดฟอร์ม กันกดซ้ำจนสินค้าซ้ำ) แล้วบอกผ่าน `imageErrorCode` → snackbar
+- เพิ่ม plugin ใหม่แล้ว `flutter build web` ยังใช้ตัวลงทะเบียน plugin เก่า (เจอ "No implementation found") → ลบ `.dart_tool/flutter_build` หรือ `flutter clean` แล้ว build ใหม่
+| คำนวณต้นทุน | `/cost` | `CostBloc` | แก้ใบต้นทุนในเครื่องก่อน (`isDirty`) แล้วกด "บันทึก" ส่งทั้งใบ, บรรทัดแบบ จำนวน × ราคา หรือ %, รายการที่ใช้บ่อย (`presets`): ปุ่ม "รายการที่ใช้บ่อย (n)" เปิดหน้าต่างเพิ่ม / แก้ / ลบ (ลบต้องยืนยัน, error อยู่ใน `presetErrorCode`) เปิดได้แม้ยังไม่มีสินค้า — แก้ราคาในรายการที่ใช้บ่อย **ไม่เปลี่ยน** ใบต้นทุนที่บันทึกไปแล้ว — ร้านปิด `useCostPage` → ซ่อนเมนูนี้ |
 | สต็อก | `/stock` | `StockBloc` | โหลดคงเหลือทุกสินค้าครั้งเดียว กรอง "ใกล้หมด" ในเครื่อง, แท็บประวัติโหลดเมื่อเปิด, รับเข้าใส่ต้นทุนต่อหน่วย + ผู้ขายได้ (API คิดต้นทุนเฉลี่ย) — สินค้าไม่นับสต็อกไม่โชว์ |
 | รายรับ-รายจ่าย | `/transactions` | `TransactionBloc` | หมวดเป็นรหัส (`TransactionModel.incomeCategories / expenseCategories`) แสดงด้วย `'transaction.category.<code>'.tr` |
 | เอกสารขาย | `/invoices`, `/invoices/create`, `/invoices/:id` | `InvoiceListBloc`, `InvoiceFormBloc`, `InvoiceDetailBloc` | ออกใบสำเร็จ → ไปหน้าดูใบ (`AppRoutes.invoiceDetailPath(id)`), ร้านจด VAT ได้ใบกำกับภาษี ไม่จด ได้ใบเสร็จรับเงิน |
@@ -479,6 +490,19 @@ token หมดอายุ (7 วัน) / ถูกปฏิเสธ: API ต
 ผลของการบันทึก / ลบ แยกเป็น field ของ state: `saveStatus` / `saveErrorCode` (กล่องฟอร์มใช้ — สำเร็จแล้วปิดเอง ไม่สำเร็จแสดง error ในกล่อง) และ `deleteStatus` / `deleteErrorCode` (หน้าใช้ — แสดง snackbar)
 กล่องฟอร์มเปิดด้วย `XxxDialog.show(context, ...)` ซึ่งส่ง bloc ของหน้าเข้าไปด้วย `BlocProvider.value`
 
+**Dialog ทุกตัวใช้โครงเดียวกัน** (ห้ามใช้ `AlertDialog` ตรง ๆ):
+
+| ใช้ทำอะไร | widget | หน้าตา |
+|---|---|---|
+| ฟอร์มเพิ่ม / แก้ข้อมูล | `FormDialog` (ใส่ `icon` ทุกครั้ง) | หัว: ไอคอนในกล่องสีส้ม + ชื่อ + ปุ่ม ✕ → เนื้อหาเลื่อนได้ (แถบเลื่อนขึ้นเมื่อยาวเกิน) → กล่อง error สีแดงเหนือปุ่ม → แถบปุ่มสีเทาอ่อน (ยกเลิก = ปุ่มขอบ, บันทึก = ปุ่มส้ม) |
+| หน้าต่างอื่นที่มีรายการ / ปุ่มเอง | `AppDialog` | โครงเดียวกับ `FormDialog` ส่ง `actions` เอง (เช่น `CostPresetsDialog`) |
+| ถามยืนยันก่อนลบ / ยกเลิก | `DialogHelper.confirm(icon:)` → `AppAlertDialog` | ไอคอนวงกลมสีแดงตรงกลาง + ชื่อ + ข้อความ + ปุ่ม ยกเลิก / ยืนยัน (สีแดง) กว้างเท่ากัน |
+| แจ้งว่าทำสำเร็จ | `AppAlertDialog(isDanger: false)` | แบบเดียวกันแต่สีเขียว ปุ่มหลักสีส้ม (เช่น ขายแล้วในหน้าขายด่วน) |
+
+- พื้น dialog สีขาว ไม่ย้อมสีส้มตามธีม + ฉากหลังมืด (`AppTheme._dialogTheme`, ปฏิทินเลือกวันที่ใช้แบบเดียวกัน)
+- มือถือ: ขอบจอแคบลง (`AppSizes.dialogMobileInset`) และปุ่มด้านล่างกว้างเท่ากัน
+- `AppButton(variant:)`: `primary` (ส้ม), `secondary` (ปุ่มขอบ), `danger` (แดง) + ใส่ `icon` ได้
+
 ลองหน้าจอกับ API อื่นที่ไม่ใช่ `http://localhost:8080/api/v1` (เช่น server จริง / API ทดสอบ):
 `flutter build web --dart-define=API_URL=https://api.example.com/api/v1` (favicon ใน `web/index.html` ต้องแก้เอง)
 
@@ -512,11 +536,15 @@ class AppButton extends StatelessWidget {
     required this.text,
     required this.onPressed,
     this.isLoading = false,
+    this.icon,
+    this.variant = AppButtonVariant.primary, // primary / secondary / danger
   });
 
   final String text;
   final VoidCallback? onPressed;
   final bool isLoading;
+  final IconData? icon;
+  final AppButtonVariant variant;
 
   @override
   Widget build(BuildContext context) {
@@ -699,16 +727,24 @@ class DateUtil {
 ```dart
 // lib/core/helpers/dialog_helper.dart
 class DialogHelper {
-  /// ถามยืนยัน คืนค่า true ถ้ากดยืนยัน
-  static Future<bool> confirm(BuildContext context, String message) async {
+  // ถามยืนยันก่อนทำสิ่งที่ย้อนกลับไม่ได้ (ลบ / ยกเลิก) → true = กดยืนยัน
+  static Future<bool> confirm(
+    BuildContext context, {
+    required String title,
+    required String message,
+    required String confirmText,
+    IconData icon = Icons.delete_outline,
+  }) async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        content: Text(message),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('common.cancel'.tr)),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: Text('common.confirm'.tr)),
-        ],
+      builder: (dialogContext) => AppAlertDialog(
+        icon: icon,
+        title: title,
+        message: message,
+        primaryText: confirmText,
+        onPrimary: () => Navigator.pop(dialogContext, true),
+        secondaryText: 'common.cancel'.tr,
+        onSecondary: () => Navigator.pop(dialogContext, false),
       ),
     );
     return result ?? false;

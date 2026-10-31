@@ -31,6 +31,17 @@ void main() {
       expect([fromItem.name, fromItem.unit, fromItem.unitPrice], ['ค่าเครื่อง', 'ชม.', 6]);
     });
 
+    test('สร้างจากบรรทัดต้นทุนโดยไม่ส่ง id ได้ id ว่าง (= เพิ่มใหม่)', () {
+      const item = CostItemModel(type: 'material', name: 'เส้น PETG', unit: 'กรัม', unitPrice: 0.5);
+      expect(CostPresetModel.fromItem(item).id, '');
+    });
+
+    test('สร้างจากบรรทัดต้นทุนแล้วส่ง id ได้ id เดิม (= แก้รายการเดิม)', () {
+      const item = CostItemModel(type: 'material', name: 'เส้น PLA', unit: 'กรัม', unitPrice: 0.5);
+      final edited = CostPresetModel.fromItem(item, id: 'p1');
+      expect([edited.id, edited.name, edited.unitPrice], ['p1', 'เส้น PLA', 0.5]);
+    });
+
     test('เอาไปเป็นบรรทัดต้นทุน ได้จำนวนตามที่ส่ง', () {
       final item = preset.toItem(quantity: 40);
       expect([item.name, item.quantity, item.unitPrice], ['เส้น PLA', 40, 0.45]);
