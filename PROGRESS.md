@@ -74,4 +74,6 @@
 
 | วันที่ | ทำอะไร | หมายเหตุ |
 |---|---|---|
+| 2026-10-31 | เพิ่มกฎ "หน้าโค้ดเยอะ → แยกส่วนย่อยเป็น extension ในไฟล์ `<ชื่อหน้า>_ext.dart`" ใน skill `simple-code` และ `docs/ARCHITECTURE.md` (หัวข้อ 3, 8, 13) | แก้แค่เอกสาร ทดลองแบบ `part` + extension ในโปรเจกต์ชั่วคราวแล้ว analyze ผ่าน |
+| 2026-10-31 | เพิ่มกฎ "โค้ดที่ใช้ตั้งแต่ 2 จุด → แยกเป็นฟังก์ชันกลาง" ใน skill `simple-code` และ `docs/ARCHITECTURE.md` หัวข้อ 9 | แก้แค่เอกสาร ไม่มีโค้ด Dart |
 | 2026-10-31 | สร้าง `docs/ARCHITECTURE.md`, `CLAUDE.md`, `PROGRESS.md`, skill `simple-code` และ `unit-test-check` | ยังไม่มีโค้ด Flutter |

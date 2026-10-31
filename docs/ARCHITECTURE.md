@@ -77,7 +77,7 @@ web-app-CostBook/
 │       │   ├── bloc/        product_bloc.dart, product_event.dart, product_state.dart
 │       │   ├── models/      product_model.dart
 │       │   ├── repository/  product_repository.dart
-│       │   ├── pages/       product_list_page.dart, product_form_page.dart
+│       │   ├── pages/       product_list_page.dart, product_list_page_ext.dart (ถ้าหน้ายาว), product_form_page.dart
 │       │   └── widgets/     widget ที่ใช้เฉพาะ feature นี้
 │       ├── cost/
 │       ├── stock/
@@ -433,6 +433,8 @@ class ProductListPage extends StatelessWidget {
 }
 ```
 
+หน้าที่โค้ดเยอะ (`build()` ยาวเกินประมาณ 60 บรรทัด หรือไฟล์ยาวเกินประมาณ 150 บรรทัด) → แยกส่วนย่อยเป็น extension ในไฟล์ `<ชื่อหน้า>_ext.dart` (เชื่อมกันด้วย `part` / `part of`) ให้ `build()` เหลือแค่โครงหน้า — กฎและตัวอย่างอยู่ใน skill `simple-code` หัวข้อ "แยกโค้ดหน้าเป็น extension"
+
 ---
 
 ## 9. Utils และ Helpers
@@ -445,6 +447,8 @@ class ProductListPage extends StatelessWidget {
 | ตัวอย่าง | `MoneyUtil`, `TaxUtil`, `CostUtil`, `DateUtil`, `ValidatorUtil` | `DialogHelper`, `SnackbarHelper`, `PdfHelper` |
 
 เขียนเป็น `class` ที่มีแต่ `static` function
+
+โค้ดที่ใช้ตั้งแต่ **2 จุดขึ้นไป** ต้องแยกเป็นฟังก์ชันกลาง ห้าม copy-paste — ถ้าใช้ซ้ำแค่ในไฟล์เดียวให้เป็น private function (`_ชื่อ`) ในไฟล์นั้น ถ้าใช้หลายไฟล์ให้ย้ายมาไว้ที่ utils / helpers
 
 ```dart
 // lib/core/utils/money_util.dart
@@ -715,6 +719,7 @@ context.read<LanguageBloc>().add(ChangeLanguage('en')); // เปลี่ยน
 | ชนิด | ชื่อไฟล์ | ชื่อ class |
 |---|---|---|
 | Page | `product_list_page.dart` | `ProductListPage` |
+| Extension ของหน้า | `product_list_page_ext.dart` | `_ProductListPageExt` |
 | Bloc | `product_bloc.dart` | `ProductBloc` |
 | Event | `product_event.dart` | `LoadProducts`, `AddProduct`, `DeleteProduct` |
 | State | `product_state.dart` | `ProductState` |
