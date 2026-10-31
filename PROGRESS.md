@@ -4,7 +4,7 @@
 
 ## สถานะตอนนี้
 
-- **เสร็จแล้ว:** Phase 0, Phase 1 (เหลือ package intl / pdf / printing), theme + responsive + ภาษา ของ Phase 2, **login ต่อ API จริงแล้ว** (route `/login` ↔ `/`, จดจำการเข้าสู่ระบบ, ปุ่มออกจากระบบ)
+- **เสร็จแล้ว:** Phase 0, Phase 1 (เหลือ package intl / pdf / printing), theme + responsive + ภาษา ของ Phase 2, **login ต่อ API จริงแล้ว** (route `/login` ↔ `/`, จดจำการเข้าสู่ระบบ, ปุ่มออกจากระบบ), โลโก้ร้านจาก API ในหน้า login + favicon
 - **งานถัดไป:** รอผู้ใช้สั่ง — เช่น หน้าแรก / `PageLayout` (เมนูข้าง + แถบบน ย้ายปุ่มออกจากระบบไปไว้ในนั้น), จัดการ 401 `unauthorized` (token หมดอายุ)
 
 ---
@@ -51,6 +51,7 @@
 แต่ละ feature: model + test → repository → bloc + test → pages → widgets
 
 - [x] auth — login: UI + `AuthBloc` + `AuthRepository` + ต่อ API `POST /auth/login` + route `/login` + จดจำ token (`shared_preferences`) + logout + test
+- [x] auth — หน้า login แสดงโลโก้ร้านจาก `GET /company/logo` (โหลดไม่ได้ → ไอคอน CostBook) + favicon ใช้โลโก้ร้าน
 - [ ] auth — ได้ 401 `unauthorized` → ลบ token แล้วไปหน้า login (ทำตอนมี API ที่ต้อง login)
 - [ ] product — จัดการสินค้า
 - [ ] cost — คำนวณต้นทุน / ราคาขาย
@@ -83,6 +84,9 @@
 
 | วันที่ | ทำอะไร | หมายเหตุ |
 |---|---|---|
+| 2026-10-31 | แอนิเมชันเปลี่ยนหน้าแบบซูมแทนการเลื่อน: `AppPageTransition.forward` (หน้าทั่วไป: ขยายเข้า / หดออก) และ `.backward` (หน้า login: ย่อเข้า / ขยายออก) ใช้ผ่าน `pageBuilder` ใน `appRouter` + `ColoredBox` พื้นหลังใน `app.dart` | test 88 ผ่าน (มี test ยืนยันว่า `go` แล้วหน้าเก่าซูมออกจริง), อัดเฟรมตอน logout ใน Chrome แล้ว (เครื่องทดสอบเรนเดอร์ช้า เห็นแค่บางเฟรม) |
+| 2026-10-31 | ออกจากระบบแล้วหน้า login แสดงอีเมลเดิม: `AuthRepository` เก็บอีเมลล่าสุด (`last_email`) ทุกครั้งที่ login สำเร็จ, logout ลบแค่ token, เพิ่ม event `SavedEmailRequested` + `AuthState.savedEmail`, หน้า login ขออีเมลตอนเปิดแล้วใส่ช่องอีเมล (ถ้ายังว่าง) | เก็บอีเมลเสมอไม่ขึ้นกับติ๊กจดจำ, test 80 ผ่าน |
+| 2026-10-31 | โลโก้ร้านจาก API: เพิ่ม `ApiConstants.companyLogoUrl`, หน้า login แสดงโลโก้ (`Image.network` ในกรอบขาวมุมโค้ง 96 px เหนือชื่อแอป แทนไอคอนส้มเดิม — โหลดไม่ได้แสดงไอคอน CostBook ขนาดเดียวกัน), favicon ใน `web/index.html` ชี้ไปที่ `http://localhost:8080/api/v1/company/logo` (ไม่เพิ่ม package), `AppSizes.logoSize` + test (`api_constants_test` 2, login_page เพิ่ม 2) | analyze ผ่าน, test 72 ผ่าน, build web ผ่าน, ดูภาพจริงใน Chrome 375x667 / 1280x800 แล้ว โลโก้ MAKEHUB ขึ้น + favicon โหลดจาก API ได้ 200 — ร้านไม่มีโลโก้ favicon จะเป็นไอคอนว่างของ browser / `apple-touch-icon` และไอคอนใน `manifest.json` ยังเป็นของ Flutter เดิม |
 | 2026-10-31 | **ต่อ API login**: เพิ่ม package flutter_bloc, equatable, http, go_router, shared_preferences, bloc_test, mocktail / `ApiConstants`, `AppStatus`, `ApiClient` + `ApiException`, `AuthRepository` (login / logout / loadSavedToken), `AuthBloc` (`LoginSubmitted`, `LogoutRequested`), `AppRoutes` + `appRouter` (redirect: ไม่มี token → `/login`), `DashboardPage` (หน้าแรกเปล่า + ปุ่มออกจากระบบ), `AppButton.isLoading`, หน้า login แสดง error `'error.<code>'.tr` + ปุ่มหมุนตอนรอ, key ภาษา `common.logout`, `dashboard.welcome`, `error.*` (invalid_credentials, email_required, password_required, server_error, network_error, unknown_error) | analyze ผ่าน, test 68 ผ่าน (เพิ่ม api_client 8, auth_repository 6, auth_bloc 4, login_page 6, dashboard_page 2), `flutter build web` ผ่าน, ลองเรียก API จริงด้วย `ApiClient`: รหัสถูกได้ token / รหัสผิด + ไม่มีอีเมลได้ `invalid_credentials`, CORS preflight 204 — **ยังไม่ได้ดูภาพจริงใน Chrome** / ยังไม่จัดการ token หมดอายุ (`error.unauthorized` ยังไม่เพิ่ม) |
 | 2026-10-31 | **(จาก api-Costbook) API ข้อมูลร้าน + โลโก้ พร้อมใช้** (1 ระบบ = 1 ร้าน แก้ข้อมูลร้านผ่าน API หน้าเว็บไม่ต้องแก้): `GET /api/v1/company` → `{"name","address","tax_id","branch","phone","has_logo"}` (ไม่ต้อง login) / `PUT /api/v1/company` (ต้อง login) ส่งครบทุกช่อง → 400 `company_name_required`, `company_tax_id_invalid` / `GET /api/v1/company/logo` → รูปตรง ๆ ใช้ `Image.network` ได้ (ไม่ต้อง login) 404 `logo_not_found` = แสดงโลโก้ CostBook แทน / `PUT /api/v1/company/logo` multipart ช่อง `logo` PNG / JPG / WebP ≤ 1 MB → 400 `logo_required`, `logo_too_large`, `logo_type_invalid` / `DELETE /api/v1/company/logo` → 204 | ยังไม่ได้แก้โค้ด Flutter — ใช้ในหน้า settings + หน้า login + PDF ใบกำกับ, เพิ่ม key `error.<code>` ข้างบนใน `th.json` / `en.json`, หลังอัปโหลดโลโก้ใหม่ต้องล้าง cache รูป (`imageCache` / ใส่ key ใหม่) — รายละเอียด: `../api-Costbook/docs/ARCHITECTURE.md` หัวข้อ 7 หรือ `http://localhost:8080/docs` |
 | 2026-10-31 | ปิดแถบ DEBUG มุมขวาบน (`debugShowCheckedModeBanner: false` ใน `app.dart`) | |

@@ -63,4 +63,29 @@ void main() {
     await repository.loadSavedToken();
     expect(ApiClient.token, '');
   });
+
+  test('login สำเร็จ เก็บอีเมลไว้ แม้ไม่ติ๊กจดจำ', () async {
+    await repository.login(email: 'admin@costbook.com', password: '1234', rememberMe: false);
+    expect(await repository.loadSavedEmail(), 'admin@costbook.com');
+  });
+
+  test('login ไม่สำเร็จ ไม่เก็บอีเมล', () async {
+    when(() => api.post('/auth/login', {'email': 'wrong@costbook.com', 'password': 'x'}))
+        .thenThrow(Exception('invalid_credentials'));
+    await expectLater(
+      repository.login(email: 'wrong@costbook.com', password: 'x', rememberMe: false),
+      throwsException,
+    );
+    expect(await repository.loadSavedEmail(), '');
+  });
+
+  test('logout แล้ว อีเมลที่เคยใช้ยังอยู่', () async {
+    await repository.login(email: 'admin@costbook.com', password: '1234', rememberMe: true);
+    await repository.logout();
+    expect(await repository.loadSavedEmail(), 'admin@costbook.com');
+  });
+
+  test('loadSavedEmail ไม่เคย login ได้ค่าว่าง', () async {
+    expect(await repository.loadSavedEmail(), '');
+  });
 }

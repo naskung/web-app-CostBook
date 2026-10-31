@@ -22,6 +22,8 @@
 Backend อยู่ที่ repo `../api-Costbook` — ระหว่างที่ API ยังไม่เสร็จ ให้ repository คืนข้อมูลตัวอย่างไปก่อน (ใส่ `// TODO: ต่อ API`)
 
 - `ApiConstants.baseUrl = 'http://localhost:8080/api/v1'`
+- โลโก้ร้าน: `ApiConstants.companyLogoUrl` (`GET /company/logo` ไม่ต้อง login) ใช้ 2 ที่ — หน้า login (`Image.network`, โหลดไม่ได้ / ร้านยังไม่มีโลโก้ → ไอคอน CostBook สีส้มแทน) และ favicon ใน `web/index.html` (เขียน URL ตรง ๆ เพราะ favicon โหลดก่อน Flutter เริ่ม)
+  - เปลี่ยน `baseUrl` → ต้องแก้ URL favicon ใน `web/index.html` ด้วย (`test/core/constants/api_constants_test.dart` เช็คว่า 2 ที่ตรงกัน ลืมแก้ test ไม่ผ่าน)
 - endpoint, ชื่อ field ใน JSON และรูปแบบ error ดูที่ `../api-Costbook/docs/ARCHITECTURE.md` หัวข้อ 6–7
 
 ---
@@ -340,7 +342,10 @@ final appRouter = GoRouter(
       routes: [
         GoRoute(
           path: AppRoutes.dashboard,
-          builder: (context, state) => const DashboardPage(),
+          pageBuilder: (context, state) => AppPageTransition.forward(
+            key: state.pageKey,
+            child: const DashboardPage(),
+          ),
         ),
         GoRoute(
           path: AppRoutes.products,
@@ -371,6 +376,21 @@ context.push(AppRoutes.productEditPath(product.id)); // เปิดหน้า
 context.pop(); // ย้อนกลับ
 ```
 
+### แอนิเมชันเปลี่ยนหน้า (ซูม ไม่ใช่เลื่อน)
+
+ทุก route ใช้ `pageBuilder` + `AppPageTransition` (`core/routes/app_page_transition.dart`) — ห้ามใช้ `builder:` ตรง ๆ
+
+| ใช้กับ | เข้ามา | ตอนถูกหน้าอื่นแทน |
+|---|---|---|
+| `AppPageTransition.forward` — หน้าทั่วไป | ขยายจาก 0.9 → 1 + จางเข้า (เด้งนิด ๆ ตอนจบ) = เดินหน้า | หด 1 → 0.9 + จางหาย = ถอยไปข้างหลัง |
+| `AppPageTransition.backward` — หน้า login (มาจากการออกจากระบบ) | ย่อจาก 1.1 → 1 + จางเข้า = ถอยหลัง | ขยาย 1 → 1.1 + จางหาย = ผ่านไปข้างหน้า |
+
+- login → หน้าแรก: หน้า login ขยายจางหาย หน้าแรกขยายเข้ามา (เดินหน้า)
+- ออกจากระบบ: หน้าแรกหดจางหาย หน้า login ย่อเข้ามา (ถอยหลัง)
+- `context.pop()` เล่นแอนิเมชันย้อนกลับของหน้านั้นเอง (หดออก) = ถอยหลัง
+- ความเร็ว / ขนาดซูม แก้ที่ `AppPageTransition` ที่เดียว
+- `app.dart` มี `ColoredBox(AppColors.background)` รองไว้ใต้ทุกหน้า ระหว่างจางจะได้ไม่เห็นพื้นดำ
+
 ### Login และ token (ทำแล้ว)
 
 ```
@@ -384,10 +404,11 @@ LoginPage ──LoginSubmitted──▶ AuthBloc ──▶ AuthRepository.login 
 |---|---|
 | เปิดแอป | `main()` เรียก `AuthRepository(ApiClient()).loadSavedToken()` → มี token ที่จดจำไว้ก็เข้าหน้าแรกได้เลย |
 | กันเข้าหน้าที่ต้อง login | `redirect` ใน `appRouter`: ไม่มี token → ไป `/login`, มี token แล้วเปิด `/login` → ไป `/` |
-| login สำเร็จ | `AuthState.status == success` → `LoginPage` ไป `AppRoutes.dashboard` |
+| login สำเร็จ | `AuthState.status == success` → `LoginPage` ไป `AppRoutes.dashboard` และเก็บอีเมลล่าสุด (`last_email`) ในเครื่องเสมอ |
+| เปิดหน้า login | `initState` ส่ง `SavedEmailRequested` → `AuthState.savedEmail` → ใส่ช่องอีเมลให้ (ถ้ายังว่าง) |
 | login ไม่ผ่าน | แสดง `'error.${state.errorCode}'.tr` เหนือปุ่ม |
 | ไม่ติ๊กจดจำ | token อยู่แค่ในหน่วยความจำ → กด refresh / ปิดเว็บ ต้อง login ใหม่ |
-| logout | `LogoutRequested` → ลบ token ทั้ง 2 ที่ → กลับ `/login` |
+| logout | `LogoutRequested` → ลบ token ทั้ง 2 ที่ (อีเมลล่าสุดยังอยู่) → กลับ `/login` |
 
 error code ที่ `ApiClient` โยนออกมาเป็น `ApiException(code)`:
 - code จาก API ตรง ๆ เช่น `invalid_credentials`

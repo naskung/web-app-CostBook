@@ -19,6 +19,7 @@ class AppSizes {
 
   static const double buttonHeight = 52;
   static const double iconBox = 48;
+  static const double logoSize = 96;
   static const double checkboxSize = 24;
   static const double loadingSize = 20;
   static const double loadingStroke = 2;

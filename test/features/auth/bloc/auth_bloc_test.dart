@@ -84,4 +84,24 @@ void main() {
       verify(() => repository.logout()).called(1);
     },
   );
+
+  blocTest<AuthBloc, AuthState>(
+    'SavedEmailRequested ได้อีเมลที่เคยใช้ โดยสถานะยังเป็น initial (ไม่พาไปหน้าแรก)',
+    build: () {
+      when(() => repository.loadSavedEmail()).thenAnswer((_) async => 'admin@costbook.com');
+      return AuthBloc(repository);
+    },
+    act: (bloc) => bloc.add(SavedEmailRequested()),
+    expect: () => [const AuthState(savedEmail: 'admin@costbook.com')],
+  );
+
+  blocTest<AuthBloc, AuthState>(
+    'SavedEmailRequested ไม่เคย login ไม่มี state ใหม่',
+    build: () {
+      when(() => repository.loadSavedEmail()).thenAnswer((_) async => '');
+      return AuthBloc(repository);
+    },
+    act: (bloc) => bloc.add(SavedEmailRequested()),
+    expect: () => <AuthState>[],
+  );
 }

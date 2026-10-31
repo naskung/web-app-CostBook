@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:costbook/core/constants/app_status.dart';
+import 'package:costbook/core/constants/api_constants.dart';
 import 'package:costbook/core/constants/screen_type.dart';
 import 'package:costbook/core/helpers/responsive_helper.dart';
 import 'package:costbook/core/lang/app_lang.dart';
@@ -32,6 +33,12 @@ class _LoginPageState extends State<LoginPage> {
   bool _rememberMe = false;
 
   @override
+  void initState() {
+    super.initState();
+    context.read<AuthBloc>().add(SavedEmailRequested());
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -40,6 +47,11 @@ class _LoginPageState extends State<LoginPage> {
 
   void _onRememberMeChanged(bool? value) {
     setState(() => _rememberMe = value ?? false);
+  }
+
+  void _fillSavedEmail(String email) {
+    if (_emailController.text.isNotEmpty) return;
+    _emailController.text = email;
   }
 
   void _onLogin() {
@@ -60,9 +72,17 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
-      listenWhen: (previous, current) => current.status == AppStatus.success,
-      listener: (context, state) => context.go(AppRoutes.dashboard),
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<AuthBloc, AuthState>(
+          listenWhen: (previous, current) => current.status == AppStatus.success,
+          listener: (context, state) => context.go(AppRoutes.dashboard),
+        ),
+        BlocListener<AuthBloc, AuthState>(
+          listenWhen: (previous, current) => current.savedEmail.isNotEmpty,
+          listener: (context, state) => _fillSavedEmail(state.savedEmail),
+        ),
+      ],
       child: Scaffold(
         body: Stack(
           fit: StackFit.expand,

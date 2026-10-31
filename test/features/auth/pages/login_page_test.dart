@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:costbook/core/constants/api_constants.dart';
 import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/network/api_exception.dart';
 import 'package:costbook/core/routes/app_routes.dart';
@@ -29,6 +30,7 @@ void main() {
 
   setUp(() {
     repository = MockAuthRepository();
+    when(() => repository.loadSavedEmail()).thenAnswer((_) async => '');
   });
 
   void whenLogin(Future<void> Function() answer) {
@@ -99,6 +101,20 @@ void main() {
       expect(find.text('app.name'.tr), findsOneWidget);
       expect(find.text('login.subtitle'.tr), findsOneWidget);
     });
+  });
+
+  testWidgets('โหลดโลโก้ร้านจาก API company/logo', (tester) async {
+    await pumpLoginPage(tester, const Size(375, 667));
+    final logo = find.byWidgetPredicate(
+      (widget) => widget is Image && widget.image is NetworkImage && (widget.image as NetworkImage).url == ApiConstants.companyLogoUrl,
+    );
+    expect(logo, findsOneWidget);
+  });
+
+  testWidgets('โหลดโลโก้ร้านไม่ได้ แสดงไอคอน CostBook แทน', (tester) async {
+    await pumpLoginPage(tester, const Size(375, 667));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.menu_book_rounded), findsOneWidget);
   });
 
   testWidgets('แสดงชื่อช่องอีเมลและรหัสผ่านไว้เหนือช่องกรอก', (tester) async {
@@ -196,6 +212,21 @@ void main() {
     await tapLoginButton(tester);
     await tester.pump();
     expect(find.text('error.network_error'.tr), findsOneWidget);
+  });
+
+  testWidgets('เคย login ไว้ แสดงอีเมลเดิมในช่องอีเมล และยังอยู่หน้า login', (tester) async {
+    when(() => repository.loadSavedEmail()).thenAnswer((_) async => 'admin@costbook.com');
+    await pumpLoginPage(tester, const Size(375, 667));
+    await tester.pumpAndSettle();
+    expect(find.text('admin@costbook.com'), findsOneWidget);
+    expect(find.byType(LoginPage), findsOneWidget);
+  });
+
+  testWidgets('ไม่เคย login ช่องอีเมลว่าง', (tester) async {
+    await pumpLoginPage(tester, const Size(375, 667));
+    await tester.pumpAndSettle();
+    final emailField = tester.widget<TextFormField>(find.byType(TextFormField).first);
+    expect(emailField.controller?.text, '');
   });
 
   testWidgets('login สำเร็จ ไปหน้าแรก', (tester) async {

@@ -6,6 +6,7 @@ class AuthRepository {
   AuthRepository(this.api);
 
   static const String _tokenKey = 'token';
+  static const String _emailKey = 'last_email';
 
   final ApiClient api;
 
@@ -18,6 +19,7 @@ class AuthRepository {
     ApiClient.token = data['token'] as String? ?? '';
 
     final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_emailKey, email);
     if (rememberMe) {
       await prefs.setString(_tokenKey, ApiClient.token);
     } else {
@@ -34,5 +36,10 @@ class AuthRepository {
   Future<void> loadSavedToken() async {
     final prefs = await SharedPreferences.getInstance();
     ApiClient.token = prefs.getString(_tokenKey) ?? '';
+  }
+
+  Future<String> loadSavedEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_emailKey) ?? '';
   }
 }

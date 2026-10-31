@@ -12,6 +12,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc(this.repository) : super(const AuthState()) {
     on<LoginSubmitted>(_onLoginSubmitted);
     on<LogoutRequested>(_onLogoutRequested);
+    on<SavedEmailRequested>(_onSavedEmailRequested);
   }
 
   final AuthRepository repository;
@@ -35,5 +36,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onLogoutRequested(LogoutRequested event, Emitter<AuthState> emit) async {
     await repository.logout();
     emit(const AuthState(status: AppStatus.success));
+  }
+
+  Future<void> _onSavedEmailRequested(SavedEmailRequested event, Emitter<AuthState> emit) async {
+    final email = await repository.loadSavedEmail();
+    if (email.isEmpty) return;
+    emit(AuthState(savedEmail: email));
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:costbook/core/routes/app_router.dart';
+import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_theme.dart';
 import 'package:costbook/shared/widgets/organisms/screen_scaler.dart';
 
@@ -13,7 +14,9 @@ class App extends StatelessWidget {
       title: 'CostBook',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      builder: (context, child) => ScreenScaler(child: child ?? const SizedBox()),
+      builder: (context, child) => ScreenScaler(
+        child: ColoredBox(color: AppColors.background, child: child ?? const SizedBox()),
+      ),
       routerConfig: appRouter,
     );
   }

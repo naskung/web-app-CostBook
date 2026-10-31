@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:costbook/core/network/api_client.dart';
+import 'package:costbook/core/routes/app_page_transition.dart';
 import 'package:costbook/core/routes/app_routes.dart';
 import 'package:costbook/features/auth/bloc/auth_bloc.dart';
 import 'package:costbook/features/auth/pages/login_page.dart';
@@ -15,16 +16,22 @@ final appRouter = GoRouter(
   routes: [
     GoRoute(
       path: AppRoutes.login,
-      builder: (context, state) => BlocProvider(
-        create: _createAuthBloc,
-        child: const LoginPage(),
+      pageBuilder: (context, state) => AppPageTransition.backward(
+        key: state.pageKey,
+        child: BlocProvider(
+          create: _createAuthBloc,
+          child: const LoginPage(),
+        ),
       ),
     ),
     GoRoute(
       path: AppRoutes.dashboard,
-      builder: (context, state) => BlocProvider(
-        create: _createAuthBloc,
-        child: const DashboardPage(),
+      pageBuilder: (context, state) => AppPageTransition.forward(
+        key: state.pageKey,
+        child: BlocProvider(
+          create: _createAuthBloc,
+          child: const DashboardPage(),
+        ),
       ),
     ),
   ],

@@ -32,29 +32,38 @@ extension _LoginPageExt on _LoginPageState {
     final textTheme = Theme.of(context).textTheme;
     return Column(
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: AppSizes.iconBox,
-              height: AppSizes.iconBox,
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(AppSizes.radius),
-              ),
-              child: const Icon(Icons.menu_book_rounded, color: AppColors.onPrimary),
-            ),
-            const SizedBox(width: AppSizes.spaceMedium),
-            Text('app.name'.tr, style: textTheme.headlineSmall?.copyWith(color: AppColors.onDark)),
-          ],
-        ),
+        _shopLogo(),
         const SizedBox(height: AppSizes.spaceMedium),
+        Text('app.name'.tr, style: textTheme.headlineSmall?.copyWith(color: AppColors.onDark)),
+        const SizedBox(height: AppSizes.spaceSmall),
         Text(
           'app.tagline'.tr,
           style: textTheme.bodyLarge?.copyWith(color: AppColors.onDarkSecondary),
           textAlign: TextAlign.center,
         ),
       ],
+    );
+  }
+
+  Widget _shopLogo() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+      child: Image.network(
+        ApiConstants.companyLogoUrl,
+        width: AppSizes.logoSize,
+        height: AppSizes.logoSize,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _defaultLogo(),
+      ),
+    );
+  }
+
+  Widget _defaultLogo() {
+    return Container(
+      width: AppSizes.logoSize,
+      height: AppSizes.logoSize,
+      color: AppColors.primary,
+      child: const Icon(Icons.menu_book_rounded, color: AppColors.onPrimary, size: AppSizes.iconBox),
     );
   }
 
