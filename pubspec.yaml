@@ -19,7 +19,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # ฟอนต์หลักของแอป ตั้งค่าใช้งานที่ lib/core/theme/app_theme.dart
   fonts:
     - family: LINESeedSansTH
       fonts:

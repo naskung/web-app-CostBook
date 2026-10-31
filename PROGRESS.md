@@ -26,6 +26,7 @@
 ## Phase 2 — Core
 
 - [x] theme: `AppColors`, `AppSizes`, `AppTheme` + ฟอนต์ LINESeedSansTH
+- [x] รองรับทุกขนาดจอ: `ScreenType`, `ResponsiveUtil` + test, `ResponsiveHelper`, `ScreenScaler` (จอใหญ่ขยายทั้งแอป) + test
 - [ ] `AppStatus`
 - [ ] ภาษา: `AppLang` + `.tr` + `th.json` / `en.json` + `LanguageBloc`
 - [ ] route: `AppRoutes` + `appRouter` (ShellRoute)
@@ -74,6 +75,8 @@
 
 | วันที่ | ทำอะไร | หมายเหตุ |
 |---|---|---|
+| 2026-10-31 | ลบคอมเมนต์ทั้งหมดในโค้ด (`lib/`, `test/`, `pubspec.yaml`) และเปลี่ยนกฎใน skill `simple-code` เป็น "ไม่เขียนคอมเมนต์ในโค้ด" | ยกเว้น `// TODO: ต่อ API` ใน repository |
+| 2026-10-31 | รองรับทุกขนาดจอ: breakpoint mobile < 600 / tablet < 1024 / desktop, จอกว้างกว่า 1440 ขยายทั้งแอปตามสัดส่วนด้วย `ScreenScaler` (สูงสุด 2 เท่า) + กฎใน skill `simple-code` และ `docs/ARCHITECTURE.md` หัวข้อ 8 | ใช้ `fvm flutter` (global flutter 3.29 ทำ `pubspec.lock` ถอยเวอร์ชัน), analyze / test 18 ผ่าน |
 | 2026-10-31 | `flutter create` + สร้างโฟลเดอร์ตาม `docs/ARCHITECTURE.md`, เพิ่มฟอนต์ LINESeedSansTH (5 น้ำหนัก) และ theme ใน `lib/core/theme/` (`AppColors`, `AppSizes`, `AppTheme`) + test | ย้าย `app_colors` / `app_sizes` จาก `constants/` ไป `theme/`, ลบ test counter ของ flutter create, analyze / test / build web ผ่าน |
 | 2026-10-31 | เพิ่มวิธีต่อ API ใน `docs/ARCHITECTURE.md` (baseUrl หัวข้อ 1, error code → `.tr` หัวข้อ 10) | ตามกติกาของ `../api-Costbook` |
 | 2026-10-31 | เพิ่มกฎ "หน้าโค้ดเยอะ → แยกส่วนย่อยเป็น extension ในไฟล์ `<ชื่อหน้า>_ext.dart`" ใน skill `simple-code` และ `docs/ARCHITECTURE.md` (หัวข้อ 3, 8, 13) | แก้แค่เอกสาร ทดลองแบบ `part` + extension ในโปรเจกต์ชั่วคราวแล้ว analyze ผ่าน |

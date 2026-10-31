@@ -1,6 +1,6 @@
 ---
 name: simple-code
-description: กฎเขียนโค้ด Flutter/Dart แบบเรียบง่าย ไม่ซับซ้อน ของโปรเจกต์ CostBook ใช้ทุกครั้งก่อนเขียน แก้ หรือรีวิวโค้ด Dart ในโปรเจกต์นี้ ไม่ว่าจะเป็น bloc, model, repository, page, widget, route, utils หรือ helper. Use whenever writing, editing, or reviewing any Dart/Flutter code in this repo.
+description: กฎเขียนโค้ด Flutter/Dart แบบเรียบง่าย ไม่ซับซ้อน ของโปรเจกต์ CostBook ใช้ทุกครั้งก่อนเขียน แก้ หรือรีวิวโค้ด Dart ในโปรเจกต์นี้ ไม่ว่าจะเป็น bloc, model, repository, page, widget, route, utils หรือ helper รวมถึงการจัด UI ให้รองรับทุกขนาดจอ (มือถือ / แท็บเล็ต / จอคอม / จอใหญ่). Use whenever writing, editing, or reviewing any Dart/Flutter code in this repo.
 ---
 
 # Simple Code — เขียนโค้ดให้ง่ายที่สุด
@@ -31,7 +31,7 @@ description: กฎเขียนโค้ด Flutter/Dart แบบเรี�
   - ใช้ซ้ำหลายไฟล์ ไม่ใช้ UI → `core/utils` (static function + เขียน test)
   - ใช้ซ้ำหลายไฟล์ ใช้ `BuildContext` / plugin → `core/helpers`
   - เป็น widget → `features/<ชื่อ>/widgets` ถ้าใช้ใน feature เดียว, `shared/widgets` ถ้าใช้หลาย feature
-- คอมเมนต์ภาษาไทยสั้น ๆ เฉพาะจุดที่ไม่ชัด เช่น สูตรคำนวณ
+- ไม่เขียนคอมเมนต์ในโค้ด (`//`, `///`, `#` ใน yaml) — ตั้งชื่อตัวแปร / ฟังก์ชันให้อ่านแล้วเข้าใจเอง ยกเว้น `// TODO: ต่อ API` ใน repository
 
 ## ห้าม
 
@@ -114,6 +114,44 @@ extension _ProductListPageExt on ProductListPage {
 }
 ```
 
+## รองรับทุกขนาดจอ (มือถือ → จอใหญ่)
+
+แอปใช้แบบ cross platform ทุกหน้าต้องใช้ได้ตั้งแต่มือถือจนถึงจอใหญ่ ตัวเลขทั้งหมดอยู่ใน `ResponsiveUtil` ที่เดียว
+
+| ความกว้างจอ | `ScreenType` | ทำยังไง |
+|---|---|---|
+| < 600 | `mobile` | จัด layout ใหม่: 1 คอลัมน์, เมนูเป็น Drawer, ตาราง → รายการแบบการ์ด |
+| 600 – 1023 | `tablet` | 1–2 คอลัมน์, เมนูเป็น Drawer |
+| 1024 – 1440 | `desktop` | เมนูข้างแสดงตลอด, หลายคอลัมน์, ใช้ `Expanded` ยืดตามจอ |
+| > 1440 | `desktop` (จอใหญ่) | **ขยายทั้งแอปตามสัดส่วน เหมือนขยายรูปภาพ** — `ScreenScaler` ทำให้เองอัตโนมัติ ไม่ต้องเขียนอะไรเพิ่ม |
+
+จอใหญ่ทำงานยังไง: `ScreenScaler` (ใส่ไว้ใน `builder` ของ `MaterialApp` ที่เดียว) บอกแอปว่าจอกว้างแค่ 1440 (`designWidth`)
+แล้วขยายภาพทั้งแอปให้เต็มจอจริง เช่น จอ 2160 → ขยาย 1.5 เท่า ตัวอักษร ปุ่ม ระยะห่าง ใหญ่ขึ้นเท่ากันหมด หน้าตาเหมือนจอ 1440 ทุกอย่าง (ขยายได้มากสุด 2 เท่า)
+
+ทำ:
+- ออกแบบหน้าจอคอมที่กว้าง 1440 — จอใหญ่กว่านั้นถูกขยายให้เอง
+- เลือก layout ตามจอด้วย `ResponsiveHelper.screenType(context)` + `if` ธรรมดา
+- ใช้ `Expanded` / `Flexible` / `Wrap` ให้ยืดหดตามจอ แทนการกำหนดความกว้างตายตัว
+- ส่วนที่อาจยาวเกินจอ ใส่ใน `ListView` / `SingleChildScrollView`
+- ปุ่ม / ช่องกด บนมือถือสูงอย่างน้อย 48 (นิ้วกดง่าย) และอย่าใช้ hover เป็นทางเดียวที่จะเห็นปุ่ม
+- ลองทุกหน้าที่ความกว้าง 375, 768, 1280, 1920, 2560 (Chrome DevTools → Toggle device toolbar)
+
+ห้าม:
+- ห้ามพิมพ์ตัวเลข breakpoint เอง เช่น `if (width < 600)` → ใช้ `ResponsiveHelper.screenType(context)`
+- ห้ามคูณขนาดด้วย scale เอง หรือใช้ package แบบ screenutil (`.w`, `.sp`) — `ScreenScaler` ขยายทั้งแอปให้แล้ว
+- ห้ามกำหนด `width` / `height` ตายตัวให้กล่องที่มีข้อความ (บนมือถือข้อความจะล้น)
+- ห้ามใช้ `dart:html` / `package:web` นอก `core/helpers` (แอปต้องรันได้หลาย platform)
+
+```dart
+// เลือก layout ตามจอ: มือถือเป็นการ์ดเรียงลงมา จอใหญ่กว่านั้นเป็นตาราง
+Widget _content(BuildContext context, List<ProductModel> products) {
+  if (ResponsiveHelper.screenType(context) == ScreenType.mobile) {
+    return ProductCardList(products: products);
+  }
+  return ProductTable(products: products);
+}
+```
+
 ## ตัวอย่าง
 
 ```dart
@@ -162,6 +200,7 @@ ProductBloc → ProductRepository → ApiClient
 - [ ] มีโค้ดซ้ำตั้งแต่ 2 จุดไหม → แยกเป็นฟังก์ชันกลาง
 - [ ] หน้าไหนโค้ดเยอะ (`build()` > ~60 บรรทัด หรือไฟล์ > ~150 บรรทัด) → แยกเป็น extension ในไฟล์ `_ext.dart`
 - [ ] ไฟล์อยู่ถูกโฟลเดอร์ตาม `docs/ARCHITECTURE.md`
+- [ ] ลองหน้าที่ความกว้าง 375 / 768 / 1280 / 1920 / 2560 แล้วไม่ล้น ไม่เพี้ยน (ดูหัวข้อ "รองรับทุกขนาดจอ")
 - [ ] ไม่มีข้อความ hardcode (ใช้ `.tr`), ไม่มีสี / ขนาด hardcode (ใช้ `AppColors` / `AppSizes`), ตัวอักษรใช้ `Theme.of(context).textTheme` ไม่ใส่ `fontSize` เอง
 - [ ] รัน skill `unit-test-check` แล้วผ่าน
 - [ ] อัปเดต `PROGRESS.md` แล้ว

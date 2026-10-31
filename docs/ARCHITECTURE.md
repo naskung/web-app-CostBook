@@ -62,18 +62,18 @@ web-app-CostBook/
 │   ├── main.dart          จุดเริ่มแอป: โหลดภาษา แล้ว runApp
 │   ├── app.dart           MaterialApp.router + theme + bloc ที่ใช้ทั้งแอป
 │   ├── core/
-│   │   ├── constants/     app_status.dart, api_constants.dart
+│   │   ├── constants/     app_status.dart, screen_type.dart, api_constants.dart
 │   │   ├── lang/          app_lang.dart (.tr), language_bloc.dart
 │   │   ├── network/       api_client.dart
 │   │   ├── routes/        app_routes.dart (ชื่อ route), app_router.dart (GoRouter)
 │   │   ├── theme/         app_colors.dart (สี), app_sizes.dart (ขนาดตัวอักษร / ระยะห่าง), app_theme.dart (ฟอนต์ + รวมเป็น ThemeData)
-│   │   ├── utils/         money_util.dart, tax_util.dart, cost_util.dart, date_util.dart, validator_util.dart
-│   │   └── helpers/       dialog_helper.dart, snackbar_helper.dart, pdf_helper.dart
+│   │   ├── utils/         money_util.dart, tax_util.dart, cost_util.dart, date_util.dart, validator_util.dart, responsive_util.dart
+│   │   └── helpers/       dialog_helper.dart, snackbar_helper.dart, pdf_helper.dart, responsive_helper.dart
 │   ├── shared/
 │   │   └── widgets/
 │   │       ├── atoms/
 │   │       ├── molecules/
-│   │       └── organisms/
+│   │       └── organisms/   เช่น page_layout.dart, screen_scaler.dart (ขยายทั้งแอปบนจอใหญ่)
 │   └── features/
 │       ├── dashboard/
 │       ├── product/
@@ -372,7 +372,7 @@ context.pop(); // ย้อนกลับ
 |---|---|---|---|
 | **atoms** | ชิ้นเล็กสุด ใช้ซ้ำทุกที่ | Flutter เท่านั้น | `AppButton`, `AppTextField`, `AppDropdown`, `AppLoading`, `AppBadge`, `MoneyText` |
 | **molecules** | atoms หลายตัวรวมกัน | atoms | `SearchField`, `StatCard`, `AmountRow`, `EmptyView`, `ErrorView` |
-| **organisms** | ส่วนใหญ่ของหน้า | atoms, molecules | `PageLayout`, `AppSideMenu`, `AppTopBar`, `AppDataTable`, `FormCard` |
+| **organisms** | ส่วนใหญ่ของหน้า | atoms, molecules | `PageLayout`, `AppSideMenu`, `AppTopBar`, `AppDataTable`, `FormCard`, `ScreenScaler` |
 | **pages** | หน้าจอจริง (อยู่ใน feature) | ทุกระดับ + bloc | `ProductListPage` |
 
 กฎของ widget กลาง (`shared/widgets`):
@@ -382,7 +382,7 @@ context.pop(); // ย้อนกลับ
 3. สี / ขนาด ใช้จาก `AppColors`, `AppSizes` ห้าม hardcode — ตัวอักษรใช้ `Theme.of(context).textTheme.xxx` ห้ามใส่ `fontSize` / `fontFamily` เอง
 4. ข้อความรับเข้ามาจากข้างนอก (คนเรียกใช้ใส่ `.tr` เอง)
 5. หน้าจอต้องใช้ widget กลางก่อนเสมอ ถ้าไม่มี → สร้างเพิ่มใน shared ถ้าใช้ ≥ 2 feature
-6. `PageLayout` ทำ responsive แบบง่าย: จอกว้าง < 800 ให้เมนูข้างเป็น Drawer
+6. `PageLayout`: จอ `mobile` / `tablet` ให้เมนูข้างเป็น Drawer, จอ `desktop` แสดงเมนูข้างตลอด (ดูหัวข้อ "รองรับทุกขนาดจอ" ด้านล่าง)
 
 ```dart
 // lib/shared/widgets/atoms/app_button.dart
@@ -438,6 +438,45 @@ class ProductListPage extends StatelessWidget {
 ```
 
 หน้าที่โค้ดเยอะ (`build()` ยาวเกินประมาณ 60 บรรทัด หรือไฟล์ยาวเกินประมาณ 150 บรรทัด) → แยกส่วนย่อยเป็น extension ในไฟล์ `<ชื่อหน้า>_ext.dart` (เชื่อมกันด้วย `part` / `part of`) ให้ `build()` เหลือแค่โครงหน้า — กฎและตัวอย่างอยู่ใน skill `simple-code` หัวข้อ "แยกโค้ดหน้าเป็น extension"
+
+### รองรับทุกขนาดจอ (Responsive)
+
+แอปใช้แบบ cross platform ต้องใช้ได้ตั้งแต่มือถือจนถึงจอใหญ่ แบ่งเป็น 2 วิธี:
+
+1. **จอเล็กถึงจอคอมทั่วไป (≤ 1440)** — จัด layout ใหม่ตามประเภทจอ
+2. **จอใหญ่ (> 1440)** — ไม่จัด layout ใหม่ แต่**ขยายทั้งแอปตามสัดส่วนเหมือนขยายรูปภาพ** หน้าตาเหมือนจอ 1440 ทุกอย่าง แค่ใหญ่ขึ้น
+
+| ความกว้างจอ | `ScreenType` | layout |
+|---|---|---|
+| < 600 | `mobile` | 1 คอลัมน์, เมนูเป็น Drawer, ตาราง → รายการแบบการ์ด |
+| 600 – 1023 | `tablet` | 1–2 คอลัมน์, เมนูเป็น Drawer |
+| 1024 – 1440 | `desktop` | เมนูข้างแสดงตลอด, หลายคอลัมน์ |
+| > 1440 | `desktop` | เหมือน 1440 แล้ว `ScreenScaler` ขยายทั้งแอป (สูงสุด 2 เท่า) |
+
+| ไฟล์ | หน้าที่ |
+|---|---|
+| `core/constants/screen_type.dart` | `enum ScreenType { mobile, tablet, desktop }` |
+| `core/utils/responsive_util.dart` | ตัวเลขทั้งหมด (`tabletMinWidth`, `desktopMinWidth`, `designWidth`, `maxScale`) + `typeOf(width)`, `scaleOf(width)` — แก้ตัวเลขที่นี่ที่เดียว |
+| `core/helpers/responsive_helper.dart` | `ResponsiveHelper.screenType(context)` ใช้ในหน้าเพื่อเลือก layout |
+| `shared/widgets/organisms/screen_scaler.dart` | ขยายทั้งแอปบนจอใหญ่ ใส่ใน `builder` ของ `MaterialApp` ครั้งเดียว |
+
+`ScreenScaler` ทำงานยังไง: จอกว้าง 2160 → `scale = 2160 ÷ 1440 = 1.5` → บอกแอปผ่าน `MediaQuery` ว่าจอกว้าง 1440
+แล้วใช้ `FittedBox` ขยายภาพทั้งแอปขึ้น 1.5 เท่าให้เต็มจอ ตัวอักษร ปุ่ม ระยะห่าง ใหญ่ขึ้นเท่ากันหมด และยังกดได้ปกติ
+ตัวอักษรยังคมชัด เพราะ Flutter วาดใหม่ที่ขนาดจริง ไม่ได้ยืดภาพ pixel ส่วนรูปภาพจะเลือกไฟล์ความละเอียดสูง (2x, 3x) ให้เอง ถ้ามีใน `assets/images/`
+
+```dart
+// เลือก layout ในหน้า — ใช้ if ธรรมดา
+if (ResponsiveHelper.screenType(context) == ScreenType.mobile) {
+  return ProductCardList(products: products);
+}
+return ProductTable(products: products);
+```
+
+กฎ:
+- ห้ามพิมพ์ตัวเลข breakpoint เอง → ใช้ `ResponsiveHelper.screenType(context)`
+- ห้ามคูณขนาดด้วย scale เอง และไม่ใช้ package แบบ screenutil — `ScreenScaler` จัดการให้ทั้งแอปแล้ว
+- ใช้ `Expanded` / `Flexible` / `Wrap` แทนความกว้างตายตัว ส่วนที่อาจยาวเกินจอใส่ใน `ListView` / `SingleChildScrollView`
+- ลองทุกหน้าที่ความกว้าง 375, 768, 1280, 1920, 2560
 
 ---
 
@@ -657,6 +696,7 @@ class App extends StatelessWidget {
             key: ValueKey(langCode), // เปลี่ยนภาษา -> สร้างหน้าใหม่ ข้อความ .tr อัปเดตทั้งแอป
             title: 'CostBook',
             theme: AppTheme.light,
+            builder: (context, child) => ScreenScaler(child: child ?? const SizedBox()), // จอใหญ่ → ขยายทั้งแอป
             routerConfig: appRouter,
           );
         },
