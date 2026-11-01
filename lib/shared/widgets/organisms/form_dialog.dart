@@ -18,6 +18,7 @@ class FormDialog extends StatelessWidget {
     this.subtitle = '',
     this.isSaving = false,
     this.errorText = '',
+    this.tabs,
   });
 
   final String title;
@@ -29,6 +30,7 @@ class FormDialog extends StatelessWidget {
   final String subtitle;
   final bool isSaving;
   final String errorText;
+  final Widget? tabs;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +40,7 @@ class FormDialog extends StatelessWidget {
       icon: icon,
       closeLabel: cancelLabel,
       canClose: !isSaving,
+      tabs: tabs,
       notice: errorText.isEmpty ? null : _ErrorNotice(text: errorText),
       actions: [
         AppButton(

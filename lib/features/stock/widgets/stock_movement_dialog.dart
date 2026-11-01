@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:costbook/core/constants/app_status.dart';
 import 'package:costbook/core/lang/app_lang.dart';
+import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
 import 'package:costbook/core/utils/money_util.dart';
 import 'package:costbook/core/utils/validator_util.dart';
@@ -11,15 +12,17 @@ import 'package:costbook/features/stock/models/movement_model.dart';
 import 'package:costbook/features/stock/models/stock_item_model.dart';
 import 'package:costbook/shared/widgets/atoms/app_dropdown.dart';
 import 'package:costbook/shared/widgets/atoms/app_text_field.dart';
+import 'package:costbook/shared/widgets/molecules/app_tabs.dart';
 import 'package:costbook/shared/widgets/organisms/form_dialog.dart';
 
+// รับเข้า / เบิกออก อยู่ใน dialog เดียว สลับด้วยแท็บด้านบน (type = แท็บที่เปิดมาก่อน)
 class StockMovementDialog extends StatefulWidget {
   const StockMovementDialog({super.key, required this.type, required this.productId});
 
   final String type;
   final String productId;
 
-  static Future<void> show(BuildContext context, {required String type, String productId = ''}) {
+  static Future<void> show(BuildContext context, {String type = MovementModel.stockIn, String productId = ''}) {
     final bloc = context.read<StockBloc>();
     return showDialog<void>(
       context: context,
@@ -38,11 +41,20 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
   final _unitCostController = TextEditingController();
   final _supplierController = TextEditingController();
   late String _productId = widget.productId;
+  late String _type = widget.type;
   bool _isSubmitted = false;
   // รับเข้า = ผลิตเสร็จ → ตัดวัสดุตามใบต้นทุน (ปิดได้ถ้าเป็นของที่ทำไว้ก่อน)
   bool _useMaterials = true;
 
-  bool get _isIn => widget.type == MovementModel.stockIn;
+  bool get _isIn => _type == MovementModel.stockIn;
+
+  // เปลี่ยนแท็บ: สินค้า / จำนวน / หมายเหตุที่กรอกไว้ยังอยู่ / ซ่อน error ของแท็บเดิม
+  void _setType(String type) {
+    setState(() {
+      _type = type;
+      _isSubmitted = false;
+    });
+  }
 
   @override
   void dispose() {
@@ -59,7 +71,7 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
     setState(() => _isSubmitted = true);
     context.read<StockBloc>().add(
       StockMovementSaved(
-        type: widget.type,
+        type: _type,
         productId: _productId,
         quantity: int.tryParse(_quantityController.text.trim()) ?? 0,
         note: _noteController.text.trim(),
@@ -86,9 +98,22 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
           isSaving: state.saveStatus == AppStatus.loading,
           errorText: hasError ? 'error.${state.saveErrorCode}'.trParams(state.saveErrorParams) : '',
           onSave: _onSave,
+          tabs: _tabs(),
           child: _form(context, state.items),
         );
       },
+    );
+  }
+
+  Widget _tabs() {
+    return AppTabs(
+      selected: _type,
+      selectedColor: AppColors.surface,
+      onChanged: _setType,
+      tabs: [
+        AppTab(value: MovementModel.stockIn, label: 'stock.stock_in'.tr, icon: Icons.move_to_inbox_outlined),
+        AppTab(value: MovementModel.stockOut, label: 'stock.stock_out'.tr, icon: Icons.outbox_outlined),
+      ],
     );
   }
 

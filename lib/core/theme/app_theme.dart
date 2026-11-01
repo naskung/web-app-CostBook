@@ -38,6 +38,7 @@ class AppTheme {
     appBarTheme: _appBarTheme,
     dialogTheme: _dialogTheme,
     datePickerTheme: _datePickerTheme,
+    popupMenuTheme: _popupMenuTheme,
   );
 
   static const RoundedRectangleBorder _dialogShape = RoundedRectangleBorder(
@@ -50,6 +51,16 @@ class AppTheme {
     surfaceTintColor: AppColors.transparent,
     barrierColor: AppColors.scrim,
     shape: _dialogShape,
+  );
+
+  // เมนู ⋮ พื้นขาว มีขอบ ไม่ย้อมสีส้มตามธีม
+  static const PopupMenuThemeData _popupMenuTheme = PopupMenuThemeData(
+    color: AppColors.surface,
+    surfaceTintColor: AppColors.transparent,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(AppSizes.radius)),
+      side: BorderSide(color: AppColors.border),
+    ),
   );
 
   static const DatePickerThemeData _datePickerTheme = DatePickerThemeData(

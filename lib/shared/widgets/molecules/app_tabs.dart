@@ -15,13 +15,21 @@ class AppTab {
   final int? count;
 }
 
-// แท็บแบบแฟ้ม ใส่ไว้บนสุดของการ์ด (AppDataTable(header:)) — แท็บที่เลือกสีเดียวกับหัวตาราง ต่อกันเป็นแผ่นเดียว
+// แท็บแบบแฟ้ม ใส่ไว้บนสุดของการ์ด (AppDataTable(header:)) หรือใต้หัว dialog (AppDialog(tabs:))
+// แท็บที่เลือกสีเดียวกับพื้นที่อยู่ข้างใต้ (selectedColor: หัวตาราง = inputFill / dialog = surface) ต่อกันเป็นแผ่นเดียว
 class AppTabs extends StatelessWidget {
-  const AppTabs({super.key, required this.tabs, required this.selected, required this.onChanged});
+  const AppTabs({
+    super.key,
+    required this.tabs,
+    required this.selected,
+    required this.onChanged,
+    this.selectedColor = AppColors.inputFill,
+  });
 
   final List<AppTab> tabs;
   final String selected;
   final ValueChanged<String> onChanged;
+  final Color selectedColor;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +46,7 @@ class AppTabs extends StatelessWidget {
               _TabButton(
                 tab: tab,
                 isSelected: tab.value == selected,
+                selectedColor: selectedColor,
                 showIcon: showIcon,
                 onTap: () => onChanged(tab.value),
               ),
@@ -50,10 +59,17 @@ class AppTabs extends StatelessWidget {
 
 // แท็บที่เลือก: พื้นเดียวกับหัวตาราง + เส้นส้มด้านบน + ตัวหนังสือส้มเข้ม / ไม่ได้เลือก: ตัวหนังสือเทา ชี้เมาส์มีพื้นเทา
 class _TabButton extends StatelessWidget {
-  const _TabButton({required this.tab, required this.isSelected, required this.showIcon, required this.onTap});
+  const _TabButton({
+    required this.tab,
+    required this.isSelected,
+    required this.selectedColor,
+    required this.showIcon,
+    required this.onTap,
+  });
 
   final AppTab tab;
   final bool isSelected;
+  final Color selectedColor;
   final bool showIcon;
   final VoidCallback onTap;
 
@@ -65,7 +81,7 @@ class _TabButton extends StatelessWidget {
       selected: isSelected,
       button: true,
       child: Material(
-        color: isSelected ? AppColors.inputFill : AppColors.transparent,
+        color: isSelected ? selectedColor : AppColors.transparent,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radius)),
         clipBehavior: Clip.antiAlias,
         child: InkWell(

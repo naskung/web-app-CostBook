@@ -54,6 +54,10 @@ class AppSizes {
   static const double badgePaddingX = 10;
   static const double badgePaddingY = 2;
   static const double tableRowMinHeight = 52;
+  static const double tableColumnMinWidth = 96;
+  static const double tableActionsWidth = 104;
+  static const double productNameMinWidth = 220;
+  static const double productStockMinWidth = 104;
   static const double monthLabelWidth = 160;
   static const double paperWidth = 794;
   static const double paperPadding = 48;

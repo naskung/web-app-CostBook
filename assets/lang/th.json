@@ -710,5 +710,7 @@
   "error.avatar_required": "กรุณาเลือกรูป",
   "error.avatar_too_large": "รูปใหญ่เกิน 1 MB ลองใช้รูป JPG หรือรูปที่เล็กลง",
   "error.avatar_type_invalid": "รับเฉพาะรูป PNG / JPG / WebP",
-  "error.avatar_not_found": "ยังไม่มีรูปโปรไฟล์"
+  "error.avatar_not_found": "ยังไม่มีรูปโปรไฟล์",
+  "stock.move": "รับเข้า / เบิกออก",
+  "common.more": "เพิ่มเติม"
 }

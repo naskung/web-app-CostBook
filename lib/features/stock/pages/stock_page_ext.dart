@@ -5,14 +5,9 @@ extension _StockPageExt on StockPage {
     return PageToolbar(
       actions: [
         FilledButton.icon(
-          onPressed: () => StockMovementDialog.show(context, type: MovementModel.stockIn),
-          icon: const Icon(Icons.add),
-          label: Text('stock.stock_in'.tr),
-        ),
-        OutlinedButton.icon(
-          onPressed: () => StockMovementDialog.show(context, type: MovementModel.stockOut),
-          icon: const Icon(Icons.remove),
-          label: Text('stock.stock_out'.tr),
+          onPressed: () => StockMovementDialog.show(context),
+          icon: const Icon(Icons.swap_vert_rounded),
+          label: Text('stock.move'.tr),
         ),
       ],
       children: [Text('stock.history_subtitle'.tr, style: Theme.of(context).textTheme.bodySmall)],

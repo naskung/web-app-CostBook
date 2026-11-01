@@ -6,11 +6,23 @@ import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
 
 class AppDataColumn {
-  const AppDataColumn({required this.label, this.flex = 1, this.alignEnd = false});
+  const AppDataColumn({
+    required this.label,
+    this.flex = 1,
+    this.alignEnd = false,
+    this.width,
+    this.minWidth = AppSizes.tableColumnMinWidth,
+  });
 
   final String label;
   final int flex;
   final bool alignEnd;
+
+  // กว้างตายตัว (เช่น คอลัมน์ปุ่ม) — ไม่ใส่ = ยืดตาม flex
+  final double? width;
+
+  // แคบสุดที่ยอมได้ — รวมทุกคอลัมน์แล้วกว้างกว่าที่มี → ตารางเลื่อนซ้าย-ขวาแทนการบีบจนตัวหนังสือตกบรรทัด
+  final double minWidth;
 }
 
 class AppDataTable extends StatelessWidget {
@@ -36,9 +48,29 @@ class AppDataTable extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [if (top != null) top, if (isMobile) ..._cardRows(context) else ..._tableRows(context)],
+        children: [if (top != null) top, if (isMobile) ..._cardRows(context) else _table(context)],
       ),
     );
+  }
+
+  Widget _table(BuildContext context) {
+    final table = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: _tableRows(context));
+    final minWidth = _minWidth();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= minWidth) return table;
+        return _HorizontalScroll(child: SizedBox(width: minWidth, child: table));
+      },
+    );
+  }
+
+  // ขอบซ้าย-ขวา + ช่องว่างระหว่างคอลัมน์ + ความกว้างแคบสุดของทุกคอลัมน์ (ต้องตรงกับ _line)
+  double _minWidth() {
+    var total = AppSizes.spaceMedium * 2 + AppSizes.spaceMedium * (columns.length - 1);
+    for (final column in columns) {
+      total += column.width ?? column.minWidth;
+    }
+    return total;
   }
 
   List<Widget> _tableRows(BuildContext context) {
@@ -62,17 +94,18 @@ class AppDataTable extends StatelessWidget {
           for (var i = 0; i < columns.length; i++) ...[
             // เว้นช่องระหว่างคอลัมน์ ไม่ให้คอลัมน์ชิดขวา (เช่น จำนวน) ติดกับคอลัมน์ถัดไป
             if (i > 0) const SizedBox(width: AppSizes.spaceMedium),
-            Expanded(
-              flex: columns[i].flex,
-              child: Align(
-                alignment: columns[i].alignEnd ? Alignment.centerRight : Alignment.centerLeft,
-                child: i < cells.length ? cells[i] : const SizedBox(),
-              ),
-            ),
+            _cell(columns[i], i < cells.length ? cells[i] : const SizedBox()),
           ],
         ],
       ),
     );
+  }
+
+  Widget _cell(AppDataColumn column, Widget child) {
+    final aligned = Align(alignment: column.alignEnd ? Alignment.centerRight : Alignment.centerLeft, child: child);
+    final width = column.width;
+    if (width != null) return SizedBox(width: width, child: aligned);
+    return Expanded(flex: column.flex, child: aligned);
   }
 
   List<Widget> _cardRows(BuildContext context) {
@@ -111,5 +144,42 @@ class AppDataTable extends StatelessWidget {
     final onTap = onRowTap;
     if (onTap == null) return child;
     return InkWell(onTap: () => onTap(index), child: child);
+  }
+}
+
+// เลื่อนซ้าย-ขวา + แถบเลื่อนให้เห็นตลอด (เมาส์ลากแถบได้ / trackpad ปัดได้)
+class _HorizontalScroll extends StatefulWidget {
+  const _HorizontalScroll({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_HorizontalScroll> createState() => _HorizontalScrollState();
+}
+
+class _HorizontalScrollState extends State<_HorizontalScroll> {
+  final _controller = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scrollbar(
+      controller: _controller,
+      thumbVisibility: true,
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+        child: SingleChildScrollView(
+          controller: _controller,
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.only(bottom: AppSizes.spaceSmall),
+          child: widget.child,
+        ),
+      ),
+    );
   }
 }

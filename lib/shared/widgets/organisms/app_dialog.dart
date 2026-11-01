@@ -6,7 +6,7 @@ import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
 
 // โครง dialog กลางของทั้งแอป:
-// หัว (ไอคอน + ชื่อ + คำอธิบาย + ปุ่มปิด) → เนื้อหาเลื่อนได้ (มีแถบเลื่อนเมื่อยาวเกิน) → notice → แถบปุ่มด้านล่าง
+// หัว (ไอคอน + ชื่อ + คำอธิบาย + ปุ่มปิด) → แท็บ (ถ้ามี) → เนื้อหาเลื่อนได้ (มีแถบเลื่อนเมื่อยาวเกิน) → notice → แถบปุ่มด้านล่าง
 // มือถือ: ขอบจอแคบลง + ปุ่มด้านล่างกว้างเท่ากัน
 class AppDialog extends StatelessWidget {
   const AppDialog({
@@ -20,6 +20,7 @@ class AppDialog extends StatelessWidget {
     this.notice,
     this.actions = const [],
     this.maxWidth = AppSizes.dialogMaxWidth,
+    this.tabs,
   });
 
   final String title;
@@ -31,6 +32,9 @@ class AppDialog extends StatelessWidget {
   final Widget? notice;
   final List<Widget> actions;
   final double maxWidth;
+
+  // แท็บใต้หัว dialog (เช่น AppTabs รับเข้า / เบิกออก) แทนเส้นคั่น
+  final Widget? tabs;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +49,8 @@ class AppDialog extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _header(context),
-            const Divider(height: AppSizes.borderWidth, thickness: AppSizes.borderWidth, color: AppColors.border),
+            tabs ??
+                const Divider(height: AppSizes.borderWidth, thickness: AppSizes.borderWidth, color: AppColors.border),
             Flexible(
               child: Scrollbar(
                 thumbVisibility: true,

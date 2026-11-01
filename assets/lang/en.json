@@ -710,5 +710,7 @@
   "error.avatar_required": "Please choose a photo",
   "error.avatar_too_large": "Photo is larger than 1 MB. Try a JPG or a smaller photo",
   "error.avatar_type_invalid": "Only PNG / JPG / WebP photos",
-  "error.avatar_not_found": "No profile photo yet"
+  "error.avatar_not_found": "No profile photo yet",
+  "stock.move": "Stock in / out",
+  "common.more": "More"
 }
