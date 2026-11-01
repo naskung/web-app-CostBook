@@ -522,6 +522,8 @@ token หมดอายุ (7 วัน) / ถูกปฏิเสธ: API ต
 |---|---|---|---|
 | **atoms** | ชิ้นเล็กสุด ใช้ซ้ำทุกที่ | Flutter เท่านั้น | `AppButton`, `AppTextField`, `AppDropdown`, `AppLoading`, `AppBadge`, `MoneyText` |
 | **molecules** | atoms หลายตัวรวมกัน | atoms | `SearchField`, `StatCard`, `AmountRow`, `EmptyView`, `ErrorView` |
+
+**การ์ดตัวเลขสรุป** (`StatCard` ใน `StatGrid`): ไอคอน + ชื่อ อยู่บน → ตัวเลขใหญ่ (`AppSizes.kpiFont` สีเข้ม, ยาวเกินย่อเอง) → คำอธิบาย (ไม่เกิน 2 บรรทัด) เรียงจากบนแบบเดียวกันทุกใบ ตัวเลขจึงอยู่ระดับเดียวกัน + แถบสัดส่วนชิดล่าง (`share` = %, `shareLabel`; ราง = สีเดียวกันแบบอ่อน, `PercentUtil.fraction` แปลง % เป็นความยาว) / การ์ดผลลัพธ์ของหน้า (1 ใบต่อหน้า) ใส่ `isHighlighted: true` → พื้นเข้มไล่สี + ตัวเลขใหญ่สีขาว + แถบเฉียงสีที่มุมขวาบนแบบหน้า login (`_CornerStripesPainter`) เช่น กำไรสุทธิ, ราคาแนะนำ — ขาดทุนส่ง `valueColor: AppColors.dangerOnDark` — `StatGrid` วางเป็นแถว การ์ดในแถวเดียวกัน**สูงเท่ากัน** (`IntrinsicHeight` + `Row` stretch) และเกลี่ยจำนวนต่อแถวให้เท่า ๆ กัน (`ResponsiveUtil.gridColumns`: 4 ใบ จอพอ 3 คอลัมน์ → 2 × 2)
 | **organisms** | ส่วนใหญ่ของหน้า | atoms, molecules | `PageLayout`, `AppSideMenu`, `AppTopBar`, `AppDataTable`, `FormCard`, `ScreenScaler` |
 | **pages** | หน้าจอจริง (อยู่ใน feature) | ทุกระดับ + bloc | `ProductListPage` |
 

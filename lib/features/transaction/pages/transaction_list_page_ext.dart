@@ -60,6 +60,12 @@ extension _TransactionListPageExt on TransactionListPage {
     final summary = state.summary;
     final isLoss = summary.profit < 0;
     final money = MoneyUtil.format;
+    double ofRevenue(double part) => PercentUtil.of(part: part, total: summary.revenue);
+    String percent(double value) => PercentUtil.format(value, showSign: value < 0);
+    final salesShare = ofRevenue(summary.sales);
+    final costShare = ofRevenue(summary.costOfSales);
+    final expenseShare = ofRevenue(summary.operatingExpense);
+    final margin = ofRevenue(summary.profit);
     return StatGrid(
       maxColumns: 4,
       minCardWidth: AppSizes.statCardCompactWidth,
@@ -74,14 +80,18 @@ extension _TransactionListPageExt on TransactionListPage {
             'sales': money(summary.sales),
             'other': money(summary.otherIncome),
           }),
+          share: salesShare,
+          shareLabel: 'transaction.sales_share'.trParams({'percent': percent(salesShare)}),
         ),
         StatCard(
           label: 'transaction.cost_of_sales'.tr,
           value: money(summary.costOfSales),
           icon: Icons.inventory_2_outlined,
-          color: AppColors.textSecondary,
-          backgroundColor: AppColors.neutralSoft,
+          color: AppColors.info,
+          backgroundColor: AppColors.infoSoft,
           caption: 'transaction.cost_caption'.trParams({'gross': money(summary.grossProfit)}),
+          share: costShare,
+          shareLabel: 'transaction.share_of_revenue'.trParams({'percent': percent(costShare)}),
         ),
         StatCard(
           label: 'transaction.expense'.tr,
@@ -92,7 +102,9 @@ extension _TransactionListPageExt on TransactionListPage {
           caption:
               summary.materialExpense > 0
                   ? 'transaction.material_caption'.trParams({'amount': money(summary.materialExpense)})
-                  : null,
+                  : 'transaction.expense_caption'.tr,
+          share: expenseShare,
+          shareLabel: 'transaction.share_of_revenue'.trParams({'percent': percent(expenseShare)}),
         ),
         StatCard(
           label: 'transaction.net_profit'.tr,
@@ -101,6 +113,10 @@ extension _TransactionListPageExt on TransactionListPage {
           color: isLoss ? AppColors.danger : AppColors.primary,
           backgroundColor: isLoss ? AppColors.dangerSoft : AppColors.primarySoft,
           caption: 'transaction.profit_caption'.tr,
+          valueColor: isLoss ? AppColors.dangerOnDark : null,
+          isHighlighted: true,
+          share: margin,
+          shareLabel: 'transaction.profit_margin'.trParams({'percent': percent(margin)}),
         ),
       ],
     );

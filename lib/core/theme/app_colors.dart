@@ -7,6 +7,8 @@ class AppColors {
   static const Color darkLight = Color(0xFF29323C);
   static const Color onDark = Color(0xFFFFFFFF);
   static const Color onDarkSecondary = Color(0xB3FFFFFF);
+  static const Color trackOnDark = Color(0x26FFFFFF);
+  static const Color dangerOnDark = Color(0xFFFF8A80);
   static const Color primarySoft = Color(0x1FFD7402);
   // ส้มเข้ม สำหรับตัวหนังสือบนพื้นขาว / พื้นส้มอ่อน (ส้มปกติบนพื้นขาวอ่านยาก)
   static const Color primaryDark = Color(0xFFB85400);
@@ -38,6 +40,8 @@ class AppColors {
   static const Color dangerSoft = Color(0x1FDC2626);
   static const Color warningSoft = Color(0x29F59E0B);
   static const Color neutralSoft = Color(0x146B7280);
+  static const Color info = Color(0xFF2A78D6);
+  static const Color infoSoft = Color(0x1F2A78D6);
 
   static const Color chartIncome = Color(0xFF2A78D6);
   static const Color chartExpense = Color(0xFFEB6834);

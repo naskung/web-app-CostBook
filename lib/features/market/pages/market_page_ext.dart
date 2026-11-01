@@ -180,6 +180,7 @@ extension _MarketPageExt on MarketPage {
           icon: Icons.sell_outlined,
           color: AppColors.primary,
           backgroundColor: AppColors.primarySoft,
+          isHighlighted: true,
         ),
       ],
     );

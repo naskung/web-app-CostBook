@@ -44,4 +44,14 @@ void main() {
       expect(PercentUtil.format(250.4), '250%');
     });
   });
+
+  group('PercentUtil.fraction', () {
+    test('25% = แถบยาว 0.25', () {
+      expect(PercentUtil.fraction(25), 0.25);
+    });
+
+    test('ติดลบ (ขาดทุน) = แถบว่าง / เกิน 100% = เต็มแถบ', () {
+      expect([PercentUtil.fraction(-5), PercentUtil.fraction(150)], [0, 1]);
+    });
+  });
 }

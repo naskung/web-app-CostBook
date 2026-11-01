@@ -88,6 +88,15 @@ class AppSizes {
   static const double kpiTwoColumnBreak = 520;
   static const double heroFont = 34;
   static const double kpiFont = 26;
+  static const double statIconBox = 40;
+  static const double statIconGap = 12;
+  static const double statHeroFont = 30;
+  static const double statMeterHeight = 6;
+  static const double statStripeStart = 56;
+  static const double statStripeWidth = 12;
+  static const double statStripeThinWidth = 5;
+  static const double statStripeGap = 6;
+  static const double statStripeLength = 80;
   static const double gaugeHeight = 130;
   static const double gaugeTickLength = 16;
   static const double gaugeTickWidth = 3;
