@@ -21,11 +21,13 @@ class MonthSwitcher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // สูง / ขอบเท่าปุ่มรอง → วางคู่กับปุ่มในแถบบนแล้วเสมอกัน
     return Container(
+      height: AppSizes.buttonHeight,
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.radius),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.inputBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

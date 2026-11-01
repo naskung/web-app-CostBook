@@ -22,16 +22,6 @@ extension _ProductListPageExt on ProductListPage {
         ),
       ],
       children: [
-        SegmentedButton<String>(
-          showSelectedIcon: false,
-          segments: [
-            ButtonSegment(value: '', label: Text('product.kind_all'.tr)),
-            ButtonSegment(value: ProductState.kindForSale, label: Text('product.kind_for_sale'.tr)),
-            ButtonSegment(value: ProductState.kindMaterial, label: Text('product.kind_material'.tr)),
-          ],
-          selected: {state.kind},
-          onSelectionChanged: (selected) => bloc.add(ProductKindChanged(selected.first)),
-        ),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: AppSizes.formMaxWidth),
           child: SearchField(
@@ -65,6 +55,7 @@ extension _ProductListPageExt on ProductListPage {
               onSelected: (_) => bloc.add(ProductCategoryChanged(category.id)),
             ),
           FilterChip(
+            avatar: const Icon(Icons.warning_amber_rounded, color: AppColors.warning),
             label: Text('product.only_low'.trParams({'count': '${state.lowStockCount}'})),
             selected: state.onlyLow,
             onSelected: (selected) => bloc.add(ProductLowStockFilterChanged(onlyLow: selected)),
@@ -87,6 +78,9 @@ extension _ProductListPageExt on ProductListPage {
     if (state.visibleProducts.isEmpty && state.onlyLow) {
       return EmptyView(message: 'stock.low_empty'.tr, icon: Icons.check_circle_outline);
     }
+    if (state.kind == ProductState.kindMaterial && state.kindCount(ProductState.kindMaterial) == 0) {
+      return EmptyView(message: 'product.material_empty'.tr, icon: Icons.layers_outlined);
+    }
     if (state.visibleProducts.isEmpty) return EmptyView(message: 'product.not_found'.tr, icon: Icons.search_off);
     return null;
   }
@@ -95,6 +89,7 @@ extension _ProductListPageExt on ProductListPage {
     final products = state.visibleProducts;
     final listFields = settings.listFields;
     return AppDataTable(
+      header: _kindTabs(context, state),
       columns: [
         AppDataColumn(label: 'product.name'.tr, flex: 3),
         for (final field in listFields) AppDataColumn(label: field.name, flex: 2),
@@ -105,6 +100,29 @@ extension _ProductListPageExt on ProductListPage {
       ],
       onRowTap: (index) => ProductFormDialog.show(context, products[index], settings.fields, state.categories),
       rows: [for (final product in products) _row(context, product, listFields, settings.fields, state.categories)],
+    );
+  }
+
+  // แท็บ ทั้งหมด / สินค้าขาย / วัสดุ ติดอยู่บนตารางสินค้า
+  Widget _kindTabs(BuildContext context, ProductState state) {
+    return AppTabs(
+      selected: state.kind,
+      onChanged: (kind) => context.read<ProductBloc>().add(ProductKindChanged(kind)),
+      tabs: [
+        AppTab(value: '', label: 'product.kind_all'.tr, icon: Icons.grid_view_rounded, count: state.kindCount('')),
+        AppTab(
+          value: ProductState.kindForSale,
+          label: 'product.kind_for_sale'.tr,
+          icon: Icons.sell_outlined,
+          count: state.kindCount(ProductState.kindForSale),
+        ),
+        AppTab(
+          value: ProductState.kindMaterial,
+          label: 'product.kind_material'.tr,
+          icon: Icons.layers_outlined,
+          count: state.kindCount(ProductState.kindMaterial),
+        ),
+      ],
     );
   }
 

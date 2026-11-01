@@ -1,6 +1,7 @@
 class AppSizes {
   static const double fontSmall = 12;
   static const double fontBody = 14;
+  static const double fontButton = 15;
   static const double fontLarge = 16;
   static const double fontTitle = 20;
   static const double fontHeading = 24;
@@ -19,7 +20,13 @@ class AppSizes {
   static const double shadowBlur = 32;
   static const double shadowOffsetY = 12;
 
-  static const double buttonHeight = 52;
+  static const double buttonHeight = 48;
+  static const double textButtonHeight = 40;
+  static const double buttonPaddingX = 20;
+  static const double buttonHoverElevation = 2;
+  static const double chipIconSize = 18;
+  static const double tabAccentHeight = 3;
+  static const double tabPaddingY = 12;
   static const double iconBox = 48;
   static const double logoSize = 96;
   static const double checkboxSize = 24;

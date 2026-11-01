@@ -160,24 +160,6 @@ extension _SettingsPageExt on _SettingsPageState {
     if (isConfirmed) bloc.add(ProductFieldDeleted(field.id));
   }
 
-  Widget _logoSection(BuildContext context) {
-    return SectionCard(
-      title: 'settings.logo_title'.tr,
-      child: Row(
-        children: [
-          const ShopLogo(size: AppSizes.logoSize, radius: AppSizes.radiusLarge),
-          const SizedBox(width: AppSizes.spaceMedium),
-          Expanded(
-            child: Text(
-              'settings.logo_hint'.tr,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _languageSection(BuildContext context) {
     return SectionCard(
       title: 'settings.language_title'.tr,
@@ -186,6 +168,7 @@ extension _SettingsPageExt on _SettingsPageState {
         child: BlocBuilder<LanguageBloc, String>(
           builder:
               (context, langCode) => SegmentedButton<String>(
+                showSelectedIcon: false,
                 segments: [
                   ButtonSegment(value: 'th', label: Text('settings.language_th'.tr)),
                   ButtonSegment(value: 'en', label: Text('settings.language_en'.tr)),

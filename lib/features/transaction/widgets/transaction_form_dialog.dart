@@ -124,6 +124,7 @@ class _TransactionFormDialogState extends State<TransactionFormDialog> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SegmentedButton<String>(
+            showSelectedIcon: false,
             segments: [
               ButtonSegment(value: TransactionModel.income, label: Text('transaction.income'.tr)),
               ButtonSegment(value: TransactionModel.expense, label: Text('transaction.expense'.tr)),

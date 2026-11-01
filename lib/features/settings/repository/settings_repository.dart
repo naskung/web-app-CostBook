@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:costbook/core/network/api_client.dart';
 import 'package:costbook/features/settings/models/company_model.dart';
 import 'package:costbook/features/settings/models/product_field_model.dart';
@@ -15,6 +17,15 @@ class SettingsRepository {
   Future<CompanyModel> updateCompany(CompanyModel company) async {
     final data = await api.put('/company', company.toJson()) as Map<String, dynamic>;
     return CompanyModel.fromJson(data);
+  }
+
+  Future<CompanyModel> uploadLogo(Uint8List bytes) async {
+    final data = await api.putFile('/company/logo', 'logo', bytes, 'logo.png') as Map<String, dynamic>;
+    return CompanyModel.fromJson(data);
+  }
+
+  Future<void> deleteLogo() async {
+    await api.delete('/company/logo');
   }
 
   Future<List<ProductFieldModel>> getFields() async {

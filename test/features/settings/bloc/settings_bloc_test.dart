@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -150,4 +152,56 @@ void main() {
           ),
         ],
   );
+
+  group('โลโก้ร้าน', () {
+    final logoBytes = Uint8List.fromList([1, 2, 3]);
+    const withLogo = CompanyModel(name: 'ร้านตัวอย่าง', taxId: '0105555555555', hasLogo: true);
+
+    blocTest<SettingsBloc, SettingsState>(
+      'LogoUploaded สำเร็จ ส่งไฟล์ไป API แล้วได้ข้อมูลร้านที่มีโลโก้',
+      build: () {
+        when(() => repository.uploadLogo(logoBytes)).thenAnswer((_) async => withLogo);
+        return SettingsBloc(repository);
+      },
+      seed: () => const SettingsState(company: company),
+      act: (bloc) => bloc.add(LogoUploaded(logoBytes)),
+      expect:
+          () => [
+            const SettingsState(company: company, logoStatus: AppStatus.loading),
+            const SettingsState(company: withLogo, logoStatus: AppStatus.success),
+          ],
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'LogoUploaded รูปผิดชนิด ได้ logoStatus failure พร้อม code และข้อมูลร้านเดิม',
+      build: () {
+        when(() => repository.uploadLogo(logoBytes)).thenThrow(ApiException('logo_type_invalid'));
+        return SettingsBloc(repository);
+      },
+      seed: () => const SettingsState(company: company),
+      act: (bloc) => bloc.add(LogoUploaded(logoBytes)),
+      expect:
+          () => [
+            const SettingsState(company: company, logoStatus: AppStatus.loading),
+            const SettingsState(company: company, logoStatus: AppStatus.failure, logoErrorCode: 'logo_type_invalid'),
+          ],
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'LogoRemoved ลบโลโก้แล้วโหลดข้อมูลร้านใหม่ (ไม่มีโลโก้)',
+      build: () {
+        when(() => repository.deleteLogo()).thenAnswer((_) async {});
+        when(() => repository.getCompany()).thenAnswer((_) async => company);
+        return SettingsBloc(repository);
+      },
+      seed: () => const SettingsState(company: withLogo),
+      act: (bloc) => bloc.add(LogoRemoved()),
+      expect:
+          () => [
+            const SettingsState(company: withLogo, logoStatus: AppStatus.loading),
+            const SettingsState(company: company, logoStatus: AppStatus.success),
+          ],
+      verify: (_) => verify(() => repository.deleteLogo()).called(1),
+    );
+  });
 }

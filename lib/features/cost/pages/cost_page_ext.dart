@@ -232,7 +232,6 @@ extension _CostPageExt on _CostPageState {
               () => context.read<CostBloc>().add(
                 CostMarkupApplied(MoneyUtil.parse(_markupController.text), priceHasVat: priceHasVat),
               ),
-          style: OutlinedButton.styleFrom(minimumSize: const Size(0, AppSizes.buttonHeight)),
           child: Text('cost.apply_markup'.tr),
         ),
       ],

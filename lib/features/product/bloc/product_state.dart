@@ -42,9 +42,16 @@ class ProductState extends Equatable {
     return products.where((product) {
       final isInCategory = category.isEmpty || product.categoryId == category;
       final isShown = !onlyLow || product.isLowStock;
-      final isKind = kind.isEmpty || (kind == kindMaterial) == !product.forSale;
-      return isInCategory && isShown && isKind && product.matches(query);
+      return isInCategory && isShown && _isKind(product, kind) && product.matches(query);
     }).toList();
+  }
+
+  // จำนวนสินค้าของแต่ละแท็บ (ทั้งหมด / สินค้าขาย / วัสดุ) นับจากสินค้าทั้งหมด
+  int kindCount(String kind) => products.where((product) => _isKind(product, kind)).length;
+
+  static bool _isKind(ProductModel product, String kind) {
+    if (kind.isEmpty) return true;
+    return (kind == kindMaterial) == !product.forSale;
   }
 
   int get lowStockCount => products.where((product) => product.isLowStock).length;

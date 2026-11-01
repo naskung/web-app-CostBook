@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -14,6 +16,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   SettingsBloc(this.repository) : super(const SettingsState()) {
     on<SettingsRequested>(_onSettingsRequested);
     on<CompanySaved>(_onCompanySaved);
+    on<LogoUploaded>(_onLogoUploaded);
+    on<LogoRemoved>(_onLogoRemoved);
     on<ProductFieldSaved>(_onFieldSaved);
     on<ProductFieldDeleted>(_onFieldDeleted);
   }
@@ -38,6 +42,27 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       emit(state.copyWith(saveStatus: AppStatus.success, company: company));
     } catch (error) {
       emit(state.copyWith(saveStatus: AppStatus.failure, saveErrorCode: ErrorUtil.codeOf(error)));
+    }
+  }
+
+  Future<void> _onLogoUploaded(LogoUploaded event, Emitter<SettingsState> emit) async {
+    emit(state.copyWith(logoStatus: AppStatus.loading));
+    try {
+      final company = await repository.uploadLogo(event.bytes);
+      emit(state.copyWith(logoStatus: AppStatus.success, company: company));
+    } catch (error) {
+      emit(state.copyWith(logoStatus: AppStatus.failure, logoErrorCode: ErrorUtil.codeOf(error)));
+    }
+  }
+
+  Future<void> _onLogoRemoved(LogoRemoved event, Emitter<SettingsState> emit) async {
+    emit(state.copyWith(logoStatus: AppStatus.loading));
+    try {
+      await repository.deleteLogo();
+      final company = await repository.getCompany();
+      emit(state.copyWith(logoStatus: AppStatus.success, company: company));
+    } catch (error) {
+      emit(state.copyWith(logoStatus: AppStatus.failure, logoErrorCode: ErrorUtil.codeOf(error)));
     }
   }
 

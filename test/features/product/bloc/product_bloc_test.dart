@@ -271,6 +271,14 @@ void main() {
     expect(forSale.visibleProducts, [coffee]);
   });
 
+  test('นับจำนวนสินค้าของแต่ละแท็บ จากสินค้าทั้งหมด (ไม่สนคำค้น / แท็บที่เลือกอยู่)', () {
+    const state = ProductState(products: [coffee, tea, pla], kind: ProductState.kindMaterial, query: 'ชา');
+    expect(
+      [state.kindCount(''), state.kindCount(ProductState.kindForSale), state.kindCount(ProductState.kindMaterial)],
+      [3, 2, 1],
+    );
+  });
+
   blocTest<ProductBloc, ProductState>(
     'ProductKindChanged เปลี่ยนตัวกรองขาย / วัสดุ ไม่โหลดใหม่',
     build: () => ProductBloc(repository, categoryRepository),

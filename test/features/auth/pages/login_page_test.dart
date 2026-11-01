@@ -103,7 +103,7 @@ void main() {
       (widget) =>
           widget is Image &&
           widget.image is NetworkImage &&
-          (widget.image as NetworkImage).url == ApiConstants.companyLogoUrl,
+          (widget.image as NetworkImage).url.startsWith(ApiConstants.companyLogoUrl),
     );
     expect(logo, findsOneWidget);
   });

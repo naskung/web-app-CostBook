@@ -8,6 +8,8 @@ class SettingsState extends Equatable {
     this.errorCode = '',
     this.saveStatus = AppStatus.initial,
     this.saveErrorCode = '',
+    this.logoStatus = AppStatus.initial,
+    this.logoErrorCode = '',
     this.fieldStatus = AppStatus.initial,
     this.fieldErrorCode = '',
   });
@@ -18,6 +20,8 @@ class SettingsState extends Equatable {
   final String errorCode;
   final AppStatus saveStatus;
   final String saveErrorCode;
+  final AppStatus logoStatus;
+  final String logoErrorCode;
   final AppStatus fieldStatus;
   final String fieldErrorCode;
 
@@ -30,6 +34,8 @@ class SettingsState extends Equatable {
     String? errorCode,
     AppStatus? saveStatus,
     String? saveErrorCode,
+    AppStatus? logoStatus,
+    String? logoErrorCode,
     AppStatus? fieldStatus,
     String? fieldErrorCode,
   }) {
@@ -40,6 +46,8 @@ class SettingsState extends Equatable {
       errorCode: errorCode ?? this.errorCode,
       saveStatus: saveStatus ?? this.saveStatus,
       saveErrorCode: saveErrorCode ?? this.saveErrorCode,
+      logoStatus: logoStatus ?? this.logoStatus,
+      logoErrorCode: logoErrorCode ?? this.logoErrorCode,
       fieldStatus: fieldStatus ?? this.fieldStatus,
       fieldErrorCode: fieldErrorCode ?? this.fieldErrorCode,
     );
@@ -53,6 +61,8 @@ class SettingsState extends Equatable {
     errorCode,
     saveStatus,
     saveErrorCode,
+    logoStatus,
+    logoErrorCode,
     fieldStatus,
     fieldErrorCode,
   ];

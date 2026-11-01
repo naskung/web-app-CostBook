@@ -9,17 +9,30 @@ class ShopLogo extends StatelessWidget {
   final double size;
   final double radius;
 
+  // เปลี่ยน / ลบโลโก้แล้วเรียก ShopLogo.refresh() → โลโก้ทุกที่ (เมนู / หน้า login / ใบกำกับ) โหลดรูปใหม่
+  // (URL เปลี่ยนตาม version ไม่งั้น Flutter ใช้รูปเก่าที่จำไว้)
+  static final ValueNotifier<int> _version = ValueNotifier(0);
+
+  static void refresh() => _version.value++;
+
+  static String urlOf(int version) => '${ApiConstants.companyLogoUrl}?v=$version';
+
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(radius),
-      child: Image.network(
-        ApiConstants.companyLogoUrl,
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _defaultLogo(),
-      ),
+    return ValueListenableBuilder<int>(
+      valueListenable: _version,
+      builder: (context, version, _) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(radius),
+          child: Image.network(
+            urlOf(version),
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => _defaultLogo(),
+          ),
+        );
+      },
     );
   }
 

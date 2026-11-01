@@ -23,6 +23,7 @@ import 'package:costbook/shared/widgets/atoms/app_badge.dart';
 import 'package:costbook/shared/widgets/atoms/app_loading.dart';
 import 'package:costbook/shared/widgets/atoms/money_text.dart';
 import 'package:costbook/features/product/widgets/product_image.dart';
+import 'package:costbook/shared/widgets/molecules/app_tabs.dart';
 import 'package:costbook/shared/widgets/molecules/empty_view.dart';
 import 'package:costbook/shared/widgets/molecules/error_view.dart';
 import 'package:costbook/shared/widgets/molecules/search_field.dart';
@@ -73,13 +74,14 @@ class ProductListPage extends StatelessWidget {
       child: BlocBuilder<ProductBloc, ProductState>(
         builder: (context, state) {
           final settings = context.watch<SettingsBloc>().state;
-          final stateView = _stateView(context, state);
+          // มีสินค้าแล้ว → แสดงตาราง (พร้อมแท็บ) เสมอ แม้กรองแล้วไม่เจอ จะได้กดแท็บอื่นได้
+          final hasProducts = state.status == AppStatus.success && state.products.isNotEmpty;
           return PageContent(
-            centerChild: stateView,
+            centerChild: _stateView(context, state),
             children: [
               _toolbar(context, state, settings.fields),
               _filters(context, state),
-              if (stateView == null) _table(context, state, settings),
+              if (hasProducts) _table(context, state, settings),
             ],
           );
         },

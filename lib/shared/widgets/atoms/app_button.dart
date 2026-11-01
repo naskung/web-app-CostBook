@@ -4,6 +4,7 @@ import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
 
 // primary = ปุ่มหลักสีส้ม, secondary = ปุ่มขอบ (ยกเลิก / ปิด), danger = ปุ่มสีแดง (ลบ)
+// หน้าตา (ขนาด / มุมโค้ง / ตัวหนังสือ) มาจากธีมใน app_theme.dart — ที่นี่เปลี่ยนแค่สีของปุ่มแดง
 enum AppButtonVariant { primary, secondary, danger }
 
 class AppButton extends StatelessWidget {
@@ -22,13 +23,6 @@ class AppButton extends StatelessWidget {
   final IconData? icon;
   final AppButtonVariant variant;
 
-  static final ButtonStyle _secondaryStyle = OutlinedButton.styleFrom(
-    foregroundColor: AppColors.textPrimary,
-    minimumSize: const Size(0, AppSizes.buttonHeight),
-    side: const BorderSide(color: AppColors.inputBorder),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radius)),
-  );
-
   static final ButtonStyle _dangerStyle = ElevatedButton.styleFrom(
     backgroundColor: AppColors.danger,
     foregroundColor: AppColors.onDark,
@@ -38,7 +32,7 @@ class AppButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final onTap = isLoading ? null : onPressed;
     if (variant == AppButtonVariant.secondary) {
-      return OutlinedButton(onPressed: onTap, style: _secondaryStyle, child: _label());
+      return OutlinedButton(onPressed: onTap, child: _label());
     }
     final style = variant == AppButtonVariant.danger ? _dangerStyle : null;
     return ElevatedButton(onPressed: onTap, style: style, child: _label());

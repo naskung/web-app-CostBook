@@ -187,6 +187,7 @@ class _CostItemDialogState extends State<CostItemDialog> {
             ),
             const SizedBox(height: AppSizes.spaceMedium),
             SegmentedButton<String>(
+              showSelectedIcon: false,
               segments: [
                 ButtonSegment(value: CostItemModel.fixed, label: Text('cost.kind_fixed'.tr)),
                 ButtonSegment(value: CostItemModel.percentKind, label: Text('cost.kind_percent'.tr)),

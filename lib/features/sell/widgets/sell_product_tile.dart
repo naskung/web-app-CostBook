@@ -46,7 +46,13 @@ class SellProductTile extends StatelessWidget {
               children: [
                 image,
                 const SizedBox(height: AppSizes.spaceSmall),
-                Text(name, style: textTheme.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
+                // จองที่ชื่อไว้ 2 บรรทัดเสมอ (ข้อความว่าง 2 บรรทัดซ้อนอยู่ข้างหลัง) → ชื่อสั้น / ยาว การ์ดก็สูงเท่ากัน
+                Stack(
+                  children: [
+                    ExcludeSemantics(child: Text('\n', style: textTheme.titleSmall)),
+                    Text(name, style: textTheme.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
+                  ],
+                ),
                 const SizedBox(height: AppSizes.spaceSmall),
                 Text(MoneyUtil.format(price), style: textTheme.titleMedium?.copyWith(color: AppColors.primary)),
                 Text(stockText, style: textTheme.bodySmall?.copyWith(color: isOut ? AppColors.danger : null)),

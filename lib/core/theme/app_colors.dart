@@ -8,6 +8,8 @@ class AppColors {
   static const Color onDark = Color(0xFFFFFFFF);
   static const Color onDarkSecondary = Color(0xB3FFFFFF);
   static const Color primarySoft = Color(0x1FFD7402);
+  // ส้มเข้ม สำหรับตัวหนังสือบนพื้นขาว / พื้นส้มอ่อน (ส้มปกติบนพื้นขาวอ่านยาก)
+  static const Color primaryDark = Color(0xFFB85400);
   static const Color menuHover = Color(0x14FFFFFF);
   static const Color transparent = Color(0x00000000);
 
@@ -16,6 +18,7 @@ class AppColors {
   static const Color surfaceMuted = Color(0xFFF9FAFB);
   static const Color scrim = Color(0x991B2228);
   static const Color inputFill = Color(0xFFF9FAFB);
+  static const Color tabStrip = Color(0xFFEEF0F3);
   static const Color border = Color(0xFFE5E7EB);
   static const Color inputBorder = Color(0xFFD1D5DB);
   static const Color shadow = Color(0x1F1B2228);

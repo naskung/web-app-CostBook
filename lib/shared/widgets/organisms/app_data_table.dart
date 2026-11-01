@@ -14,15 +14,19 @@ class AppDataColumn {
 }
 
 class AppDataTable extends StatelessWidget {
-  const AppDataTable({super.key, required this.columns, required this.rows, this.onRowTap});
+  const AppDataTable({super.key, required this.columns, required this.rows, this.onRowTap, this.header});
 
   final List<AppDataColumn> columns;
   final List<List<Widget>> rows;
   final ValueChanged<int>? onRowTap;
 
+  // ส่วนบนสุดในการ์ด เหนือหัวตาราง เช่น แท็บ (AppTabs)
+  final Widget? header;
+
   @override
   Widget build(BuildContext context) {
     final isMobile = ResponsiveHelper.screenType(context) == ScreenType.mobile;
+    final top = header;
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -32,7 +36,7 @@ class AppDataTable extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: isMobile ? _cardRows(context) : _tableRows(context),
+        children: [if (top != null) top, if (isMobile) ..._cardRows(context) else ..._tableRows(context)],
       ),
     );
   }

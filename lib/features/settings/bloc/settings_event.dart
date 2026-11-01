@@ -10,6 +10,14 @@ class CompanySaved extends SettingsEvent {
   final CompanyModel company;
 }
 
+class LogoUploaded extends SettingsEvent {
+  LogoUploaded(this.bytes);
+
+  final Uint8List bytes;
+}
+
+class LogoRemoved extends SettingsEvent {}
+
 class ProductFieldSaved extends SettingsEvent {
   ProductFieldSaved(this.field);
 
