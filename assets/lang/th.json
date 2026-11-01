@@ -733,5 +733,8 @@
   "sell.not_enough": "เงินไม่พอ ขาดอีก {amount} บาท",
   "sell.confirm_pay": "ยืนยันขาย",
   "sell.sold_message_change": "{no}\nยอด {total} บาท\nรับมา {received} บาท · ทอน {change} บาท",
-  "common.clear": "ล้าง"
+  "common.clear": "ล้าง",
+  "stock.profit": "กำไร",
+  "stock.sold": "ขาย",
+  "stock.profit_detail": "ขาย {sale} · ทุน {cost}"
 }

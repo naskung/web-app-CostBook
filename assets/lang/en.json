@@ -733,5 +733,8 @@
   "sell.not_enough": "Not enough — {amount} short",
   "sell.confirm_pay": "Confirm sale",
   "sell.sold_message_change": "{no}\nTotal {total}\nReceived {received} · Change {change}",
-  "common.clear": "Clear"
+  "common.clear": "Clear",
+  "stock.profit": "Profit",
+  "stock.sold": "Sold",
+  "stock.profit_detail": "Sales {sale} · Cost {cost}"
 }

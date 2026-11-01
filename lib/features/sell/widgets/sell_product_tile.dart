@@ -4,7 +4,7 @@ import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
 import 'package:costbook/core/utils/money_util.dart';
 
-// การ์ดสินค้าในหน้าขาย: อยู่ในบิลแล้ว → ขอบส้ม + วงกลมบอกจำนวนที่มุมรูป
+// การ์ดสินค้าในหน้าขาย: รูปสี่เหลี่ยมจัตุรัสเต็มความกว้างการ์ด (ครอปตรงกลาง) / อยู่ในบิลแล้ว → ขอบส้ม + วงกลมบอกจำนวนที่มุมรูป
 class SellProductTile extends StatelessWidget {
   const SellProductTile({
     super.key,
@@ -51,11 +51,20 @@ class SellProductTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Stack(
-                  children: [
-                    image,
-                    if (isInCart) Positioned(top: 0, right: 0, child: _QuantityBadge(quantity: quantityInCart)),
-                  ],
+                AspectRatio(
+                  aspectRatio: AppSizes.sellTileImageRatio,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      image,
+                      if (isInCart)
+                        Positioned(
+                          top: AppSizes.spaceXSmall,
+                          right: AppSizes.spaceXSmall,
+                          child: _QuantityBadge(quantity: quantityInCart),
+                        ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: AppSizes.spaceSmall),
                 // จองที่ชื่อไว้ 2 บรรทัดเสมอ (ข้อความว่าง 2 บรรทัดซ้อนอยู่ข้างหลัง) → ชื่อสั้น / ยาว การ์ดก็สูงเท่ากัน

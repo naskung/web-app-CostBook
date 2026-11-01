@@ -57,5 +57,33 @@ void main() {
       expect(used.isMaterial, true);
       expect(MovementModel.fromJson({'id': 'm2', 'type': 'in', 'quantity': 1}).isMaterial, false);
     });
+
+    test('อ่านกำไรของแถวที่ขายได้ / ไม่มี = ไม่มีกำไร', () {
+      final sold = MovementModel.fromJson({
+        'id': 'm1',
+        'type': 'out',
+        'quantity': 2,
+        'invoice_no': 'RC-2026-0004',
+        'has_profit': true,
+        'sale_amount': 215.03,
+        'cost_amount': 227.74,
+        'profit': -12.71,
+      });
+      expect(sold.hasProfit, true);
+      expect(sold.saleAmount, 215.03);
+      expect(sold.costAmount, 227.74);
+      expect(sold.profit, -12.71);
+      expect(MovementModel.fromJson({'id': 'm2', 'type': 'in', 'quantity': 1}).hasProfit, false);
+    });
+
+    test('isSale = เบิกออกตามเอกสารขาย (ไม่ใช่คืนจากยกเลิก / ไม่ใช่วัสดุ)', () {
+      expect(movement.isSale, true);
+      expect(MovementModel.fromJson({'type': 'in', 'invoice_no': 'RC-1', 'quantity': 1}).isSale, false);
+      expect(
+        MovementModel.fromJson({'type': 'out', 'invoice_no': 'RC-1', 'quantity': 1, 'is_material': true}).isSale,
+        false,
+      );
+      expect(MovementModel.fromJson({'type': 'out', 'quantity': 1}).isSale, false);
+    });
   });
 }

@@ -41,4 +41,25 @@ void main() {
     expect(find.text('3'), findsOneWidget);
     expect(find.text('0'), findsNothing);
   });
+
+  testWidgets('รูปเต็มความกว้างการ์ด เป็นสี่เหลี่ยมจัตุรัส (ไม่ชิดซ้าย / ไม่แคบ)', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SellProductTile(
+            image: const ColoredBox(key: Key('image'), color: Colors.grey),
+            name: 'พวงกุญแจ',
+            price: 59,
+            stockText: 'คงเหลือ 7',
+            width: 180,
+            isOut: false,
+            onTap: () {},
+          ),
+        ),
+      ),
+    );
+    final image = tester.getSize(find.byKey(const Key('image')));
+    expect(image.width, greaterThan(140));
+    expect(image.height, image.width);
+  });
 }

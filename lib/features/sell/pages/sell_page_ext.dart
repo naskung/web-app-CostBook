@@ -233,7 +233,7 @@ extension _SellPageExt on _SellPageState {
         product.trackStock ? 'invoice.in_stock'.trParams({'stock': '${product.stock}'}) : 'product.no_stock'.tr;
     return SellProductTile(
       width: width,
-      image: ProductImage(product: product, height: AppSizes.sellTileImageHeight),
+      image: ProductImage(product: product),
       name: product.name,
       price: product.sellPrice,
       stockText: stockText,

@@ -14,6 +14,10 @@ class MovementModel extends Equatable {
     this.supplier = '',
     this.isMaterial = false,
     required this.createdAt,
+    this.hasProfit = false,
+    this.saleAmount = 0,
+    this.costAmount = 0,
+    this.profit = 0,
   });
 
   static const String stockIn = 'in';
@@ -32,10 +36,17 @@ class MovementModel extends Equatable {
   // ตัด / คืนวัสดุที่ใช้ผลิตสินค้าอื่นอัตโนมัติ (note บอกว่าใช้ผลิตอะไร)
   final bool isMaterial;
   final DateTime createdAt;
+  // แถวที่ขายตามเอกสารที่ยังไม่ยกเลิก: ยอดขายก่อน VAT หลังเฉลี่ยส่วนลด / ต้นทุน ณ วันที่ขาย / กำไร (API คิดให้)
+  final bool hasProfit;
+  final double saleAmount;
+  final double costAmount;
+  final double profit;
 
   bool get isIn => type == stockIn;
 
   bool get isFromInvoice => invoiceNo.isNotEmpty;
+
+  bool get isSale => isFromInvoice && !isIn && !isMaterial;
 
   factory MovementModel.fromJson(Map<String, dynamic> json) {
     return MovementModel(
@@ -51,6 +62,10 @@ class MovementModel extends Equatable {
       supplier: json['supplier'] as String? ?? '',
       isMaterial: json['is_material'] as bool? ?? false,
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? '')?.toLocal() ?? DateTime(1970),
+      hasProfit: json['has_profit'] as bool? ?? false,
+      saleAmount: (json['sale_amount'] as num? ?? 0).toDouble(),
+      costAmount: (json['cost_amount'] as num? ?? 0).toDouble(),
+      profit: (json['profit'] as num? ?? 0).toDouble(),
     );
   }
 
@@ -68,6 +83,10 @@ class MovementModel extends Equatable {
       'supplier': supplier,
       'is_material': isMaterial,
       'created_at': createdAt.toUtc().toIso8601String(),
+      'has_profit': hasProfit,
+      'sale_amount': saleAmount,
+      'cost_amount': costAmount,
+      'profit': profit,
     };
   }
 
@@ -85,5 +104,9 @@ class MovementModel extends Equatable {
     supplier,
     isMaterial,
     createdAt,
+    hasProfit,
+    saleAmount,
+    costAmount,
+    profit,
   ];
 }

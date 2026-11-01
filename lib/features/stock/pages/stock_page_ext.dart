@@ -34,6 +34,7 @@ extension _StockPageExt on StockPage {
         AppDataColumn(label: 'stock.product'.tr, flex: 3),
         AppDataColumn(label: 'stock.type'.tr, flex: 2),
         AppDataColumn(label: 'common.quantity'.tr, flex: 2, alignEnd: true),
+        AppDataColumn(label: 'stock.profit'.tr, flex: 2, alignEnd: true),
         AppDataColumn(label: 'common.note'.tr, flex: 3),
       ],
       rows: [
@@ -48,6 +49,7 @@ extension _StockPageExt on StockPage {
                 context,
               ).textTheme.titleSmall?.copyWith(color: movement.isIn ? AppColors.success : AppColors.danger),
             ),
+            _profitCell(context, movement),
             Text(_noteText(movement), style: Theme.of(context).textTheme.bodySmall),
           ],
       ],
@@ -65,7 +67,33 @@ extension _StockPageExt on StockPage {
     if (movement.isIn) {
       return AppBadge(text: 'stock.stock_in'.tr, color: AppColors.success, backgroundColor: AppColors.successSoft);
     }
+    if (movement.isSale) {
+      return AppBadge(text: 'stock.sold'.tr, color: AppColors.primaryDark, backgroundColor: AppColors.primarySoft);
+    }
     return AppBadge(text: 'stock.stock_out'.tr, color: AppColors.danger, backgroundColor: AppColors.dangerSoft);
+  }
+
+  // แถวที่ขาย: กำไร (เขียว / ขาดทุนแดง) + ยอดขาย · ทุน ข้างล่าง / แถวอื่น: —
+  Widget _profitCell(BuildContext context, MovementModel movement) {
+    if (!movement.hasProfit) return const Text('—');
+    final textTheme = Theme.of(context).textTheme;
+    final color = movement.profit < 0 ? AppColors.danger : AppColors.success;
+    final sign = movement.profit > 0 ? '+' : '';
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text('$sign${MoneyUtil.format(movement.profit)}', style: textTheme.titleSmall?.copyWith(color: color)),
+        Text(
+          'stock.profit_detail'.trParams({
+            'sale': MoneyUtil.format(movement.saleAmount),
+            'cost': MoneyUtil.format(movement.costAmount),
+          }),
+          textAlign: TextAlign.end,
+          style: textTheme.bodySmall,
+        ),
+      ],
+    );
   }
 
   String _timeText(DateTime time) {

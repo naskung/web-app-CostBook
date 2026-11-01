@@ -43,7 +43,7 @@ class AppSizes {
   static const double alertIcon = 32;
   static const double productThumb = 40;
   static const double productImagePreview = 112;
-  static const double sellTileImageHeight = 96;
+  static const double sellTileImageRatio = 1;
   static const double contentMaxWidth = 1200;
   static const double statCardWidth = 260;
   static const double statCardCompactWidth = 220;
