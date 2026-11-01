@@ -518,6 +518,7 @@
   "assistant.field.min_stock": "Minimum stock",
   "error.ai_not_configured": "No AI available — add a Claude key in Settings",
   "error.ai_key_invalid": "The key does not work — check it was copied fully and is still active",
+  "error.ai_credit_low": "Your Claude key is out of credit. Add credits at platform.claude.com → Plans & Billing, then try again (or remove the key in Settings)",
   "error.ai_busy": "AI is busy right now — try again shortly",
   "error.ai_refused": "AI can't help with that — try asking differently",
   "error.ai_no_result": "AI did not finish — please try again",

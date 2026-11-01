@@ -518,6 +518,7 @@
   "assistant.field.min_stock": "จำนวนขั้นต่ำ",
   "error.ai_not_configured": "ยังไม่มี AI ให้ใช้ ใส่ key ของ Claude ที่หน้าตั้งค่า",
   "error.ai_key_invalid": "key ใช้ไม่ได้ ตรวจว่า copy มาครบ หรือ key ยังไม่ถูกยกเลิก",
+  "error.ai_credit_low": "เครดิตของ key Claude หมดแล้ว — เติมเครดิตที่ platform.claude.com → Plans & Billing แล้วลองใหม่ (หรือลบ key ที่หน้าตั้งค่า)",
   "error.ai_busy": "AI ไม่ว่างตอนนี้ ลองใหม่อีกครั้งในอีกสักครู่",
   "error.ai_refused": "AI ตอบเรื่องนี้ไม่ได้ ลองถามแบบอื่น",
   "error.ai_no_result": "AI ตอบไม่ครบ ลองใหม่อีกครั้ง",
