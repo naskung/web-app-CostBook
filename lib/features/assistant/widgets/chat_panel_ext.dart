@@ -3,6 +3,7 @@ part of 'chat_panel.dart';
 extension _ChatPanelExt on _ChatPanelState {
   String _providerText(AiStatusModel ai) {
     if (ai.provider == AiStatusModel.claude) return 'assistant.provider_claude'.tr;
+    if (ai.isFree && ai.webSearch) return 'assistant.provider_free_search'.tr;
     if (ai.isFree) return 'assistant.provider_free'.tr;
     return 'assistant.provider_none'.tr;
   }

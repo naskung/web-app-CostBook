@@ -129,8 +129,8 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
           key: _formKey,
           child: PageContent(
             maxWidth: AppSizes.contentMaxWidth * 3 / 4,
+            header: _backButton(context),
             children: [
-              _backButton(context),
               if (state.company.needsTaxId) _taxIdBanner(context),
               _customerSection(context, state),
               _itemsSection(context, state),

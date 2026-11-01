@@ -35,9 +35,9 @@ class MockTransactionRepository extends Mock implements TransactionRepository {}
 
 class MockMarketRepository extends Mock implements MarketRepository {}
 
-AssistantBloc _assistantBloc() {
+AssistantBloc _assistantBloc(AiStatusModel aiStatus) {
   final aiRepository = MockAiRepository();
-  when(() => aiRepository.getStatus()).thenAnswer((_) async => const AiStatusModel(enabled: true, provider: 'gemini'));
+  when(() => aiRepository.getStatus()).thenAnswer((_) async => aiStatus);
   return AssistantBloc(
     aiRepository: aiRepository,
     productRepository: MockProductRepository(),
@@ -65,7 +65,10 @@ void main() {
     when(() => settingsRepository.getFields()).thenAnswer((_) async => []);
   });
 
-  Future<void> pumpShell(WidgetTester tester) async {
+  Future<void> pumpShell(
+    WidgetTester tester, {
+    AiStatusModel aiStatus = const AiStatusModel(enabled: true, provider: 'gemini'),
+  }) async {
     tester.view.physicalSize = const Size(1440, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -79,7 +82,7 @@ void main() {
                 providers: [
                   BlocProvider(create: (_) => AuthBloc(repository)),
                   BlocProvider(create: (_) => SettingsBloc(settingsRepository)..add(SettingsRequested())),
-                  BlocProvider(create: (_) => _assistantBloc()..add(AssistantOpened())),
+                  BlocProvider(create: (_) => _assistantBloc(aiStatus)..add(AssistantOpened())),
                 ],
                 child: AppShell(currentPath: state.uri.path, child: child),
               ),
@@ -126,6 +129,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('menu.cost'.tr), findsNothing);
     expect(find.text('menu.sell'.tr), findsOneWidget);
+  });
+
+  testWidgets('AI ฟรีที่ค้นเว็บได้ (API มีตัวค้นเว็บฟรี) หัวแชทบอกว่าค้นเว็บได้', (tester) async {
+    await pumpShell(tester, aiStatus: const AiStatusModel(enabled: true, provider: 'gemini', webSearch: true));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('assistant.open'.tr));
+    await tester.pumpAndSettle();
+    expect(find.text('assistant.provider_free_search'.tr), findsOneWidget);
+    expect(find.text('assistant.provider_free'.tr), findsNothing);
   });
 
   testWidgets('ทุกหน้ามีปุ่มแชท AI มุมขวาล่าง กดแล้วเปิดหน้าต่างแชท กดย่อแล้วปิด', (tester) async {

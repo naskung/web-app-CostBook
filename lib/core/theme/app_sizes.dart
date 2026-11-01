@@ -81,6 +81,13 @@ class AppSizes {
   static const double chatAvatarSize = 32;
   static const double unreadDotSize = 12;
   static const double chatLauncherSpace = 88;
+  // ปุ่มแชท (FloatingActionButton ขนาดปกติ) วางห่างขอบขวา / ล่าง spaceLarge
+  static const double chatFabSize = 56;
+  // ปุ่มเลื่อนขึ้นบนสุด (FloatingActionButton.small) วางกึ่งกลางเหนือปุ่มแชท / ขึ้นเมื่อเลื่อนลงเกิน scrollTopThreshold
+  static const double scrollTopButtonSize = 40;
+  static const double scrollTopThreshold = 400;
+  static const double scrollTopRight = spaceLarge + (chatFabSize - scrollTopButtonSize) / 2;
+  static const double scrollTopBottom = spaceLarge + chatFabSize + spaceMedium;
   static const double panelRadius = 16;
   static const double panelPadding = 20;
   static const double dashboardWideBreak = 960;

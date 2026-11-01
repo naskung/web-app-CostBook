@@ -4,10 +4,13 @@ extension _InvoiceFormPageExt on _InvoiceFormPageState {
   Widget _backButton(BuildContext context) {
     return Align(
       alignment: Alignment.centerLeft,
-      child: TextButton.icon(
-        onPressed: () => context.go(AppRoutes.invoices),
-        icon: const Icon(Icons.arrow_back),
-        label: Text('common.back'.tr),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: AppSizes.spaceSmall),
+        child: TextButton.icon(
+          onPressed: () => context.go(AppRoutes.invoices),
+          icon: const Icon(Icons.arrow_back),
+          label: Text('common.back'.tr),
+        ),
       ),
     );
   }

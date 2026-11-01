@@ -67,8 +67,8 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
         if (invoice == null) return const AppLoading();
         return PageContent(
           maxWidth: AppSizes.paperWidth,
+          header: _toolbar(context, state, invoice),
           children: [
-            _toolbar(context, state, invoice),
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.topCenter,

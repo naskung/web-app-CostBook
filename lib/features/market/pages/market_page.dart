@@ -54,9 +54,9 @@ class MarketPage extends StatelessWidget {
         final check = state.check;
         final isLoaded = state.status == AppStatus.success && product != null;
         return PageContent(
+          header: _backButton(context),
           centerChild: _stateView(context, state),
           children: [
-            _backButton(context),
             if (isLoaded) _header(context, state, product, company),
             if (isLoaded && state.isChecking) _checking(context),
             if (isLoaded && check != null) ..._result(context, product, check, company),

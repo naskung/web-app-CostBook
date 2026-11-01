@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
 import 'package:costbook/shared/widgets/organisms/page_content.dart';
 
@@ -34,5 +35,52 @@ void main() {
   testWidgets('centerChild อยู่กึ่งกลางแนวนอน', (tester) async {
     await pumpPage(tester, centerChild: const Text('ยังไม่มีสินค้า'));
     expect(tester.getCenter(find.text('ยังไม่มีสินค้า')).dx, closeTo(640, 1));
+  });
+
+  Future<void> pumpLongPage(WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await AppLang.load('th');
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PageContent(
+            header: const Text('กลับไปหน้าสินค้า'),
+            children: [for (var i = 0; i < 30; i++) SizedBox(height: 100, child: Text('แถว $i'))],
+          ),
+        ),
+      ),
+    );
+  }
+
+  bool topButtonShown(WidgetTester tester) {
+    final scale = tester.widget<AnimatedScale>(
+      find.ancestor(of: find.byType(FloatingActionButton), matching: find.byType(AnimatedScale)),
+    );
+    return scale.scale == 1;
+  }
+
+  testWidgets('header ติดอยู่ด้านบน เลื่อนลงแล้วยังอยู่ที่เดิม', (tester) async {
+    await pumpLongPage(tester);
+    final before = tester.getTopLeft(find.text('กลับไปหน้าสินค้า')).dy;
+    await tester.drag(find.text('แถว 2'), const Offset(0, -600));
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.text('กลับไปหน้าสินค้า')).dy, before);
+    expect(find.text('แถว 0'), findsNothing);
+  });
+
+  testWidgets('เลื่อนลงเกินระยะ → มีปุ่มลูกศร กดแล้วกลับขึ้นบนสุด', (tester) async {
+    await pumpLongPage(tester);
+    expect(topButtonShown(tester), isFalse);
+
+    await tester.drag(find.text('แถว 2'), const Offset(0, -(AppSizes.scrollTopThreshold + 300)));
+    await tester.pumpAndSettle();
+    expect(topButtonShown(tester), isTrue);
+
+    await tester.tap(find.byTooltip('common.scroll_top'.tr));
+    await tester.pumpAndSettle();
+    expect(find.text('แถว 0'), findsOneWidget);
+    expect(topButtonShown(tester), isFalse);
   });
 }

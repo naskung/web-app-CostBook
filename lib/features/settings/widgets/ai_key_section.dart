@@ -101,16 +101,22 @@ class _AiKeySectionState extends State<AiKeySection> {
     );
   }
 
+  // Gemini ฟรีเช็คราคาตลาดได้เมื่อ API มีตัวค้นเว็บฟรี (TAVILY_API_KEY) → web_search = true
+  String _detailText(AiStatusModel ai) {
+    if (ai.provider == AiStatusModel.claude) return 'settings.ai_claude_detail'.tr;
+    if (ai.webSearch) return 'settings.ai_free_search_detail'.tr;
+    return 'settings.ai_free_detail'.tr;
+  }
+
   Widget _current(BuildContext context, AiStatusModel ai) {
     final textTheme = Theme.of(context).textTheme;
-    final isClaude = ai.provider == AiStatusModel.claude;
     final label = switch (ai.provider) {
       AiStatusModel.claude =>
         ai.hasOwnKey ? 'settings.ai_using_own'.trParams({'hint': ai.keyHint}) : 'settings.ai_using_env'.tr,
       AiStatusModel.gemini => 'settings.ai_using_free'.tr,
       _ => 'settings.ai_using_none'.tr,
     };
-    final detail = isClaude ? 'settings.ai_claude_detail'.tr : 'settings.ai_free_detail'.tr;
+    final detail = _detailText(ai);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
