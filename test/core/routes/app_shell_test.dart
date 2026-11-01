@@ -7,6 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/routes/app_routes.dart';
 import 'package:costbook/core/routes/app_shell.dart';
+import 'package:costbook/core/theme/app_sizes.dart';
 import 'package:costbook/core/theme/app_theme.dart';
 import 'package:costbook/features/assistant/bloc/assistant_bloc.dart';
 import 'package:costbook/features/assistant/models/ai_status_model.dart';
@@ -79,12 +80,14 @@ void main() {
   Future<void> pumpShell(
     WidgetTester tester, {
     AiStatusModel aiStatus = const AiStatusModel(enabled: true, provider: 'gemini'),
+    Size size = const Size(1440, 900),
+    String initialLocation = AppRoutes.dashboard,
   }) async {
-    tester.view.physicalSize = const Size(1440, 900);
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final router = GoRouter(
-      initialLocation: AppRoutes.dashboard,
+      initialLocation: initialLocation,
       routes: [
         GoRoute(path: AppRoutes.login, builder: (context, state) => const Text('login-page')),
         ShellRoute(
@@ -102,6 +105,7 @@ void main() {
             GoRoute(path: AppRoutes.dashboard, builder: (context, state) => const Text('dashboard-page')),
             GoRoute(path: AppRoutes.products, builder: (context, state) => const Text('products-page')),
             GoRoute(path: AppRoutes.profile, builder: (context, state) => const Text('profile-page')),
+            GoRoute(path: AppRoutes.sell, builder: (context, state) => const Text('sell-page')),
           ],
         ),
       ],
@@ -179,5 +183,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('profile-page'), findsOneWidget);
     expect(find.widgetWithText(AppBar, 'menu.profile'.tr), findsOneWidget);
+  });
+
+  double chatButtonBottom(WidgetTester tester) {
+    return tester.view.physicalSize.height - tester.getRect(find.byTooltip('assistant.open'.tr)).bottom;
+  }
+
+  testWidgets('หน้าขายบนมือถือ ปุ่มแชทยกขึ้นไปอยู่เหนือแถบยอดรวม / หน้าอื่นอยู่มุมล่างเหมือนเดิม', (tester) async {
+    await pumpShell(tester, size: const Size(375, 800), initialLocation: AppRoutes.sell);
+    await tester.pumpAndSettle();
+    expect(chatButtonBottom(tester), greaterThanOrEqualTo(AppSizes.sellCartBarHeight));
+
+    await pumpShell(tester, size: const Size(375, 800), initialLocation: AppRoutes.products);
+    await tester.pumpAndSettle();
+    expect(chatButtonBottom(tester), lessThan(AppSizes.sellCartBarHeight));
+  });
+
+  testWidgets('หน้าขายบนจอคอม ปุ่มแชทอยู่มุมล่างเหมือนเดิม (ใต้บิล)', (tester) async {
+    await pumpShell(tester, initialLocation: AppRoutes.sell);
+    await tester.pumpAndSettle();
+    expect(chatButtonBottom(tester), lessThan(AppSizes.sellCartBarHeight));
   });
 }

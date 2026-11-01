@@ -57,6 +57,7 @@ class AppSizes {
   static const double sellQuantityBadge = 26;
   static const double sellDiscountWidth = 140;
   static const double sellSheetHeightRatio = 0.9;
+  static const double sellCartBarHeight = 80;
   static const double iconSmall = 20;
   static const double badgePaddingX = 10;
   static const double badgePaddingY = 2;

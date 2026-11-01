@@ -58,7 +58,7 @@ extension _SellPageExt on _SellPageState {
     );
   }
 
-  // มือถือ: แถบติดล่าง จำนวนชิ้น + ยอดรวม + ปุ่มดูบิล (ด้านขวาเว้นที่ให้ปุ่มแชท AI)
+  // มือถือ: แถบติดล่าง สูง sellCartBarHeight จำนวนชิ้น + ยอดรวม + ปุ่มดูบิล (ปุ่มแชท AI ถูกยกขึ้นไปอยู่เหนือแถบ — AppShell)
   Widget _cartBar(BuildContext context, InvoiceFormState state) {
     final textTheme = Theme.of(context).textTheme;
     return Material(
@@ -67,13 +67,9 @@ extension _SellPageExt on _SellPageState {
       shadowColor: AppColors.shadow,
       child: SafeArea(
         top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSizes.spaceMedium,
-            AppSizes.spaceMedium,
-            AppSizes.chatLauncherSpace,
-            AppSizes.spaceMedium,
-          ),
+        child: Container(
+          height: AppSizes.sellCartBarHeight,
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.spaceMedium),
           child: Row(
             children: [
               Expanded(
@@ -205,12 +201,14 @@ extension _SellPageExt on _SellPageState {
   Widget _productGrid(BuildContext context, InvoiceFormState state) {
     final products = state.productsMatching(_query, category: _category);
     if (products.isEmpty) return EmptyView(message: 'product.not_found'.tr, icon: Icons.search_off);
+    // มือถือ: ปุ่มแชทลอยอยู่มุมล่างของรายการสินค้า → เว้นที่ท้ายรายการ เลื่อนการ์ดแถวสุดท้ายขึ้นพ้นปุ่มได้
+    final isMobile = ResponsiveHelper.screenType(context) == ScreenType.mobile;
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AppSizes.spaceMedium,
         AppSizes.spaceSmall,
         AppSizes.spaceMedium,
-        AppSizes.spaceMedium,
+        isMobile ? AppSizes.chatLauncherSpace : AppSizes.spaceMedium,
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {

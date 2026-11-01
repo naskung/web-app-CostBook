@@ -11,8 +11,11 @@ import 'package:costbook/core/theme/app_sizes.dart';
 import 'package:costbook/features/assistant/bloc/assistant_bloc.dart';
 import 'package:costbook/features/assistant/widgets/chat_panel.dart';
 
+// bottom = ระยะปุ่มแชทจากขอบล่าง (หน้าที่มีแถบติดล่าง เช่น หน้าขายบนมือถือ → ยกปุ่มขึ้นเหนือแถบ)
 class ChatLauncher extends StatelessWidget {
-  const ChatLauncher({super.key});
+  const ChatLauncher({super.key, this.bottom = AppSizes.spaceLarge});
+
+  final double bottom;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +39,7 @@ class ChatLauncher extends StatelessWidget {
         }
         return Positioned(
           right: AppSizes.spaceLarge,
-          bottom: AppSizes.spaceLarge,
+          bottom: bottom,
           child: Badge(
             isLabelVisible: state.hasUnread,
             smallSize: AppSizes.unreadDotSize,

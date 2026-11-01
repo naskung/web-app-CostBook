@@ -3,9 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:costbook/core/constants/app_status.dart';
+import 'package:costbook/core/constants/screen_type.dart';
+import 'package:costbook/core/helpers/responsive_helper.dart';
 import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/routes/app_menu.dart';
 import 'package:costbook/core/routes/app_routes.dart';
+import 'package:costbook/core/theme/app_sizes.dart';
 import 'package:costbook/features/assistant/widgets/chat_launcher.dart';
 import 'package:costbook/features/auth/bloc/auth_bloc.dart';
 import 'package:costbook/features/settings/bloc/settings_bloc.dart';
@@ -51,9 +54,16 @@ class AppShell extends StatelessWidget {
           profile: _menuProfile(profile),
           child: child,
         ),
-        const ChatLauncher(),
+        ChatLauncher(bottom: _chatBottom(context)),
       ],
     );
+  }
+
+  // หน้าขายบนมือถือมีแถบยอดรวมติดล่าง → ยกปุ่มแชทขึ้นไปเหนือแถบ ไม่ทับปุ่มดูบิล
+  double _chatBottom(BuildContext context) {
+    final isMobile = ResponsiveHelper.screenType(context) == ScreenType.mobile;
+    if (!isMobile || currentPath != AppRoutes.sell) return AppSizes.spaceLarge;
+    return AppSizes.sellCartBarHeight + AppSizes.spaceMedium + MediaQuery.paddingOf(context).bottom;
   }
 
   // ยังโหลดผู้ใช้ไม่เสร็จ → ยังไม่แสดงแถวผู้ใช้
