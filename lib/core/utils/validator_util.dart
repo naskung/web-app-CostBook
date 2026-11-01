@@ -4,6 +4,9 @@ class ValidatorUtil {
   static final RegExp _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
   static final RegExp _taxIdPattern = RegExp(r'^[0-9]{13}$');
 
+  // ตรงกับ API: นับเป็นตัวอักษร (ภาษาไทย 1 ตัว = 1)
+  static const int minPasswordLength = 6;
+
   static String? required(String? value) {
     if (value == null || value.trim().isEmpty) return 'validation.required'.tr;
     return null;
@@ -40,6 +43,20 @@ class ValidatorUtil {
   static String? positiveInteger(String? value) {
     final number = int.tryParse(value?.trim() ?? '');
     if (number == null || number <= 0) return 'validation.positive_integer'.tr;
+    return null;
+  }
+
+  static String? password(String? value) {
+    final text = value ?? '';
+    if (text.isEmpty) return 'validation.required'.tr;
+    if (text.runes.length < minPasswordLength) {
+      return 'validation.password_too_short'.trParams({'min': '$minPasswordLength'});
+    }
+    return null;
+  }
+
+  static String? passwordMatch(String? value, String password) {
+    if ((value ?? '') != password) return 'validation.password_mismatch'.tr;
     return null;
   }
 }

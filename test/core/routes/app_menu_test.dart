@@ -76,4 +76,9 @@ void main() {
   test('ร้านใช้หน้าคำนวณต้นทุน เห็นเมนูครบ', () {
     expect(AppMenu.itemsFor(useCostPage: true), AppMenu.items);
   });
+
+  test('หน้าโปรไฟล์ / จัดการผู้ใช้ (ไม่อยู่ในรายการเมนู) มีชื่อหน้าของตัวเอง', () {
+    expect(AppMenu.titleOf(AppRoutes.profile), 'menu.profile'.tr);
+    expect(AppMenu.titleOf(AppRoutes.users), 'menu.users'.tr);
+  });
 }

@@ -68,8 +68,16 @@ class AppMenu {
     return items.where((item) => item.route != AppRoutes.cost).toList();
   }
 
+  // หน้าที่ไม่อยู่ในรายการเมนู (เปิดจากแถวผู้ใช้ด้านล่างเมนู)
+  static const Map<String, String> _otherPageTitleKeys = {
+    AppRoutes.profile: 'menu.profile',
+    AppRoutes.users: 'menu.users',
+  };
+
   // ชื่อหน้าบนแถบบน: ใช้ชื่อเมนูย่อยถ้าอยู่ในกลุ่ม
   static String titleOf(String path) {
+    final otherPageTitleKey = _otherPageTitleKeys[path];
+    if (otherPageTitleKey != null) return otherPageTitleKey.tr;
     for (final item in items) {
       if (!item.isSelected(path)) continue;
       return item.selectedChild(path)?.label ?? item.label;

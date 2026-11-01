@@ -43,6 +43,11 @@ import 'package:costbook/features/stock/repository/stock_repository.dart';
 import 'package:costbook/features/transaction/bloc/transaction_bloc.dart';
 import 'package:costbook/features/transaction/pages/transaction_list_page.dart';
 import 'package:costbook/features/transaction/repository/transaction_repository.dart';
+import 'package:costbook/features/user/bloc/profile_bloc.dart';
+import 'package:costbook/features/user/bloc/user_list_bloc.dart';
+import 'package:costbook/features/user/pages/profile_page.dart';
+import 'package:costbook/features/user/pages/user_list_page.dart';
+import 'package:costbook/features/user/repository/user_repository.dart';
 
 final appRouter = GoRouter(
   initialLocation: AppRoutes.dashboard,
@@ -64,6 +69,7 @@ final appRouter = GoRouter(
               providers: [
                 BlocProvider(create: _createAuthBloc),
                 BlocProvider(create: (_) => SettingsBloc(SettingsRepository(ApiClient()))..add(SettingsRequested())),
+                BlocProvider(create: (_) => ProfileBloc(UserRepository(ApiClient()))..add(ProfileRequested())),
                 BlocProvider(create: (context) => _createAssistantBloc(context)..add(AssistantOpened())),
               ],
               child: AppShell(currentPath: state.uri.path, child: child),
@@ -82,6 +88,8 @@ final appRouter = GoRouter(
         _menuRoute(AppRoutes.invoiceCreate, _invoiceFormPage),
         _menuRoute(AppRoutes.invoiceDetail, _invoiceDetailPage),
         _menuRoute(AppRoutes.settings, _settingsPage),
+        _menuRoute(AppRoutes.profile, _profilePage),
+        _menuRoute(AppRoutes.users, _userListPage),
       ],
     ),
   ],
@@ -205,6 +213,18 @@ Widget _invoiceDetailPage(GoRouterState state) {
 
 Widget _settingsPage(GoRouterState state) {
   return const SettingsPage();
+}
+
+// ใช้ ProfileBloc ของ shell (ตัวเดียวกับที่เมนูข้างใช้) → แก้ชื่อ / รูปแล้วเมนูเปลี่ยนตามทันที
+Widget _profilePage(GoRouterState state) {
+  return const ProfilePage();
+}
+
+Widget _userListPage(GoRouterState state) {
+  return BlocProvider(
+    create: (_) => UserListBloc(UserRepository(ApiClient()))..add(UsersRequested()),
+    child: const UserListPage(),
+  );
 }
 
 Widget _sellPage(GoRouterState state) {

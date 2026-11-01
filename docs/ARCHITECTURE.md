@@ -73,13 +73,13 @@ web-app-CostBook/
 │   ├── main.dart          จุดเริ่มแอป: โหลดภาษาที่เลือกไว้ + อ่าน token ที่จดจำไว้ + ตั้ง ApiClient.onUnauthorized แล้ว runApp
 │   ├── app.dart           LanguageBloc + MaterialApp.router (key = รหัสภาษา → เปลี่ยนภาษาแล้วข้อความเปลี่ยนทั้งแอป)
 │   ├── core/
-│   │   ├── constants/     app_status.dart, screen_type.dart, api_constants.dart (baseUrl, companyLogoUrl)
+│   │   ├── constants/     app_status.dart, screen_type.dart, user_role.dart (owner / manager / staff), api_constants.dart (baseUrl, companyLogoUrl, productImageUrl, userAvatarUrl)
 │   │   ├── lang/          app_lang.dart (.tr), language_bloc.dart (เปลี่ยน + จำภาษา)
 │   │   ├── network/       api_client.dart (get / post / put / delete + token + 401), api_exception.dart (error code จาก API)
 │   │   ├── routes/        app_routes.dart (ชื่อ route), app_router.dart (GoRouter + สร้าง bloc ของแต่ละหน้า), app_menu.dart, app_shell.dart, app_page_transition.dart
 │   │   ├── theme/         app_colors.dart (สี), app_sizes.dart (ขนาดตัวอักษร / ระยะห่าง), app_theme.dart (ฟอนต์ + รวมเป็น ThemeData)
 │   │   ├── utils/         money_util, tax_util, cost_util, date_util, validator_util, error_util, responsive_util,
-│   │   │                  percent_util (% เทียบเดือนก่อน), market_util (เทียบราคาตลาด), chart_util (สเกลแกนกราฟ)
+│   │   │                  percent_util (% เทียบเดือนก่อน), market_util (เทียบราคาตลาด), chart_util (สเกลแกนกราฟ), name_util (ตัวอักษรย่อในรูปโปรไฟล์)
 │   │   └── helpers/       dialog_helper.dart (ถามยืนยัน), snackbar_helper.dart, pdf_helper.dart (พิมพ์ / ดาวน์โหลด PDF), responsive_helper.dart,
 │   │                      image_pick_helper.dart (เลือกรูป + ย่อเหลือด้านยาว 1200 px)
 │   ├── shared/
@@ -107,6 +107,10 @@ web-app-CostBook/
 │       ├── invoice/         bloc 3 ตัว: invoice_list / invoice_form / invoice_detail
 │       │                    pages: invoice_list_page, invoice_form_page (+ _ext), invoice_detail_page
 │       │                    widgets: invoice_item_row.dart (บรรทัดสินค้าในฟอร์ม), invoice_paper.dart (กระดาษใบกำกับ A4)
+│       ├── user/            ผู้ใช้ที่ login อยู่ + โปรไฟล์ + จัดการผู้ใช้ (เจ้าของร้าน): ProfileBloc (shell), UserListBloc
+│       │                    pages: profile_page, user_list_page (+ _ext)
+│       │                    widgets: user_avatar (รูป / ตัวอักษรย่อ), role_badge, profile_photo_card, profile_info_section, password_section,
+│       │                    user_form_dialog (เพิ่ม / แก้ผู้ใช้), reset_password_dialog
 │       └── settings/        ข้อมูลร้าน + รูปแบบร้าน + ช่องข้อมูลเพิ่มเติม (widgets/product_field_dialog.dart) + key AI (widgets/ai_key_section.dart) + โลโก้ + เปลี่ยนภาษา
 └── test/                  โครงเหมือน lib/ ทุกอย่าง เช่น test/core/utils/tax_util_test.dart
 ```
@@ -312,7 +316,7 @@ class ProductRepository {
 | Bloc แบบไหน | สร้างที่ |
 |---|---|
 | ใช้ทั้งแอป (ภาษา) | `app.dart` |
-| ใช้ทุกหน้าหลัง login (`AuthBloc`, `SettingsBloc` = ข้อมูลร้าน + รูปแบบร้าน + ช่องข้อมูลเพิ่มเติม, `AssistantBloc` = แชท AI) | `ShellRoute` ใน `app_router.dart` — หน้าไหนอยากรู้รูปแบบร้านใช้ `context.watch<SettingsBloc>()` / แชทอยู่ที่ shell → เปลี่ยนหน้าแล้วกลับมา แชทยังอยู่ (หายเมื่อ refresh / logout) |
+| ใช้ทุกหน้าหลัง login (`AuthBloc`, `SettingsBloc` = ข้อมูลร้าน + รูปแบบร้าน + ช่องข้อมูลเพิ่มเติม, `AssistantBloc` = แชท AI, `ProfileBloc` = ผู้ใช้ที่ login อยู่ + role) | `ShellRoute` ใน `app_router.dart` — หน้าไหนอยากรู้รูปแบบร้านใช้ `context.watch<SettingsBloc>()` / แชทอยู่ที่ shell → เปลี่ยนหน้าแล้วกลับมา แชทยังอยู่ (หายเมื่อ refresh / logout) |
 | ใช้หน้าเดียว | ใน `builder` ของ route นั้น (ดูหัวข้อ 7) |
 
 ไม่ใช้ get_it — สร้าง object ตรง ๆ เช่น `ProductBloc(ProductRepository(ApiClient()))`
@@ -465,6 +469,18 @@ token หมดอายุ (7 วัน) / ถูกปฏิเสธ: API ต
 | เอกสารขาย | `/invoices`, `/invoices/create`, `/invoices/:id` | `InvoiceListBloc`, `InvoiceFormBloc`, `InvoiceDetailBloc` | ออกใบสำเร็จ → ไปหน้าดูใบ (`AppRoutes.invoiceDetailPath(id)`), ร้านจด VAT ได้ใบกำกับภาษี ไม่จด ได้ใบเสร็จรับเงิน |
 | ตั้งค่า | `/settings` | `SettingsBloc` (จาก shell) + `LanguageBloc` + `AssistantBloc` (key AI) | ข้อมูลร้าน, รูปแบบร้าน, ช่องข้อมูลเพิ่มเติมของสินค้า, key ของ Claude, โลโก้, ภาษา — ร้านจด VAT ต้องกรอกเลขผู้เสียภาษีก่อนออกใบกำกับ / **โลโก้** (`LogoSection`): เลือก / เปลี่ยนรูป (`ImagePickHelper` ย่อให้, เกิน 1 MB เตือนไม่ส่ง) → `LogoUploaded` → `PUT /company/logo` / ลบ (ถามยืนยัน) → `LogoRemoved` → `DELETE` แล้วโหลดข้อมูลร้านใหม่ (`logoStatus` / `logoErrorCode`) — สำเร็จแล้วเรียก `ShopLogo.refresh()`: URL โลโก้มี `?v=<เลข>` เปลี่ยนเลข → โลโก้ทุกที่ (เมนู / หน้า login / ใบกำกับ) โหลดรูปใหม่ทันที ไม่ใช้รูปเก่าที่ Flutter จำไว้ (favicon บนแท็บ browser เปลี่ยนเมื่อ refresh) |
 
+| โปรไฟล์ | `/profile` | `ProfileBloc` (จาก shell) | เปิดจากแถวผู้ใช้ด้านล่างเมนู (เหนือออกจากระบบ) / รูปโปรไฟล์ (เพิ่ม / เปลี่ยน / ลบ แบบเดียวกับโลโก้), ชื่อ-นามสกุล (อีเมลแก้ไม่ได้), เปลี่ยนรหัสผ่าน (ต้องใส่รหัสเดิม, ใหม่ ≥ 6 ตัว + ยืนยันให้ตรง) / เจ้าของร้านมีการ์ด "จัดการผู้ใช้" |
+| จัดการผู้ใช้ | `/profile/users` | `UserListBloc` + `ProfileBloc` | เฉพาะเจ้าของร้าน (คนอื่นเปิดมาได้ 403 `forbidden` → ขึ้นรูปกุญแจ "ไม่มีสิทธิ์") / ตาราง: รูป + ชื่อ + อีเมล, ตำแหน่ง, สถานะ / เพิ่มผู้ใช้ (อีเมล + รหัสแรก + ตำแหน่ง), แก้ชื่อ / ตำแหน่ง / เปิด-ปิดบัญชี, ตั้งรหัสใหม่ให้ / **แก้บัญชีตัวเอง เปลี่ยนตำแหน่ง / ปิดบัญชีไม่ได้** (กันล็อกตัวเองออก) / บันทึกแล้วโหลด `ProfileBloc` ใหม่ (เผื่อแก้ชื่อตัวเอง) |
+
+**ผู้ใช้ + role** (API `000014_user_roles`):
+
+- `ProfileBloc` สร้างที่ shell → `GET /auth/me` ครั้งเดียว ใช้ทั้งแถวผู้ใช้ในเมนู (`SideMenuProfile` ส่งผ่าน `PageLayout` → `AppSideMenu`: รูปมีขอบขาว + ชื่อ + ตำแหน่ง / เมนูแบบแคบเหลือแต่รูป) และหน้าโปรไฟล์ → แก้ชื่อ / รูปแล้วเมนูเปลี่ยนตามทันที
+- `UserModel.role` เป็น enum `UserRole` (`core/constants/user_role.dart`) — role ที่ไม่รู้จัก = `staff` (สิทธิ์น้อยสุด) / `isOwner` ใช้ซ่อนการ์ดจัดการผู้ใช้
+- **ยังไม่ได้ซ่อนเมนูตาม role** (ทุก role เห็นทุกเมนู) — จะทำตอนผู้ใช้กำหนดสิทธิ์: กรองใน `AppMenu.itemsFor(...)` ด้วย role จาก `ProfileBloc` / API ต้องจำกัดด้วย `RequireRole` ด้วยเสมอ (ซ่อนเมนูอย่างเดียวไม่ปลอดภัย)
+- รูปโปรไฟล์: `UserAvatar` โหลด `/users/{id}/avatar?v=<avatarVersion>` (ส่ง token ผ่าน `ApiClient.authHeaders`) / ไม่มีรูป = วงกลมส้ม + ตัวอักษรย่อ (`NameUtil.initialOf`: ชื่อขึ้นต้นด้วยสระ เ แ โ ใ ไ เอาพยัญชนะตัวถัดไปด้วย)
+- หน้าที่ไม่อยู่ในรายการเมนู (โปรไฟล์ / จัดการผู้ใช้) ตั้งชื่อหน้าใน `AppMenu._otherPageTitleKeys`
+- ปิดบัญชีแล้ว → API ตอบ 401 ทันที → `ApiClient.onUnauthorized` พาไปหน้า login / login ไม่ได้ขึ้น `error.user_disabled`
+
 **แชทผู้ช่วย AI (ลอยทุกหน้า เหมือน Messenger)** — ไม่มี route ของตัวเอง:
 
 - `AppShell` = `Stack(PageLayout, ChatLauncher)` → ปุ่มแชทอยู่ทุกหน้าที่อยู่ใน `ShellRoute` (หน้า login ไม่อยู่ใน shell → ไม่มีปุ่ม)
@@ -522,6 +538,8 @@ token หมดอายุ (7 วัน) / ถูกปฏิเสธ: API ต
 |---|---|---|---|
 | **atoms** | ชิ้นเล็กสุด ใช้ซ้ำทุกที่ | Flutter เท่านั้น | `AppButton`, `AppTextField`, `AppDropdown`, `AppLoading`, `AppBadge`, `MoneyText` |
 | **molecules** | atoms หลายตัวรวมกัน | atoms | `SearchField`, `StatCard`, `AmountRow`, `EmptyView`, `ErrorView` |
+
+**เนื้อหาของทุกหน้า** (`PageContent` — ทุกหน้ายกเว้น login): เลื่อนขึ้นลงได้ / `header:` = แถบบนติดอยู่กับที่ตอนเลื่อน (มีเส้นบาง ๆ ใต้แถบเมื่อเลื่อนแล้ว) ใช้กับปุ่มกลับ: เช็คราคาตลาด, ออกเอกสารขาย, ดูเอกสารขาย (ทั้งแถบปุ่ม พิมพ์ / ดาวน์โหลด) / เลื่อนลงเกิน `AppSizes.scrollTopThreshold` → ปุ่มลูกศรกลม (`FloatingActionButton.small`) มุมขวาล่าง กึ่งกลางเหนือปุ่มแชท (`scrollTopRight` / `scrollTopBottom` คิดจากขนาดปุ่มแชท) กดแล้วเลื่อนกลับขึ้นบนสุด
 
 **การ์ดตัวเลขสรุป** (`StatCard` ใน `StatGrid`): ไอคอน + ชื่อ อยู่บน → ตัวเลขใหญ่ (`AppSizes.kpiFont` สีเข้ม, ยาวเกินย่อเอง) → คำอธิบาย (ไม่เกิน 2 บรรทัด) เรียงจากบนแบบเดียวกันทุกใบ ตัวเลขจึงอยู่ระดับเดียวกัน + แถบสัดส่วนชิดล่าง (`share` = %, `shareLabel`; ราง = สีเดียวกันแบบอ่อน, `PercentUtil.fraction` แปลง % เป็นความยาว) / การ์ดผลลัพธ์ของหน้า (1 ใบต่อหน้า) ใส่ `isHighlighted: true` → พื้นเข้มไล่สี + ตัวเลขใหญ่สีขาว + แถบเฉียงสีที่มุมขวาบนแบบหน้า login (`_CornerStripesPainter`) เช่น กำไรสุทธิ, ราคาแนะนำ — ขาดทุนส่ง `valueColor: AppColors.dangerOnDark` — `StatGrid` วางเป็นแถว การ์ดในแถวเดียวกัน**สูงเท่ากัน** (`IntrinsicHeight` + `Row` stretch) และเกลี่ยจำนวนต่อแถวให้เท่า ๆ กัน (`ResponsiveUtil.gridColumns`: 4 ใบ จอพอ 3 คอลัมน์ → 2 × 2)
 | **organisms** | ส่วนใหญ่ของหน้า | atoms, molecules | `PageLayout`, `AppSideMenu`, `AppTopBar`, `AppDataTable`, `FormCard`, `ScreenScaler` |

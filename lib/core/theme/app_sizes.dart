@@ -111,6 +111,9 @@ class AppSizes {
   static const double gaugeTickWidth = 3;
   static const double orbSize = 76;
   static const double avatarSize = 36;
+  static const double profileAvatarSize = 96;
+  static const double avatarRingWidth = 2;
+  static const double profileFormMaxWidth = 760;
   static const double splitBarHeight = 4;
   static const double weekdayChartHeight = 280;
   static const double salesChartHeight = 200;

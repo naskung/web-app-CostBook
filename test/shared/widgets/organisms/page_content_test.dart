@@ -6,6 +6,10 @@ import 'package:costbook/core/theme/app_sizes.dart';
 import 'package:costbook/shared/widgets/organisms/page_content.dart';
 
 void main() {
+  setUpAll(() async {
+    await AppLang.load('th');
+  });
+
   Future<void> pumpPage(WidgetTester tester, {Widget? centerChild}) async {
     tester.view.physicalSize = const Size(1280, 800);
     tester.view.devicePixelRatio = 1;
@@ -41,7 +45,6 @@ void main() {
     tester.view.physicalSize = const Size(1280, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    await AppLang.load('th');
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -63,11 +66,12 @@ void main() {
 
   testWidgets('header ติดอยู่ด้านบน เลื่อนลงแล้วยังอยู่ที่เดิม', (tester) async {
     await pumpLongPage(tester);
-    final before = tester.getTopLeft(find.text('กลับไปหน้าสินค้า')).dy;
+    final headerBefore = tester.getTopLeft(find.text('กลับไปหน้าสินค้า')).dy;
+    final rowBefore = tester.getTopLeft(find.text('แถว 5')).dy;
     await tester.drag(find.text('แถว 2'), const Offset(0, -600));
     await tester.pumpAndSettle();
-    expect(tester.getTopLeft(find.text('กลับไปหน้าสินค้า')).dy, before);
-    expect(find.text('แถว 0'), findsNothing);
+    expect(tester.getTopLeft(find.text('กลับไปหน้าสินค้า')).dy, headerBefore);
+    expect(tester.getTopLeft(find.text('แถว 5')).dy, lessThan(rowBefore - 500));
   });
 
   testWidgets('เลื่อนลงเกินระยะ → มีปุ่มลูกศร กดแล้วกลับขึ้นบนสุด', (tester) async {

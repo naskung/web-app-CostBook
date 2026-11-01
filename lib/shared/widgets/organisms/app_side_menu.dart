@@ -5,6 +5,18 @@ import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
 import 'package:costbook/shared/widgets/atoms/shop_logo.dart';
 
+// ผู้ใช้ที่ login อยู่ แสดงเหนือปุ่มออกจากระบบ กดแล้วไปหน้า route (หน้าโปรไฟล์)
+class SideMenuProfile {
+  const SideMenuProfile({required this.name, required this.subtitle, required this.avatar, required this.route});
+
+  final String name;
+  final String subtitle;
+  final Widget avatar;
+  final String route;
+
+  bool isSelected(String path) => path == route || path.startsWith('$route/');
+}
+
 // เมนูด้านข้าง: เมนูกลุ่ม (มี children) กดแล้วกาง / หุบ เมนูย่อยเยื้องเข้าไป
 // กลุ่มที่มีหน้าปัจจุบันอยู่ข้างในกางให้เอง / แบบแคบ (ไอคอนอย่างเดียว) แสดงเมนูย่อยเป็นไอคอนเรียงกันไปเลย
 class AppSideMenu extends StatefulWidget {
@@ -16,6 +28,7 @@ class AppSideMenu extends StatefulWidget {
     required this.logoutLabel,
     required this.onItemTap,
     required this.onLogout,
+    this.profile,
   });
 
   final String title;
@@ -24,6 +37,7 @@ class AppSideMenu extends StatefulWidget {
   final String logoutLabel;
   final ValueChanged<String> onItemTap;
   final VoidCallback onLogout;
+  final SideMenuProfile? profile;
 
   @override
   State<AppSideMenu> createState() => _AppSideMenuState();
@@ -55,6 +69,7 @@ class _AppSideMenuState extends State<AppSideMenu> {
                   _header(context, isCompact),
                   const SizedBox(height: AppSizes.spaceLarge),
                   Expanded(child: _menuList(isCompact)),
+                  ..._profile(widget.profile, isCompact),
                   _MenuTile(
                     icon: Icons.logout_rounded,
                     label: widget.logoutLabel,
@@ -94,6 +109,19 @@ class _AppSideMenuState extends State<AppSideMenu> {
         ],
       ),
     );
+  }
+
+  List<Widget> _profile(SideMenuProfile? profile, bool isCompact) {
+    if (profile == null) return const [];
+    return [
+      const Divider(color: AppColors.trackOnDark, height: AppSizes.spaceMedium),
+      _ProfileTile(
+        profile: profile,
+        isSelected: profile.isSelected(widget.currentPath),
+        isCompact: isCompact,
+        onTap: () => widget.onItemTap(profile.route),
+      ),
+    ];
   }
 
   Widget _menuList(bool isCompact) {
@@ -217,6 +245,82 @@ class _MenuTile extends StatelessWidget {
           ),
         ),
         if (trailing != null) Icon(trailing, color: color, size: AppSizes.iconSmall),
+      ],
+    );
+  }
+}
+
+// แถวผู้ใช้: รูป + ชื่อ + role / แบบแคบเหลือแต่รูป (ชี้แล้วเห็นชื่อ)
+class _ProfileTile extends StatelessWidget {
+  const _ProfileTile({required this.profile, required this.isSelected, required this.isCompact, required this.onTap});
+
+  final SideMenuProfile profile;
+  final bool isSelected;
+  final bool isCompact;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tile = Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.spaceXSmall),
+      child: Semantics(
+        selected: isSelected,
+        button: true,
+        child: Material(
+          color: isSelected ? AppColors.primary : AppColors.transparent,
+          borderRadius: BorderRadius.circular(AppSizes.radius),
+          child: InkWell(
+            onTap: onTap,
+            hoverColor: AppColors.menuHover,
+            borderRadius: BorderRadius.circular(AppSizes.radius),
+            child: Padding(
+              padding: EdgeInsets.all(isCompact ? AppSizes.spaceXSmall : AppSizes.spaceSmall),
+              child: isCompact ? Center(child: _ringedAvatar()) : _avatarAndName(context),
+            ),
+          ),
+        ),
+      ),
+    );
+    if (!isCompact) return tile;
+    return Tooltip(message: profile.name, child: tile);
+  }
+
+  // ขอบขาวรอบรูป — รูปตัวอักษรย่อสีส้มไม่กลืนไปกับพื้นส้มตอนแถวนี้ถูกเลือก
+  Widget _ringedAvatar() {
+    return Container(
+      padding: const EdgeInsets.all(AppSizes.avatarRingWidth),
+      decoration: const BoxDecoration(color: AppColors.onDark, shape: BoxShape.circle),
+      child: profile.avatar,
+    );
+  }
+
+  Widget _avatarAndName(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final nameColor = isSelected ? AppColors.onPrimary : AppColors.onDark;
+    final subtitleColor = isSelected ? AppColors.onPrimary : AppColors.onDarkSecondary;
+    return Row(
+      children: [
+        _ringedAvatar(),
+        const SizedBox(width: AppSizes.spaceMedium),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                profile.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textTheme.titleSmall?.copyWith(color: nameColor),
+              ),
+              Text(
+                profile.subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textTheme.bodySmall?.copyWith(color: subtitleColor),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

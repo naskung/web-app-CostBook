@@ -20,6 +20,10 @@ import 'package:costbook/features/auth/repository/auth_repository.dart';
 import 'package:costbook/features/settings/bloc/settings_bloc.dart';
 import 'package:costbook/features/settings/models/company_model.dart';
 import 'package:costbook/features/settings/repository/settings_repository.dart';
+import 'package:costbook/core/constants/user_role.dart';
+import 'package:costbook/features/user/bloc/profile_bloc.dart';
+import 'package:costbook/features/user/models/user_model.dart';
+import 'package:costbook/features/user/repository/user_repository.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 
@@ -34,6 +38,8 @@ class MockStockRepository extends Mock implements StockRepository {}
 class MockTransactionRepository extends Mock implements TransactionRepository {}
 
 class MockMarketRepository extends Mock implements MarketRepository {}
+
+class MockUserRepository extends Mock implements UserRepository {}
 
 AssistantBloc _assistantBloc(AiStatusModel aiStatus) {
   final aiRepository = MockAiRepository();
@@ -52,6 +58,7 @@ void main() {
 
   late MockAuthRepository repository;
   late MockSettingsRepository settingsRepository;
+  late MockUserRepository userRepository;
 
   setUpAll(() async {
     await AppLang.load('th');
@@ -63,6 +70,10 @@ void main() {
     settingsRepository = MockSettingsRepository();
     when(() => settingsRepository.getCompany()).thenAnswer((_) async => const CompanyModel(name: 'ร้าน'));
     when(() => settingsRepository.getFields()).thenAnswer((_) async => []);
+    userRepository = MockUserRepository();
+    when(
+      () => userRepository.getMe(),
+    ).thenAnswer((_) async => const UserModel(id: 'u1', email: 'a@b.co', firstName: 'สมชาย', role: UserRole.manager));
   });
 
   Future<void> pumpShell(
@@ -83,12 +94,14 @@ void main() {
                   BlocProvider(create: (_) => AuthBloc(repository)),
                   BlocProvider(create: (_) => SettingsBloc(settingsRepository)..add(SettingsRequested())),
                   BlocProvider(create: (_) => _assistantBloc(aiStatus)..add(AssistantOpened())),
+                  BlocProvider(create: (_) => ProfileBloc(userRepository)..add(ProfileRequested())),
                 ],
                 child: AppShell(currentPath: state.uri.path, child: child),
               ),
           routes: [
             GoRoute(path: AppRoutes.dashboard, builder: (context, state) => const Text('dashboard-page')),
             GoRoute(path: AppRoutes.products, builder: (context, state) => const Text('products-page')),
+            GoRoute(path: AppRoutes.profile, builder: (context, state) => const Text('profile-page')),
           ],
         ),
       ],
@@ -154,5 +167,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('assistant.welcome_title'.tr), findsNothing);
     expect(find.byTooltip('assistant.open'.tr), findsOneWidget);
+  });
+
+  testWidgets('เมนูข้างมีชื่อ + ตำแหน่งของผู้ใช้ที่ login อยู่ กดแล้วไปหน้าโปรไฟล์ หัวข้อเป็นโปรไฟล์', (tester) async {
+    await pumpShell(tester);
+    await tester.pumpAndSettle();
+    expect(find.text('สมชาย'), findsOneWidget);
+    expect(find.text('role.manager'.tr), findsOneWidget);
+
+    await tester.tap(find.text('สมชาย'));
+    await tester.pumpAndSettle();
+    expect(find.text('profile-page'), findsOneWidget);
+    expect(find.widgetWithText(AppBar, 'menu.profile'.tr), findsOneWidget);
   });
 }

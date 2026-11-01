@@ -106,4 +106,25 @@ void main() {
       expect(ValidatorUtil.positiveInteger('0'), isNotNull);
     });
   });
+
+  group('ValidatorUtil.password', () {
+    test('ว่าง / สั้นกว่า 6 ตัว ได้ข้อความ error', () {
+      expect(ValidatorUtil.password(''), isNotNull);
+      expect(ValidatorUtil.password(null), isNotNull);
+      expect(ValidatorUtil.password('12345'), isNotNull);
+    });
+
+    test('6 ตัวขึ้นไป ผ่าน / ภาษาไทยนับเป็นตัวอักษร (ตรงกับ API)', () {
+      expect(ValidatorUtil.password('123456'), isNull);
+      expect(ValidatorUtil.password('รหัสผ่าน'), isNull);
+    });
+  });
+
+  group('ValidatorUtil.passwordMatch', () {
+    test('ตรงกัน ผ่าน / ไม่ตรง ได้ข้อความ error', () {
+      expect(ValidatorUtil.passwordMatch('abc123', 'abc123'), isNull);
+      expect(ValidatorUtil.passwordMatch('abc124', 'abc123'), isNotNull);
+      expect(ValidatorUtil.passwordMatch(null, 'abc123'), isNotNull);
+    });
+  });
 }

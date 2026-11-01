@@ -19,6 +19,7 @@ class PageLayout extends StatefulWidget {
     required this.onNavigate,
     required this.onLogout,
     required this.child,
+    this.profile,
   });
 
   static const Duration menuAnimationDuration = Duration(milliseconds: 250);
@@ -32,6 +33,7 @@ class PageLayout extends StatefulWidget {
   final ValueChanged<String> onNavigate;
   final VoidCallback onLogout;
   final Widget child;
+  final SideMenuProfile? profile;
 
   @override
   State<PageLayout> createState() => _PageLayoutState();
@@ -116,6 +118,7 @@ class _PageLayoutState extends State<PageLayout> {
       logoutLabel: widget.logoutLabel,
       onItemTap: onItemTap,
       onLogout: widget.onLogout,
+      profile: widget.profile,
     );
   }
 }

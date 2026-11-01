@@ -9,6 +9,9 @@ import 'package:costbook/core/routes/app_routes.dart';
 import 'package:costbook/features/assistant/widgets/chat_launcher.dart';
 import 'package:costbook/features/auth/bloc/auth_bloc.dart';
 import 'package:costbook/features/settings/bloc/settings_bloc.dart';
+import 'package:costbook/features/user/bloc/profile_bloc.dart';
+import 'package:costbook/features/user/widgets/user_avatar.dart';
+import 'package:costbook/shared/widgets/organisms/app_side_menu.dart';
 import 'package:costbook/shared/widgets/organisms/page_layout.dart';
 
 class AppShell extends StatelessWidget {
@@ -25,23 +28,43 @@ class AppShell extends StatelessWidget {
       child: BlocBuilder<SettingsBloc, SettingsState>(
         buildWhen: (previous, current) => previous.company.useCostPage != current.company.useCostPage,
         builder:
-            (context, settings) => Stack(
-              children: [
-                PageLayout(
-                  title: AppMenu.titleOf(currentPath),
-                  menuItems: AppMenu.itemsFor(useCostPage: settings.company.useCostPage),
-                  appName: 'app.name'.tr,
-                  logoutLabel: 'common.logout'.tr,
-                  menuButtonLabel: 'common.toggle_menu'.tr,
-                  currentPath: currentPath,
-                  onNavigate: (route) => context.go(route),
-                  onLogout: () => context.read<AuthBloc>().add(LogoutRequested()),
-                  child: child,
-                ),
-                const ChatLauncher(),
-              ],
+            (context, settings) => BlocBuilder<ProfileBloc, ProfileState>(
+              buildWhen: (previous, current) => previous.user != current.user,
+              builder: (context, profile) => _layout(context, settings, profile),
             ),
       ),
+    );
+  }
+
+  Widget _layout(BuildContext context, SettingsState settings, ProfileState profile) {
+    return Stack(
+      children: [
+        PageLayout(
+          title: AppMenu.titleOf(currentPath),
+          menuItems: AppMenu.itemsFor(useCostPage: settings.company.useCostPage),
+          appName: 'app.name'.tr,
+          logoutLabel: 'common.logout'.tr,
+          menuButtonLabel: 'common.toggle_menu'.tr,
+          currentPath: currentPath,
+          onNavigate: (route) => context.go(route),
+          onLogout: () => context.read<AuthBloc>().add(LogoutRequested()),
+          profile: _menuProfile(profile),
+          child: child,
+        ),
+        const ChatLauncher(),
+      ],
+    );
+  }
+
+  // ยังโหลดผู้ใช้ไม่เสร็จ → ยังไม่แสดงแถวผู้ใช้
+  SideMenuProfile? _menuProfile(ProfileState profile) {
+    final user = profile.user;
+    if (user.isNew) return null;
+    return SideMenuProfile(
+      name: user.displayName,
+      subtitle: user.role.labelKey.tr,
+      avatar: UserAvatar(user: user),
+      route: AppRoutes.profile,
     );
   }
 }

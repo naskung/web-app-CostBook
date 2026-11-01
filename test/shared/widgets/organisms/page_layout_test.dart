@@ -43,6 +43,12 @@ void main() {
           currentPath: currentPath,
           onNavigate: navigatedRoutes.add,
           onLogout: () => logoutCount++,
+          profile: const SideMenuProfile(
+            name: 'สมชาย ใจดี',
+            subtitle: 'เจ้าของร้าน',
+            avatar: SizedBox.square(key: Key('avatar'), dimension: AppSizes.avatarSize),
+            route: AppRoutes.profile,
+          ),
           child: const Text('page-content'),
         ),
       ),
@@ -209,5 +215,39 @@ void main() {
     await pumpLayout(tester, const Size(1440, 900));
     await tester.tap(find.text('common.logout'.tr));
     expect(logoutCount, 1);
+  });
+
+  Material profileTile(WidgetTester tester) {
+    return tester.widget<Material>(
+      find.ancestor(of: find.byKey(const Key('avatar')), matching: find.byType(Material)).first,
+    );
+  }
+
+  testWidgets('แถวผู้ใช้เหนือปุ่มออกจากระบบ มีชื่อ + ตำแหน่ง กดแล้วไปหน้าโปรไฟล์', (tester) async {
+    await pumpLayout(tester, const Size(1440, 900));
+    expect(find.text('สมชาย ใจดี'), findsOneWidget);
+    expect(find.text('เจ้าของร้าน'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('สมชาย ใจดี')).dy,
+      lessThan(tester.getTopLeft(find.text('common.logout'.tr)).dy),
+    );
+    await tester.tap(find.text('สมชาย ใจดี'));
+    expect(navigatedRoutes, [AppRoutes.profile]);
+  });
+
+  testWidgets('อยู่หน้าโปรไฟล์ หรือหน้าจัดการผู้ใช้ (ใต้โปรไฟล์) แถวผู้ใช้เป็นสีส้ม', (tester) async {
+    await pumpLayout(tester, const Size(1440, 900));
+    expect(profileTile(tester).color, AppColors.transparent);
+
+    await pumpLayout(tester, const Size(1440, 900), currentPath: AppRoutes.users);
+    expect(profileTile(tester).color, AppColors.primary);
+  });
+
+  testWidgets('จอคอม เมนูหดอยู่ แถวผู้ใช้เหลือแต่รูป ชี้แล้วเห็นชื่อ', (tester) async {
+    await pumpLayout(tester, const Size(1440, 900));
+    await toggleMenu(tester);
+    expect(find.text('สมชาย ใจดี'), findsNothing);
+    expect(find.byKey(const Key('avatar')), findsOneWidget);
+    expect(find.byTooltip('สมชาย ใจดี'), findsOneWidget);
   });
 }
