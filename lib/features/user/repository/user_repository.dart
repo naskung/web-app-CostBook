@@ -34,9 +34,17 @@ class UserRepository {
 
   // ---------- จัดการผู้ใช้ (เฉพาะเจ้าของร้าน — คนอื่นได้ error forbidden) ----------
 
-  Future<List<UserModel>> getUsers() async {
-    final data = await api.get('/users') as List;
-    return data.map((item) => UserModel.fromJson(item as Map<String, dynamic>)).toList();
+  Future<List<UserModel>> getUsers() async => _users(await api.get('/users'));
+
+  // ของที่เคยโหลด (โชว์ก่อนระหว่างโหลดใหม่) / ไม่เคยโหลด = null
+  List<UserModel>? cachedUsers() {
+    final data = api.cached('/users');
+    if (data == null) return null;
+    return _users(data);
+  }
+
+  List<UserModel> _users(dynamic data) {
+    return (data as List).map((item) => UserModel.fromJson(item as Map<String, dynamic>)).toList();
   }
 
   Future<void> createUser(UserModel user, String password) async {

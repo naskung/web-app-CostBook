@@ -14,6 +14,13 @@ class SettingsRepository {
     return CompanyModel.fromJson(data);
   }
 
+  // ของที่เคยโหลด (โชว์ก่อนระหว่างโหลดใหม่) / ไม่เคยโหลด = null
+  CompanyModel? cachedCompany() {
+    final data = api.cached('/company');
+    if (data == null) return null;
+    return CompanyModel.fromJson(data as Map<String, dynamic>);
+  }
+
   Future<CompanyModel> updateCompany(CompanyModel company) async {
     final data = await api.put('/company', company.toJson()) as Map<String, dynamic>;
     return CompanyModel.fromJson(data);

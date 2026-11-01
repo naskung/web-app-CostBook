@@ -30,14 +30,27 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
   final CategoryRepository categoryRepository;
 
   Future<void> _onProductsRequested(ProductsRequested event, Emitter<ProductState> emit) async {
-    emit(state.copyWith(status: AppStatus.loading));
+    _showCachedFirst(emit);
     try {
       final products = await repository.getProducts();
       final categories = await categoryRepository.getCategories();
       emit(state.copyWith(status: AppStatus.success, products: products, categories: categories));
     } catch (error) {
+      // มีของเดิมโชว์อยู่ (จาก cache) แล้วโหลดใหม่ไม่ได้ → โชว์ของเดิมต่อ ไม่ขึ้นหน้า error
+      if (state.status == AppStatus.success) return;
       emit(state.copyWith(status: AppStatus.failure, errorCode: ErrorUtil.codeOf(error)));
     }
+  }
+
+  // เคยโหลดแล้ว → โชว์ของเดิมทันที (ไม่ขึ้นหน้าโหลด) แล้วค่อยโหลดใหม่เงียบ ๆ / ยังไม่เคย → หน้าโหลด
+  void _showCachedFirst(Emitter<ProductState> emit) {
+    final products = repository.cachedProducts();
+    final categories = categoryRepository.cachedCategories();
+    if (products == null || categories == null) {
+      emit(state.copyWith(status: AppStatus.loading));
+      return;
+    }
+    emit(state.copyWith(status: AppStatus.success, products: products, categories: categories));
   }
 
   void _onSearchChanged(ProductSearchChanged event, Emitter<ProductState> emit) {

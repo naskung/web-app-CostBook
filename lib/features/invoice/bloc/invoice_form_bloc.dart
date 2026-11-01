@@ -31,20 +31,33 @@ class InvoiceFormBloc extends Bloc<InvoiceFormEvent, InvoiceFormState> {
   final ProductRepository productRepository;
   final SettingsRepository settingsRepository;
 
+  // เคยโหลดแล้ว → โชว์สินค้าเดิมทันที (เริ่มขายได้เลย) แล้วค่อยโหลดใหม่เงียบ ๆ / ยังไม่เคย → หน้าโหลด
   Future<void> _onOpened(InvoiceFormOpened event, Emitter<InvoiceFormState> emit) async {
-    emit(state.copyWith(status: AppStatus.loading));
+    final products = productRepository.cachedProducts();
+    final company = settingsRepository.cachedCompany();
+    if (products == null || company == null) {
+      emit(state.copyWith(status: AppStatus.loading));
+    } else {
+      emit(state.copyWith(status: AppStatus.success, products: _forSale(products), company: company));
+    }
     await _loadProducts(emit);
   }
 
   Future<void> _loadProducts(Emitter<InvoiceFormState> emit) async {
     try {
-      // วัสดุ (ไม่ขาย) ไม่ขึ้นให้เลือกขาย
-      final products = (await productRepository.getProducts()).where((product) => product.forSale).toList();
+      final products = _forSale(await productRepository.getProducts());
       final company = await settingsRepository.getCompany();
       emit(state.copyWith(status: AppStatus.success, products: products, company: company));
     } catch (error) {
+      // มีของเดิมโชว์อยู่ (จาก cache) แล้วโหลดใหม่ไม่ได้ → โชว์ของเดิมต่อ ไม่ขึ้นหน้า error
+      if (state.status == AppStatus.success) return;
       emit(state.copyWith(status: AppStatus.failure, errorCode: ErrorUtil.codeOf(error)));
     }
+  }
+
+  // วัสดุ (ไม่ขาย) ไม่ขึ้นให้เลือกขาย
+  List<ProductModel> _forSale(List<ProductModel> products) {
+    return products.where((product) => product.forSale).toList();
   }
 
   void _onItemAdded(InvoiceItemAdded event, Emitter<InvoiceFormState> emit) {

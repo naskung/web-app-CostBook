@@ -9,9 +9,19 @@ class InvoiceRepository {
 
   final ApiClient api;
 
-  Future<List<InvoiceSummaryModel>> getInvoices(DateTime month) async {
-    final data = await api.get('/invoices?month=${DateUtil.toApiMonth(month)}') as List;
-    return data.map((item) => InvoiceSummaryModel.fromJson(item as Map<String, dynamic>)).toList();
+  Future<List<InvoiceSummaryModel>> getInvoices(DateTime month) async => _invoices(await api.get(_listPath(month)));
+
+  // ของที่เคยโหลด (โชว์ก่อนระหว่างโหลดใหม่) / ไม่เคยโหลด = null
+  List<InvoiceSummaryModel>? cachedInvoices(DateTime month) {
+    final data = api.cached(_listPath(month));
+    if (data == null) return null;
+    return _invoices(data);
+  }
+
+  String _listPath(DateTime month) => '/invoices?month=${DateUtil.toApiMonth(month)}';
+
+  List<InvoiceSummaryModel> _invoices(dynamic data) {
+    return (data as List).map((item) => InvoiceSummaryModel.fromJson(item as Map<String, dynamic>)).toList();
   }
 
   Future<InvoiceModel> getInvoice(String id) async {

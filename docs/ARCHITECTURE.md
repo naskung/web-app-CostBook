@@ -75,7 +75,7 @@ web-app-CostBook/
 │   ├── core/
 │   │   ├── constants/     app_status.dart, screen_type.dart, user_role.dart (owner / manager / staff), api_constants.dart (baseUrl, companyLogoUrl, productImageUrl, userAvatarUrl)
 │   │   ├── lang/          app_lang.dart (.tr), language_bloc.dart (เปลี่ยน + จำภาษา)
-│   │   ├── network/       api_client.dart (get / post / put / delete + token + 401), api_exception.dart (error code จาก API)
+│   │   ├── network/       api_client.dart (get / post / put / delete + token + 401 + เก็บผล GET ไว้ใน cache), api_exception.dart (error code จาก API)
 │   │   ├── routes/        app_routes.dart (ชื่อ route), app_router.dart (GoRouter + สร้าง bloc ของแต่ละหน้า), app_menu.dart, app_shell.dart, app_page_transition.dart
 │   │   ├── theme/         app_colors.dart (สี), app_sizes.dart (ขนาดตัวอักษร / ระยะห่าง), app_theme.dart (ฟอนต์ + รวมเป็น ThemeData)
 │   │   ├── utils/         money_util, tax_util, cost_util, date_util, validator_util, error_util, responsive_util,
@@ -144,6 +144,21 @@ Page ──(add Event)──▶ Bloc ──▶ Repository ──▶ ApiClient �
 - Bloc **ไม่** import widget และไม่ใช้ `BuildContext`
 - Repository คืนค่าเป็น **Model** เสมอ (ไม่คืน `Map`)
 - การคำนวณ (ต้นทุน, VAT) อยู่ใน `core/utils` — bloc และ page เรียกใช้
+
+### เก็บข้อมูลไว้ (cache) — เปลี่ยนหน้าไปมาไม่ต้องรอโหลด ไม่ยิง API ซ้ำ
+
+ทำ 2 ชั้น (ผู้ใช้ขอ 2026-11-01 "เปลี่ยนหน้าแล้วยิง API ทุกครั้ง เปลืองไหม / มีของใหม่ค่อยขึ้นมาเนียน ๆ"):
+
+1. **`ApiClient` เก็บผล GET** ไว้ในหน่วยความจำ (key = path เช่น `/dashboard?month=2026-11`, refresh หน้าเว็บ = หาย)
+   - เพิ่งโหลดไม่เกิน `ApiClient.cacheFreshFor` (30 วินาที) และหลังจากนั้นยังไม่มีการแก้ข้อมูล → `get` คืนของเดิมเลย **ไม่ยิง API**
+   - แก้ข้อมูลสำเร็จ (POST / PUT / DELETE / อัปโหลดไฟล์) → ของที่เก็บไว้ถือว่า**เก่าทั้งหมด** (ขาย 1 บิล → สต็อก / ภาพรวม / รายรับเปลี่ยนตาม) ครั้งหน้ายิงใหม่
+   - `api.cached(path)` = ของที่เคยโหลด (เก่าแค่ไหนก็ได้) ไว้โชว์ก่อน / `ApiClient.clearCache()` ตอน login / logout / ได้ 401 → คนต่อไปไม่เห็นข้อมูลของคนก่อน
+2. **bloc ของหน้าหลักโชว์ของเดิมก่อน** (`_showCachedFirst`): เคยโหลดแล้ว → emit success ด้วยของเดิมทันที (ไม่ขึ้นหน้าโหลด) แล้วค่อยโหลดใหม่ ข้อมูลใหม่มาก็ emit ทับเงียบ ๆ (เหมือนเดิม = Equatable ไม่ rebuild) / ยังไม่เคยโหลด → หน้าโหลดตามปกติ
+   - โหลดใหม่ไม่สำเร็จแต่มีของเดิมโชว์อยู่ (status success) → โชว์ของเดิมต่อ ไม่ขึ้นหน้า error
+   - repository มีคู่ `getXxx()` (ยิง API / ได้จาก cache ถ้ายังใหม่) กับ `cachedXxx()` (ของเดิม หรือ null)
+   - ทำแล้ว: ภาพรวม (ต่อเดือน), ขายสินค้า + ออกเอกสาร (`InvoiceFormBloc`), รายการสินค้า + หมวด, สต็อก, หมวดหมู่, คำนวณต้นทุน (ใบต้นทุน — กำลังแก้ใบอยู่ ของใหม่ไม่ทับ), รายรับ-รายจ่าย (ต่อเดือน), เอกสารขาย (ต่อเดือน), จัดการผู้ใช้
+   - ไม่ได้ทำ (เปิดไม่บ่อย ได้ชั้นที่ 1 อยู่แล้ว): เช็คราคาตลาด, ดูเอกสารขาย 1 ใบ / bloc ที่อยู่ที่ shell (ตั้งค่า / โปรไฟล์ / AI) สร้างครั้งเดียว ไม่โหลดซ้ำตอนเปลี่ยนหน้าอยู่แล้ว
+- API ตอบ `Access-Control-Max-Age: 600` → browser จำคำตอบของ OPTIONS (ถามสิทธิ์ CORS) 10 นาที ไม่ต้องถามก่อนทุก request
 
 ---
 

@@ -34,27 +34,59 @@ class CostBloc extends Bloc<CostEvent, CostState> {
   final ProductRepository productRepository;
 
   Future<void> _onPageOpened(CostPageOpened event, Emitter<CostState> emit) async {
-    emit(state.copyWith(status: AppStatus.loading));
+    _showCachedFirst(emit);
     try {
       final products = await productRepository.getProducts();
       final presets = await repository.getPresets();
       emit(state.copyWith(status: AppStatus.success, products: products, presets: presets));
-      if (products.isNotEmpty) await _loadSheet(products.first.id, emit);
+      if (products.isNotEmpty) await _loadSheet(state.sheet?.productId ?? products.first.id, emit);
     } catch (error) {
+      // มีของเดิมโชว์อยู่ (จาก cache) แล้วโหลดใหม่ไม่ได้ → โชว์ของเดิมต่อ ไม่ขึ้นหน้า error
+      if (state.status == AppStatus.success) return;
       emit(state.copyWith(status: AppStatus.failure, errorCode: ErrorUtil.codeOf(error)));
     }
+  }
+
+  // เคยโหลดแล้ว → โชว์สินค้า + ใบต้นทุนของตัวแรกทันที (ไม่ขึ้นหน้าโหลด) แล้วค่อยโหลดใหม่เงียบ ๆ / ยังไม่เคย → หน้าโหลด
+  void _showCachedFirst(Emitter<CostState> emit) {
+    final products = productRepository.cachedProducts();
+    final presets = repository.cachedPresets();
+    if (products == null || presets == null) {
+      emit(state.copyWith(status: AppStatus.loading));
+      return;
+    }
+    final sheet = products.isEmpty ? null : repository.cachedSheet(products.first.id);
+    emit(
+      state.copyWith(
+        status: AppStatus.success,
+        products: products,
+        presets: presets,
+        sheet: sheet,
+        sheetStatus: sheet == null ? null : AppStatus.success,
+      ),
+    );
   }
 
   Future<void> _onProductSelected(CostProductSelected event, Emitter<CostState> emit) async {
     await _loadSheet(event.productId, emit);
   }
 
+  // ใบของสินค้านี้เคยโหลดแล้ว → โชว์ของเดิมก่อน แล้วค่อยโหลดใหม่ / ระหว่างนั้นผู้ใช้เริ่มแก้ใบแล้ว → ไม่ทับของที่แก้
   Future<void> _loadSheet(String productId, Emitter<CostState> emit) async {
-    emit(state.copyWith(sheetStatus: AppStatus.loading));
+    final cached = repository.cachedSheet(productId);
+    if (state.sheet?.productId != productId) {
+      emit(
+        cached == null
+            ? state.copyWith(sheetStatus: AppStatus.loading)
+            : state.copyWith(sheetStatus: AppStatus.success, sheet: cached, isDirty: false),
+      );
+    }
     try {
       final sheet = await repository.getSheet(productId);
+      if (state.isDirty && state.sheet?.productId == productId) return;
       emit(state.copyWith(sheetStatus: AppStatus.success, sheet: sheet, isDirty: false));
     } catch (error) {
+      if (state.sheetStatus == AppStatus.success && state.sheet?.productId == productId) return;
       emit(state.copyWith(sheetStatus: AppStatus.failure, errorCode: ErrorUtil.codeOf(error)));
     }
   }

@@ -10,9 +10,13 @@ import 'package:costbook/core/network/api_client.dart';
 import 'package:costbook/core/network/api_exception.dart';
 
 void main() {
+  setUp(ApiClient.clearCache);
+
   tearDown(() {
     ApiClient.token = '';
     ApiClient.onUnauthorized = null;
+    ApiClient.now = DateTime.now;
+    ApiClient.clearCache();
   });
 
   ApiClient clientThatReplies(int statusCode, String body) {
@@ -222,6 +226,81 @@ void main() {
       final api = clientThatReplies(401, '{"error":"invalid_credentials"}');
       await errorCodeOf(api.post('/auth/login', {}));
       expect(called, false);
+    });
+  });
+
+  group('ApiClient เก็บผล GET (cache)', () {
+    late int calls;
+    late int status;
+    late DateTime clock;
+
+    ApiClient countingClient() {
+      return ApiClient(
+        client: MockClient((request) async {
+          calls++;
+          if (request.method == 'GET') return http.Response('{"n":$calls}', 200);
+          return http.Response(status == 200 ? '{}' : '{"error":"invalid_json"}', status);
+        }),
+      );
+    }
+
+    setUp(() {
+      calls = 0;
+      status = 200;
+      clock = DateTime(2026, 11, 1, 10);
+      ApiClient.now = () => clock;
+    });
+
+    test('โหลดซ้ำภายใน 30 วินาที ได้ของเดิม ไม่ยิง API ซ้ำ', () async {
+      final api = countingClient();
+      expect(await api.get('/products'), {'n': 1});
+      clock = clock.add(const Duration(seconds: 20));
+      expect(await api.get('/products'), {'n': 1});
+      expect(calls, 1);
+    });
+
+    test('เก่าเกิน 30 วินาที ยิง API ใหม่ / path อื่นยิงแยก', () async {
+      final api = countingClient();
+      await api.get('/products');
+      await api.get('/stock');
+      clock = clock.add(ApiClient.cacheFreshFor);
+      expect(await api.get('/products'), {'n': 3});
+      expect(calls, 3);
+    });
+
+    test('แก้ข้อมูลสำเร็จ (POST / PUT / DELETE) → ของที่เก็บไว้ถือว่าเก่า โหลดใหม่ทันที', () async {
+      final api = countingClient();
+      await api.get('/products');
+      clock = clock.add(const Duration(seconds: 1));
+      await api.post('/products', {});
+      clock = clock.add(const Duration(seconds: 1));
+      await api.get('/products');
+      expect(calls, 3);
+    });
+
+    test('แก้ข้อมูลไม่สำเร็จ ของที่เก็บไว้ยังใช้ต่อได้', () async {
+      final api = countingClient();
+      await api.get('/products');
+      status = 400;
+      await expectLater(api.put('/products/1', {}), throwsA(isA<ApiException>()));
+      await api.get('/products');
+      expect(calls, 2);
+    });
+
+    test('cached ได้ของที่เคยโหลด แม้จะเก่าแล้ว / ไม่เคยโหลด = null', () async {
+      final api = countingClient();
+      expect(api.cached('/products'), isNull);
+      await api.get('/products');
+      clock = clock.add(const Duration(hours: 1));
+      expect(api.cached('/products'), {'n': 1});
+    });
+
+    test('token หมดอายุ (401) ล้างของที่เก็บไว้ทั้งหมด', () async {
+      final api = countingClient();
+      await api.get('/products');
+      final expired = ApiClient(client: MockClient((request) async => http.Response('{"error":"unauthorized"}', 401)));
+      await expectLater(expired.get('/me'), throwsA(isA<ApiException>()));
+      expect(api.cached('/products'), isNull);
     });
   });
 }

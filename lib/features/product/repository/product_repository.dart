@@ -8,9 +8,19 @@ class ProductRepository {
 
   final ApiClient api;
 
-  Future<List<ProductModel>> getProducts() async {
-    final data = await api.get('/products') as List;
-    return data.map((item) => ProductModel.fromJson(item as Map<String, dynamic>)).toList();
+  static const String _listPath = '/products';
+
+  Future<List<ProductModel>> getProducts() async => _products(await api.get(_listPath));
+
+  // ของที่เคยโหลด (โชว์ก่อนระหว่างโหลดใหม่) / ไม่เคยโหลด = null
+  List<ProductModel>? cachedProducts() {
+    final data = api.cached(_listPath);
+    if (data == null) return null;
+    return _products(data);
+  }
+
+  List<ProductModel> _products(dynamic data) {
+    return (data as List).map((item) => ProductModel.fromJson(item as Map<String, dynamic>)).toList();
   }
 
   Future<ProductModel> getProduct(String id) async {

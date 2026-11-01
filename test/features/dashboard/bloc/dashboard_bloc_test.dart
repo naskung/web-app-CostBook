@@ -65,4 +65,32 @@ void main() {
           DashboardState(month: october, status: AppStatus.failure, errorCode: 'network_error'),
         ],
   );
+
+  const fresh = DashboardModel(income: 1500, expense: 400, profit: 1100);
+
+  blocTest<DashboardBloc, DashboardState>(
+    'เคยโหลดเดือนนี้แล้ว โชว์ของเดิมทันที (ไม่ขึ้นหน้าโหลด) แล้วเปลี่ยนเป็นของใหม่เงียบ ๆ',
+    build: () {
+      when(() => repository.cachedDashboard(october)).thenReturn(dashboard);
+      when(() => repository.getDashboard(any())).thenAnswer((_) async => fresh);
+      return DashboardBloc(repository, month: october);
+    },
+    act: (bloc) => bloc.add(DashboardRequested()),
+    expect:
+        () => [
+          DashboardState(month: october, status: AppStatus.success, dashboard: dashboard),
+          DashboardState(month: october, status: AppStatus.success, dashboard: fresh),
+        ],
+  );
+
+  blocTest<DashboardBloc, DashboardState>(
+    'มีของเดิมโชว์อยู่ แล้วโหลดใหม่ไม่ได้ → โชว์ของเดิมต่อ ไม่ขึ้นหน้า error',
+    build: () {
+      when(() => repository.cachedDashboard(october)).thenReturn(dashboard);
+      when(() => repository.getDashboard(any())).thenThrow(ApiException('network_error'));
+      return DashboardBloc(repository, month: october);
+    },
+    act: (bloc) => bloc.add(DashboardRequested()),
+    expect: () => [DashboardState(month: october, status: AppStatus.success, dashboard: dashboard)],
+  );
 }

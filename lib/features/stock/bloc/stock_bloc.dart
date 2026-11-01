@@ -21,8 +21,19 @@ class StockBloc extends Bloc<StockEvent, StockState> {
   final bool withHistory;
 
   Future<void> _onStockRequested(StockRequested event, Emitter<StockState> emit) async {
-    emit(state.copyWith(status: AppStatus.loading));
+    _showCachedFirst(emit);
     await _load(emit);
+  }
+
+  // เคยโหลดแล้ว → โชว์ของเดิมทันที (ไม่ขึ้นหน้าโหลด) แล้วค่อยโหลดใหม่เงียบ ๆ / ยังไม่เคย → หน้าโหลด
+  void _showCachedFirst(Emitter<StockState> emit) {
+    final items = repository.cachedStock();
+    final movements = withHistory ? repository.cachedMovements() : state.movements;
+    if (items == null || movements == null) {
+      emit(state.copyWith(status: AppStatus.loading));
+      return;
+    }
+    emit(state.copyWith(status: AppStatus.success, items: items, movements: movements));
   }
 
   Future<void> _load(Emitter<StockState> emit) async {
@@ -31,6 +42,8 @@ class StockBloc extends Bloc<StockEvent, StockState> {
       final movements = withHistory ? await repository.getMovements() : state.movements;
       emit(state.copyWith(status: AppStatus.success, items: items, movements: movements));
     } catch (error) {
+      // มีของเดิมโชว์อยู่ (จาก cache) แล้วโหลดใหม่ไม่ได้ → โชว์ของเดิมต่อ ไม่ขึ้นหน้า error
+      if (state.status == AppStatus.success) return;
       emit(state.copyWith(status: AppStatus.failure, errorCode: ErrorUtil.codeOf(error)));
     }
   }

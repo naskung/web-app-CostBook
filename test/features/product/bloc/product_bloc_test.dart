@@ -285,4 +285,37 @@ void main() {
     act: (bloc) => bloc.add(ProductKindChanged(ProductState.kindMaterial)),
     expect: () => [const ProductState(kind: ProductState.kindMaterial)],
   );
+
+  blocTest<ProductBloc, ProductState>(
+    'เคยโหลดแล้ว โชว์สินค้าเดิมทันที (ไม่ขึ้นหน้าโหลด) แล้วเปลี่ยนเป็นรายการใหม่เงียบ ๆ',
+    build: () {
+      when(() => repository.cachedProducts()).thenReturn([coffee]);
+      when(() => categoryRepository.cachedCategories()).thenReturn([drinks]);
+      when(() => repository.getProducts()).thenAnswer((_) async => [coffee, tea]);
+      when(() => categoryRepository.getCategories()).thenAnswer((_) async => [drinks]);
+      return ProductBloc(repository, categoryRepository);
+    },
+    act: (bloc) => bloc.add(ProductsRequested()),
+    expect:
+        () => [
+          const ProductState(status: AppStatus.success, products: [coffee], categories: [drinks]),
+          const ProductState(status: AppStatus.success, products: [coffee, tea], categories: [drinks]),
+        ],
+  );
+
+  blocTest<ProductBloc, ProductState>(
+    'มีสินค้าใน cache แต่หมวดยังไม่เคยโหลด → ขึ้นหน้าโหลดตามปกติ',
+    build: () {
+      when(() => repository.cachedProducts()).thenReturn([coffee]);
+      when(() => repository.getProducts()).thenAnswer((_) async => [coffee]);
+      when(() => categoryRepository.getCategories()).thenAnswer((_) async => [drinks]);
+      return ProductBloc(repository, categoryRepository);
+    },
+    act: (bloc) => bloc.add(ProductsRequested()),
+    expect:
+        () => [
+          const ProductState(status: AppStatus.loading),
+          const ProductState(status: AppStatus.success, products: [coffee], categories: [drinks]),
+        ],
+  );
 }

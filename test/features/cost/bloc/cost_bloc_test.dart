@@ -299,4 +299,37 @@ void main() {
     act: (bloc) => bloc.add(CostPresetDeleted('pr1')),
     expect: () => [const CostState()],
   );
+
+  const freshSheet = CostSheetModel(productId: 'p1', productName: 'กาแฟเย็น', batchQuantity: 20);
+
+  blocTest<CostBloc, CostState>(
+    'เคยโหลดแล้ว โชว์สินค้า + ใบต้นทุนเดิมทันที แล้วเปลี่ยนเป็นใบใหม่เงียบ ๆ',
+    build: () {
+      when(() => productRepository.cachedProducts()).thenReturn([coffee]);
+      when(() => repository.cachedPresets()).thenReturn([preset]);
+      when(() => repository.cachedSheet('p1')).thenReturn(sheet);
+      when(() => productRepository.getProducts()).thenAnswer((_) async => [coffee]);
+      when(() => repository.getPresets()).thenAnswer((_) async => [preset]);
+      when(() => repository.getSheet('p1')).thenAnswer((_) async => freshSheet);
+      return buildBloc();
+    },
+    act: (bloc) => bloc.add(CostPageOpened()),
+    expect:
+        () => [
+          const CostState(
+            status: AppStatus.success,
+            products: [coffee],
+            presets: [preset],
+            sheetStatus: AppStatus.success,
+            sheet: sheet,
+          ),
+          const CostState(
+            status: AppStatus.success,
+            products: [coffee],
+            presets: [preset],
+            sheetStatus: AppStatus.success,
+            sheet: freshSheet,
+          ),
+        ],
+  );
 }

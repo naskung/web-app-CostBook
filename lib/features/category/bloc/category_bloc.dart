@@ -18,12 +18,20 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
 
   final CategoryRepository repository;
 
+  // เคยโหลดแล้ว → โชว์ของเดิมทันที (ไม่ขึ้นหน้าโหลด) แล้วค่อยโหลดใหม่เงียบ ๆ / ยังไม่เคย → หน้าโหลด
   Future<void> _onRequested(CategoriesRequested event, Emitter<CategoryState> emit) async {
-    emit(state.copyWith(status: AppStatus.loading));
+    final cached = repository.cachedCategories();
+    emit(
+      cached == null
+          ? state.copyWith(status: AppStatus.loading)
+          : state.copyWith(status: AppStatus.success, categories: cached),
+    );
     try {
       final categories = await repository.getCategories();
       emit(state.copyWith(status: AppStatus.success, categories: categories));
     } catch (error) {
+      // มีของเดิมโชว์อยู่ (จาก cache) แล้วโหลดใหม่ไม่ได้ → โชว์ของเดิมต่อ ไม่ขึ้นหน้า error
+      if (state.status == AppStatus.success) return;
       emit(state.copyWith(status: AppStatus.failure, errorCode: ErrorUtil.codeOf(error)));
     }
   }

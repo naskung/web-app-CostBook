@@ -19,13 +19,23 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   final DashboardRepository repository;
 
   Future<void> _onRequested(DashboardRequested event, Emitter<DashboardState> emit) async {
-    emit(state.copyWith(status: AppStatus.loading));
+    _showCachedFirst(emit, state.month);
     await _load(emit);
   }
 
   Future<void> _onMonthChanged(DashboardMonthChanged event, Emitter<DashboardState> emit) async {
-    emit(state.copyWith(status: AppStatus.loading, month: DateUtil.addMonths(state.month, event.monthCount)));
+    _showCachedFirst(emit, DateUtil.addMonths(state.month, event.monthCount));
     await _load(emit);
+  }
+
+  // เคยโหลดเดือนนี้แล้ว → โชว์ของเดิมทันที (ไม่ขึ้นหน้าโหลด) แล้วค่อยโหลดใหม่เงียบ ๆ / ยังไม่เคย → หน้าโหลด
+  void _showCachedFirst(Emitter<DashboardState> emit, DateTime month) {
+    final cached = repository.cachedDashboard(month);
+    if (cached == null) {
+      emit(state.copyWith(status: AppStatus.loading, month: month));
+      return;
+    }
+    emit(state.copyWith(status: AppStatus.success, month: month, dashboard: cached));
   }
 
   Future<void> _load(Emitter<DashboardState> emit) async {
@@ -33,6 +43,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       final dashboard = await repository.getDashboard(state.month);
       emit(state.copyWith(status: AppStatus.success, dashboard: dashboard));
     } catch (error) {
+      // มีของเดิมโชว์อยู่ (จาก cache) แล้วโหลดใหม่ไม่ได้ → โชว์ของเดิมต่อ ไม่ขึ้นหน้า error
+      if (state.status == AppStatus.success) return;
       emit(state.copyWith(status: AppStatus.failure, errorCode: ErrorUtil.codeOf(error)));
     }
   }

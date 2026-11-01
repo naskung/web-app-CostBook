@@ -7,14 +7,32 @@ class StockRepository {
 
   final ApiClient api;
 
-  Future<List<StockItemModel>> getStock() async {
-    final data = await api.get('/stock') as List;
-    return data.map((item) => StockItemModel.fromJson(item as Map<String, dynamic>)).toList();
+  static const String _stockPath = '/stock';
+  static const String _movementsPath = '/stock/movements';
+
+  Future<List<StockItemModel>> getStock() async => _items(await api.get(_stockPath));
+
+  Future<List<MovementModel>> getMovements() async => _movements(await api.get(_movementsPath));
+
+  // ของที่เคยโหลด (โชว์ก่อนระหว่างโหลดใหม่) / ไม่เคยโหลด = null
+  List<StockItemModel>? cachedStock() {
+    final data = api.cached(_stockPath);
+    if (data == null) return null;
+    return _items(data);
   }
 
-  Future<List<MovementModel>> getMovements() async {
-    final data = await api.get('/stock/movements') as List;
-    return data.map((item) => MovementModel.fromJson(item as Map<String, dynamic>)).toList();
+  List<MovementModel>? cachedMovements() {
+    final data = api.cached(_movementsPath);
+    if (data == null) return null;
+    return _movements(data);
+  }
+
+  List<StockItemModel> _items(dynamic data) {
+    return (data as List).map((item) => StockItemModel.fromJson(item as Map<String, dynamic>)).toList();
+  }
+
+  List<MovementModel> _movements(dynamic data) {
+    return (data as List).map((item) => MovementModel.fromJson(item as Map<String, dynamic>)).toList();
   }
 
   Future<void> addMovement({

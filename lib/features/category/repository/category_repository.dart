@@ -6,9 +6,19 @@ class CategoryRepository {
 
   final ApiClient api;
 
-  Future<List<ProductCategoryModel>> getCategories() async {
-    final data = await api.get('/product-categories') as List;
-    return data.map((item) => ProductCategoryModel.fromJson(item as Map<String, dynamic>)).toList();
+  static const String _path = '/product-categories';
+
+  Future<List<ProductCategoryModel>> getCategories() async => _categories(await api.get(_path));
+
+  // ของที่เคยโหลด (โชว์ก่อนระหว่างโหลดใหม่) / ไม่เคยโหลด = null
+  List<ProductCategoryModel>? cachedCategories() {
+    final data = api.cached(_path);
+    if (data == null) return null;
+    return _categories(data);
+  }
+
+  List<ProductCategoryModel> _categories(dynamic data) {
+    return (data as List).map((item) => ProductCategoryModel.fromJson(item as Map<String, dynamic>)).toList();
   }
 
   // ไม่มี id = เพิ่มใหม่, มี id = เปลี่ยนชื่อ

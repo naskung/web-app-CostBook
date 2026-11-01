@@ -22,13 +22,24 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
   final TransactionRepository repository;
 
   Future<void> _onRequested(TransactionsRequested event, Emitter<TransactionState> emit) async {
-    emit(state.copyWith(status: AppStatus.loading));
+    _showCachedFirst(emit, state.month);
     await _load(emit);
   }
 
   Future<void> _onMonthChanged(TransactionMonthChanged event, Emitter<TransactionState> emit) async {
-    emit(state.copyWith(status: AppStatus.loading, month: DateUtil.addMonths(state.month, event.monthCount)));
+    _showCachedFirst(emit, DateUtil.addMonths(state.month, event.monthCount));
     await _load(emit);
+  }
+
+  // เคยโหลดเดือนนี้แล้ว → โชว์ของเดิมทันที (ไม่ขึ้นหน้าโหลด) แล้วค่อยโหลดใหม่เงียบ ๆ / ยังไม่เคย → หน้าโหลด
+  void _showCachedFirst(Emitter<TransactionState> emit, DateTime month) {
+    final transactions = repository.cachedTransactions(month);
+    final summary = repository.cachedSummary(month);
+    if (transactions == null || summary == null) {
+      emit(state.copyWith(status: AppStatus.loading, month: month));
+      return;
+    }
+    emit(state.copyWith(status: AppStatus.success, month: month, transactions: transactions, summary: summary));
   }
 
   Future<void> _load(Emitter<TransactionState> emit) async {
@@ -37,6 +48,8 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
       final summary = await repository.getSummary(state.month);
       emit(state.copyWith(status: AppStatus.success, transactions: transactions, summary: summary));
     } catch (error) {
+      // มีของเดิมโชว์อยู่ (จาก cache) แล้วโหลดใหม่ไม่ได้ → โชว์ของเดิมต่อ ไม่ขึ้นหน้า error
+      if (state.status == AppStatus.success) return;
       emit(state.copyWith(status: AppStatus.failure, errorCode: ErrorUtil.codeOf(error)));
     }
   }

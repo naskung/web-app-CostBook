@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -89,5 +91,13 @@ void main() {
 
   test('loadSavedEmail ไม่เคย login ได้ค่าว่าง', () async {
     expect(await repository.loadSavedEmail(), '');
+  });
+
+  test('logout ล้างข้อมูลที่เก็บไว้ (คนที่ login ต่อไม่เห็นข้อมูลของคนก่อน)', () async {
+    final realApi = ApiClient(client: MockClient((request) async => http.Response('[]', 200)));
+    await realApi.get('/products');
+    expect(realApi.cached('/products'), isNotNull);
+    await AuthRepository(realApi).logout();
+    expect(realApi.cached('/products'), isNull);
   });
 }

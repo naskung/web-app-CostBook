@@ -8,18 +8,36 @@ class CostRepository {
   final ApiClient api;
 
   Future<CostSheetModel> getSheet(String productId) async {
-    final data = await api.get('/products/$productId/costs') as Map<String, dynamic>;
+    final data = await api.get(_sheetPath(productId)) as Map<String, dynamic>;
     return CostSheetModel.fromJson(data);
   }
+
+  // ของที่เคยโหลด (โชว์ก่อนระหว่างโหลดใหม่) / ไม่เคยโหลด = null
+  CostSheetModel? cachedSheet(String productId) {
+    final data = api.cached(_sheetPath(productId));
+    if (data == null) return null;
+    return CostSheetModel.fromJson(data as Map<String, dynamic>);
+  }
+
+  List<CostPresetModel>? cachedPresets() {
+    final data = api.cached(_presetsPath);
+    if (data == null) return null;
+    return _presets(data);
+  }
+
+  String _sheetPath(String productId) => '/products/$productId/costs';
 
   Future<CostSheetModel> saveSheet(CostSheetModel sheet) async {
     final data = await api.put('/products/${sheet.productId}/costs', sheet.toJson()) as Map<String, dynamic>;
     return CostSheetModel.fromJson(data);
   }
 
-  Future<List<CostPresetModel>> getPresets() async {
-    final data = await api.get('/cost-presets') as List;
-    return data.map((item) => CostPresetModel.fromJson(item as Map<String, dynamic>)).toList();
+  static const String _presetsPath = '/cost-presets';
+
+  Future<List<CostPresetModel>> getPresets() async => _presets(await api.get(_presetsPath));
+
+  List<CostPresetModel> _presets(dynamic data) {
+    return (data as List).map((item) => CostPresetModel.fromJson(item as Map<String, dynamic>)).toList();
   }
 
   // ไม่มี id = เพิ่มใหม่, มี id = แก้รายการเดิม

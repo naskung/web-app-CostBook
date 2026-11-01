@@ -12,6 +12,7 @@ class AuthRepository {
 
   Future<void> login({required String email, required String password, required bool rememberMe}) async {
     final data = await api.post('/auth/login', {'email': email, 'password': password});
+    ApiClient.clearCache();
     ApiClient.token = data['token'] as String? ?? '';
 
     final prefs = await SharedPreferences.getInstance();
@@ -23,8 +24,10 @@ class AuthRepository {
     }
   }
 
+  // ล้างข้อมูลที่เก็บไว้ด้วย → คนที่ login ต่อไม่เห็นข้อมูลของคนก่อน
   Future<void> logout() async {
     ApiClient.token = '';
+    ApiClient.clearCache();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
   }

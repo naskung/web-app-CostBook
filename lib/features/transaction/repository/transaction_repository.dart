@@ -9,13 +9,33 @@ class TransactionRepository {
   final ApiClient api;
 
   Future<List<TransactionModel>> getTransactions(DateTime month) async {
-    final data = await api.get('/transactions?month=${DateUtil.toApiMonth(month)}') as List;
-    return data.map((item) => TransactionModel.fromJson(item as Map<String, dynamic>)).toList();
+    return _transactions(await api.get(_listPath(month)));
   }
 
   Future<TransactionSummaryModel> getSummary(DateTime month) async {
-    final data = await api.get('/transactions/summary?month=${DateUtil.toApiMonth(month)}') as Map<String, dynamic>;
+    final data = await api.get(_summaryPath(month)) as Map<String, dynamic>;
     return TransactionSummaryModel.fromJson(data);
+  }
+
+  // ของที่เคยโหลด (โชว์ก่อนระหว่างโหลดใหม่) / ไม่เคยโหลด = null
+  List<TransactionModel>? cachedTransactions(DateTime month) {
+    final data = api.cached(_listPath(month));
+    if (data == null) return null;
+    return _transactions(data);
+  }
+
+  TransactionSummaryModel? cachedSummary(DateTime month) {
+    final data = api.cached(_summaryPath(month));
+    if (data == null) return null;
+    return TransactionSummaryModel.fromJson(data as Map<String, dynamic>);
+  }
+
+  String _listPath(DateTime month) => '/transactions?month=${DateUtil.toApiMonth(month)}';
+
+  String _summaryPath(DateTime month) => '/transactions/summary?month=${DateUtil.toApiMonth(month)}';
+
+  List<TransactionModel> _transactions(dynamic data) {
+    return (data as List).map((item) => TransactionModel.fromJson(item as Map<String, dynamic>)).toList();
   }
 
   Future<void> saveTransaction(TransactionModel transaction) async {

@@ -19,12 +19,20 @@ class UserListBloc extends Bloc<UserListEvent, UserListState> {
 
   final UserRepository repository;
 
+  // เคยโหลดแล้ว → โชว์ของเดิมทันที (ไม่ขึ้นหน้าโหลด) แล้วค่อยโหลดใหม่เงียบ ๆ / ยังไม่เคย → หน้าโหลด
   Future<void> _onRequested(UsersRequested event, Emitter<UserListState> emit) async {
-    emit(state.copyWith(status: AppStatus.loading));
+    final cached = repository.cachedUsers();
+    emit(
+      cached == null
+          ? state.copyWith(status: AppStatus.loading)
+          : state.copyWith(status: AppStatus.success, users: cached),
+    );
     try {
       final users = await repository.getUsers();
       emit(state.copyWith(status: AppStatus.success, users: users));
     } catch (error) {
+      // มีของเดิมโชว์อยู่ (จาก cache) แล้วโหลดใหม่ไม่ได้ → โชว์ของเดิมต่อ ไม่ขึ้นหน้า error
+      if (state.status == AppStatus.success) return;
       emit(state.copyWith(status: AppStatus.failure, errorCode: ErrorUtil.codeOf(error)));
     }
   }
