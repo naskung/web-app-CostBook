@@ -1,51 +1,226 @@
 part of 'sell_page.dart';
 
 extension _SellPageExt on _SellPageState {
-  Widget _layout(BuildContext context, InvoiceFormState state) {
-    if (ResponsiveHelper.screenType(context) == ScreenType.desktop) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  // จอคอม / แท็บเล็ต: สินค้า | บิล — ใต้บิลเว้นที่ให้ปุ่มแชท AI (มุมขวาล่าง) ไม่บังปุ่มรับเงิน
+  Widget _wideLayout(BuildContext context, InvoiceFormState state) {
+    final isDesktop = ResponsiveHelper.screenType(context) == ScreenType.desktop;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(AppSizes.spaceLarge, AppSizes.spaceLarge, AppSizes.spaceLarge, 0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(child: _productArea(context, state)),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: AppSizes.spaceLarge),
+              child: _productPane(context, state),
+            ),
+          ),
           const SizedBox(width: AppSizes.spaceMedium),
-          SizedBox(width: AppSizes.sellCartWidth, child: _cartArea(context, state)),
+          SizedBox(
+            width: isDesktop ? AppSizes.sellBillWidth : AppSizes.sellBillCompactWidth,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: AppSizes.chatLauncherSpace),
+              child: _billPanel(onPay: _onPay),
+            ),
+          ),
         ],
-      );
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [_productArea(context, state), const SizedBox(height: AppSizes.spaceMedium), _cartArea(context, state)],
+      ),
     );
   }
 
-  Widget _productArea(BuildContext context, InvoiceFormState state) {
-    final products = state.productsMatching(_query);
-    return SectionCard(
-      title: 'sell.products_title'.tr,
+  Widget _mobileLayout(BuildContext context, InvoiceFormState state) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSizes.spaceMedium,
+              AppSizes.spaceMedium,
+              AppSizes.spaceMedium,
+              AppSizes.spaceSmall,
+            ),
+            child: _productPane(context, state),
+          ),
+        ),
+        _cartBar(context, state),
+      ],
+    );
+  }
+
+  Widget _billPanel({required VoidCallback onPay, VoidCallback? onClose}) {
+    return SellBillPanel(
+      customerController: _customerController,
+      discountController: _discountController,
+      onPay: onPay,
+      onClear: _confirmClear,
+      onClose: onClose,
+    );
+  }
+
+  // มือถือ: แถบติดล่าง จำนวนชิ้น + ยอดรวม + ปุ่มดูบิล (ด้านขวาเว้นที่ให้ปุ่มแชท AI)
+  Widget _cartBar(BuildContext context, InvoiceFormState state) {
+    final textTheme = Theme.of(context).textTheme;
+    return Material(
+      color: AppColors.surface,
+      elevation: AppSizes.chatPanelElevation,
+      shadowColor: AppColors.shadow,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSizes.spaceMedium,
+            AppSizes.spaceMedium,
+            AppSizes.chatLauncherSpace,
+            AppSizes.spaceMedium,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('sell.bill_count'.trParams({'count': '${state.itemCount}'}), style: textTheme.bodySmall),
+                    Text(
+                      MoneyUtil.format(state.amounts.total),
+                      style: textTheme.titleLarge?.copyWith(color: AppColors.primaryDark, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+              // ปุ่มได้ที่มากกว่ายอดรวม (flex 2) / ที่ไม่พอ คำบนปุ่มหดเป็น ... ไม่ล้นจอ
+              Flexible(
+                flex: 2,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton.icon(
+                    onPressed: () => _openBillSheet(context),
+                    icon: const Icon(Icons.receipt_long_outlined),
+                    label: Text('sell.view_bill_pay'.tr, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // เปิดบิลทับทั้งจอ (root navigator → ทับปุ่มแชท AI ด้วย) / กดรับเงิน = ปิดบิลก่อนแล้วเปิดหน้าต่างรับเงิน
+  Future<void> _openBillSheet(BuildContext context) {
+    final bloc = context.read<InvoiceFormBloc>();
+    final height = MediaQuery.sizeOf(context).height * AppSizes.sellSheetHeightRatio;
+    return showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      backgroundColor: AppColors.transparent,
+      builder:
+          (sheetContext) => BlocProvider.value(
+            value: bloc,
+            child: SafeArea(
+              child: SizedBox(
+                height: height,
+                child: _billPanel(
+                  onClose: () => Navigator.pop(sheetContext),
+                  onPay: () {
+                    Navigator.pop(sheetContext);
+                    _onPay();
+                  },
+                ),
+              ),
+            ),
+          ),
+    );
+  }
+
+  // ฝั่งสินค้า: ช่องค้นหา / สแกน + ปุ่มกรองหมวด (ติดด้านบน) + การ์ดสินค้า (เลื่อนได้)
+  Widget _productPane(BuildContext context, InvoiceFormState state) {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppSizes.radius),
+        border: Border.all(color: AppColors.border),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TextField(
-            controller: _searchController,
-            focusNode: _searchFocus,
-            autofocus: true,
-            onChanged: _onQueryChanged,
-            onSubmitted: _onCodeSubmitted,
-            decoration: InputDecoration(hintText: 'sell.search_hint'.tr, prefixIcon: const Icon(Icons.qr_code_scanner)),
-          ),
-          const SizedBox(height: AppSizes.spaceMedium),
-          if (products.isEmpty) EmptyView(message: 'product.not_found'.tr, icon: Icons.search_off),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final tileWidth = _tileWidth(constraints.maxWidth);
-              return Wrap(
-                spacing: AppSizes.spaceSmall,
-                runSpacing: AppSizes.spaceSmall,
-                children: [for (final product in products) _productTile(context, product, tileWidth)],
-              );
-            },
-          ),
+          Padding(padding: const EdgeInsets.all(AppSizes.spaceMedium), child: _searchField(context)),
+          if (state.productCategories.isNotEmpty) _categoryChips(state.productCategories),
+          Expanded(child: _productGrid(context, state)),
         ],
+      ),
+    );
+  }
+
+  Widget _searchField(BuildContext context) {
+    final isMobile = ResponsiveHelper.screenType(context) == ScreenType.mobile;
+    return TextField(
+      controller: _searchController,
+      focusNode: _searchFocus,
+      autofocus: !isMobile,
+      onChanged: _onQueryChanged,
+      onSubmitted: _onCodeSubmitted,
+      decoration: InputDecoration(
+        hintText: 'sell.search_hint'.tr,
+        prefixIcon: const Icon(Icons.qr_code_scanner),
+        suffixIcon:
+            _query.isEmpty
+                ? null
+                : IconButton(
+                  tooltip: 'common.clear'.tr,
+                  onPressed: () {
+                    _searchController.clear();
+                    _onQueryChanged('');
+                  },
+                  icon: const Icon(Icons.close),
+                ),
+      ),
+    );
+  }
+
+  Widget _categoryChips(List<String> categories) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(AppSizes.spaceMedium, 0, AppSizes.spaceMedium, AppSizes.spaceSmall),
+      child: Row(
+        children: [
+          for (final category in ['', ...categories])
+            Padding(
+              padding: const EdgeInsets.only(right: AppSizes.spaceSmall),
+              child: ChoiceChip(
+                label: Text(category.isEmpty ? 'product.all_categories'.tr : category),
+                selected: _category == category,
+                onSelected: (_) => _onCategoryChanged(category),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _productGrid(BuildContext context, InvoiceFormState state) {
+    final products = state.productsMatching(_query, category: _category);
+    if (products.isEmpty) return EmptyView(message: 'product.not_found'.tr, icon: Icons.search_off);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(
+        AppSizes.spaceMedium,
+        AppSizes.spaceSmall,
+        AppSizes.spaceMedium,
+        AppSizes.spaceMedium,
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tileWidth = _tileWidth(constraints.maxWidth);
+          return Wrap(
+            spacing: AppSizes.spaceSmall,
+            runSpacing: AppSizes.spaceSmall,
+            children: [for (final product in products) _productTile(context, state, product, tileWidth)],
+          );
+        },
       ),
     );
   }
@@ -55,7 +230,7 @@ extension _SellPageExt on _SellPageState {
     return (areaWidth - AppSizes.spaceSmall * (columns - 1)) / columns;
   }
 
-  Widget _productTile(BuildContext context, ProductModel product, double width) {
+  Widget _productTile(BuildContext context, InvoiceFormState state, ProductModel product, double width) {
     final stockText =
         product.trackStock ? 'invoice.in_stock'.trParams({'stock': '${product.stock}'}) : 'product.no_stock'.tr;
     return SellProductTile(
@@ -65,96 +240,19 @@ extension _SellPageExt on _SellPageState {
       price: product.sellPrice,
       stockText: stockText,
       isOut: product.trackStock && product.stock <= 0,
+      quantityInCart: state.quantityOf(product.id),
       onTap: () => context.read<InvoiceFormBloc>().add(InvoiceItemAdded(product.id)),
     );
   }
 
-  Widget _cartArea(BuildContext context, InvoiceFormState state) {
-    final bloc = context.read<InvoiceFormBloc>();
-    return SectionCard(
-      title: 'sell.cart_title'.trParams({'count': '${state.itemCount}'}),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (state.company.needsTaxId) NoticeBanner(message: 'invoice.tax_id_missing'.tr),
-          if (state.items.isEmpty) Text('sell.cart_empty'.tr, style: Theme.of(context).textTheme.bodySmall),
-          for (final item in state.items)
-            InvoiceItemRow(
-              key: ValueKey(item.productId),
-              item: item,
-              onChanged:
-                  (quantity, unitPrice) =>
-                      bloc.add(InvoiceItemChanged(productId: item.productId, quantity: quantity, unitPrice: unitPrice)),
-              onRemove: () => bloc.add(InvoiceItemRemoved(item.productId)),
-            ),
-          const SizedBox(height: AppSizes.spaceSmall),
-          AppTextField(
-            label: state.needsCustomerName ? 'invoice.customer_name'.tr : 'sell.customer_optional'.tr,
-            controller: _customerController,
-            validator: state.needsCustomerName ? _requiredCustomer : null,
-          ),
-          _totals(context, state),
-          const SizedBox(height: AppSizes.spaceMedium),
-          AppButton(
-            text: 'sell.pay'.trParams({'total': MoneyUtil.format(state.amounts.total)}),
-            isLoading: state.submitStatus == AppStatus.loading,
-            onPressed: state.items.isEmpty ? null : _onSubmit,
-          ),
-        ],
-      ),
-    );
-  }
-
-  String? _requiredCustomer(String? value) {
-    if (value == null || value.trim().isEmpty) return 'validation.required'.tr;
-    return null;
-  }
-
-  Widget _totals(BuildContext context, InvoiceFormState state) {
-    final amounts = state.amounts;
-    final isVat = state.company.vatRegistered;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SizedBox(height: AppSizes.spaceMedium),
-        _line(context, 'invoice.items_total'.tr, amounts.itemsTotal),
-        Row(
-          children: [
-            Expanded(child: Text('invoice.discount'.tr)),
-            SizedBox(
-              width: AppSizes.monthLabelWidth,
-              child: TextField(
-                controller: _discountController,
-                textAlign: TextAlign.end,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(hintText: '0.00', isDense: true),
-                onChanged: (text) => context.read<InvoiceFormBloc>().add(InvoiceDiscountChanged(MoneyUtil.parse(text))),
-              ),
-            ),
-          ],
-        ),
-        if (isVat) _line(context, 'invoice.vat'.tr, amounts.vat),
-        const Divider(),
-        _line(context, 'invoice.grand_total'.tr, amounts.total, isBig: true),
-      ],
-    );
-  }
-
-  Widget _line(BuildContext context, String label, double value, {bool isBig = false}) {
-    final textTheme = Theme.of(context).textTheme;
-    final style = isBig ? textTheme.titleLarge?.copyWith(color: AppColors.primary) : textTheme.titleSmall;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSizes.spaceXSmall),
-      child: Row(
-        children: [
-          Expanded(child: Text(label, style: isBig ? textTheme.titleMedium : textTheme.bodyMedium)),
-          Text(MoneyUtil.format(value), style: style),
-        ],
-      ),
-    );
-  }
-
   Future<bool> _showSoldDialog(BuildContext context, InvoiceModel invoice) async {
+    final change = CashUtil.change(_received, invoice.total);
+    final message = 'sell.sold_message_change'.trParams({
+      'no': invoice.invoiceNo,
+      'total': MoneyUtil.format(invoice.total),
+      'received': MoneyUtil.format(_received),
+      'change': MoneyUtil.format(change < 0 ? 0 : change),
+    });
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -163,7 +261,7 @@ extension _SellPageExt on _SellPageState {
             isDanger: false,
             icon: Icons.check_rounded,
             title: 'sell.sold_title'.tr,
-            message: 'sell.sold_message'.trParams({'no': invoice.invoiceNo, 'total': MoneyUtil.format(invoice.total)}),
+            message: message,
             secondaryText: 'sell.view_bill'.tr,
             onSecondary: () => Navigator.pop(dialogContext, true),
             primaryText: 'sell.next_sale'.tr,

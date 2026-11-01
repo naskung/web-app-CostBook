@@ -37,8 +37,30 @@ class InvoiceFormState extends Equatable {
 
   int get itemCount => items.fold(0, (count, item) => count + item.quantity);
 
-  List<ProductModel> productsMatching(String query) {
-    return products.where((product) => product.matches(query)).toList();
+  // category = ชื่อหมวด ('' = ทุกหมวด)
+  List<ProductModel> productsMatching(String query, {String category = ''}) {
+    return products
+        .where((product) => product.matches(query) && (category.isEmpty || product.category == category))
+        .toList();
+  }
+
+  // หมวดของสินค้าที่มี (ไม่ซ้ำ เรียงตามชื่อ) ไว้ทำปุ่มกรองในหน้าขาย
+  List<String> get productCategories {
+    final names =
+        {
+          for (final product in products)
+            if (product.category.isNotEmpty) product.category,
+        }.toList();
+    names.sort();
+    return names;
+  }
+
+  // สินค้านี้อยู่ในบิลกี่ชิ้น (ไม่อยู่ = 0)
+  int quantityOf(String productId) {
+    for (final item in items) {
+      if (item.productId == productId) return item.quantity;
+    }
+    return 0;
   }
 
   InvoiceFormState copyWith({

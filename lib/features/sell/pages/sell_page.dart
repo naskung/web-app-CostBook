@@ -4,33 +4,33 @@ import 'package:go_router/go_router.dart';
 
 import 'package:costbook/core/constants/app_status.dart';
 import 'package:costbook/core/constants/screen_type.dart';
+import 'package:costbook/core/helpers/dialog_helper.dart';
 import 'package:costbook/core/helpers/responsive_helper.dart';
 import 'package:costbook/core/helpers/snackbar_helper.dart';
 import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/routes/app_routes.dart';
 import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
+import 'package:costbook/core/utils/cash_util.dart';
 import 'package:costbook/core/utils/date_util.dart';
 import 'package:costbook/core/utils/money_util.dart';
 import 'package:costbook/features/invoice/bloc/invoice_form_bloc.dart';
 import 'package:costbook/features/invoice/models/invoice_draft_model.dart';
 import 'package:costbook/features/invoice/models/invoice_model.dart';
-import 'package:costbook/features/invoice/widgets/invoice_item_row.dart';
 import 'package:costbook/features/product/models/product_model.dart';
 import 'package:costbook/features/product/widgets/product_image.dart';
+import 'package:costbook/features/sell/widgets/payment_dialog.dart';
+import 'package:costbook/features/sell/widgets/sell_bill_panel.dart';
 import 'package:costbook/features/sell/widgets/sell_product_tile.dart';
-import 'package:costbook/shared/widgets/atoms/app_button.dart';
 import 'package:costbook/shared/widgets/atoms/app_loading.dart';
-import 'package:costbook/shared/widgets/atoms/app_text_field.dart';
 import 'package:costbook/shared/widgets/molecules/empty_view.dart';
 import 'package:costbook/shared/widgets/molecules/error_view.dart';
-import 'package:costbook/shared/widgets/molecules/notice_banner.dart';
-import 'package:costbook/shared/widgets/molecules/section_card.dart';
 import 'package:costbook/shared/widgets/organisms/app_alert_dialog.dart';
-import 'package:costbook/shared/widgets/organisms/page_content.dart';
 
 part 'sell_page_ext.dart';
 
+// หน้าขายหน้าร้าน (POS): สินค้าด้านซ้าย (เลื่อนได้) + บิลด้านขวาสูงเต็มจอ ปุ่มรับเงินติดอยู่ล่างบิลไม่หลุดจอ
+// มือถือ: สินค้าเต็มจอ + แถบยอดรวมติดล่าง กดแล้วบิลเลื่อนขึ้นมา / กดรับเงิน → หน้าต่างรับเงิน + เงินทอน → ขาย
 class SellPage extends StatefulWidget {
   const SellPage({super.key});
 
@@ -39,12 +39,13 @@ class SellPage extends StatefulWidget {
 }
 
 class _SellPageState extends State<SellPage> {
-  final _formKey = GlobalKey<FormState>();
   final _searchController = TextEditingController();
   final _searchFocus = FocusNode();
   final _customerController = TextEditingController();
   final _discountController = TextEditingController();
   String _query = '';
+  String _category = '';
+  double _received = 0;
 
   @override
   void dispose() {
@@ -57,6 +58,8 @@ class _SellPageState extends State<SellPage> {
 
   void _onQueryChanged(String query) => setState(() => _query = query);
 
+  void _onCategoryChanged(String category) => setState(() => _category = category);
+
   void _onCodeSubmitted(String code) {
     context.read<InvoiceFormBloc>().add(InvoiceCodeScanned(code));
     _searchController.clear();
@@ -64,14 +67,27 @@ class _SellPageState extends State<SellPage> {
     _searchFocus.requestFocus();
   }
 
-  void _onSubmit() {
-    final isValid = _formKey.currentState?.validate() ?? false;
-    if (!isValid) return;
+  // รับเงิน: หน้าต่างรับเงิน (ได้เงินที่รับมา) → ออกเอกสารขาย / กดยกเลิก = ไม่ขาย
+  Future<void> _onPay() async {
+    final bloc = context.read<InvoiceFormBloc>();
+    final received = await PaymentDialog.show(context, bloc.state.amounts.total);
+    if (received == null || !mounted) return;
+    _received = received;
     final draft = InvoiceDraftModel(
       issueDate: DateUtil.toApiDate(DateTime.now()),
       customerName: _customerController.text.trim(),
     );
-    context.read<InvoiceFormBloc>().add(InvoiceFormSubmitted(draft));
+    bloc.add(InvoiceFormSubmitted(draft));
+  }
+
+  Future<void> _confirmClear() async {
+    final isConfirmed = await DialogHelper.confirm(
+      context,
+      title: 'sell.clear_title'.tr,
+      message: 'sell.clear_message'.tr,
+      confirmText: 'sell.clear_bill'.tr,
+    );
+    if (isConfirmed) _startNewSale();
   }
 
   void _startNewSale() {
@@ -114,10 +130,9 @@ class _SellPageState extends State<SellPage> {
       child: BlocBuilder<InvoiceFormBloc, InvoiceFormState>(
         builder: (context, state) {
           final stateView = _stateView(context, state);
-          return Form(
-            key: _formKey,
-            child: PageContent(centerChild: stateView, children: [if (stateView == null) _layout(context, state)]),
-          );
+          if (stateView != null) return stateView;
+          if (ResponsiveHelper.screenType(context) == ScreenType.mobile) return _mobileLayout(context, state);
+          return _wideLayout(context, state);
         },
       ),
     );

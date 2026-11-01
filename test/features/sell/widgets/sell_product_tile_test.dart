@@ -4,8 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:costbook/features/sell/widgets/sell_product_tile.dart';
 
 void main() {
-  Widget tile(String name, {VoidCallback? onTap}) {
+  Widget tile(String name, {VoidCallback? onTap, int quantityInCart = 0}) {
     return SellProductTile(
+      quantityInCart: quantityInCart,
       key: ValueKey(name),
       image: const SizedBox(height: 96),
       name: name,
@@ -31,5 +32,13 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: Scaffold(body: tile('พวงกุญแจ', onTap: () => tapped++))));
     await tester.tap(find.text('พวงกุญแจ'));
     expect(tapped, 1);
+  });
+
+  testWidgets('อยู่ในบิลแล้ว มีวงกลมบอกจำนวน / ยังไม่อยู่ ไม่มี', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: Scaffold(body: Row(children: [tile('พวงกุญแจ', quantityInCart: 3), tile('แจกัน')]))),
+    );
+    expect(find.text('3'), findsOneWidget);
+    expect(find.text('0'), findsNothing);
   });
 }

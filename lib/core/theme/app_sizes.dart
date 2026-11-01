@@ -49,7 +49,14 @@ class AppSizes {
   static const double statCardCompactWidth = 220;
   static const double statCardMiniWidth = 160;
   static const double sellTileWidth = 140;
-  static const double sellCartWidth = 440;
+  static const double sellBillWidth = 400;
+  static const double sellBillCompactWidth = 340;
+  static const double sellLineTotalWidth = 84;
+  static const double sellStepperButton = 36;
+  static const double sellStepperValueWidth = 36;
+  static const double sellQuantityBadge = 26;
+  static const double sellDiscountWidth = 140;
+  static const double sellSheetHeightRatio = 0.9;
   static const double iconSmall = 20;
   static const double badgePaddingX = 10;
   static const double badgePaddingY = 2;
