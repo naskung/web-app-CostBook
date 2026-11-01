@@ -25,6 +25,11 @@ class CostState extends Equatable {
   final String saveErrorCode;
   final String presetErrorCode;
 
+  // วัสดุที่ใส่ในใบต้นทุนของ productId ได้ = สินค้าที่ไม่ขาย (ยกเว้นตัวเอง)
+  List<ProductModel> materialsFor(String productId) {
+    return products.where((product) => !product.forSale && product.id != productId).toList();
+  }
+
   CostState copyWith({
     AppStatus? status,
     List<ProductModel>? products,

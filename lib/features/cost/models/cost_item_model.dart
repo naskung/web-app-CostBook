@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 class CostItemModel extends Equatable {
   const CostItemModel({
     this.id = '',
+    this.materialId = '',
     required this.type,
     this.kind = fixed,
     required this.name,
@@ -21,6 +22,8 @@ class CostItemModel extends Equatable {
   static const String percentKind = 'percent';
 
   final String id;
+  // ไม่ว่าง = ใช้วัสดุจากสต็อก: ราคา / หน่วยมาจากวัสดุ (API อัปเดตเองเมื่อราคาวัสดุเปลี่ยน) + รับสินค้าเข้าแล้วตัดวัสดุ
+  final String materialId;
   final String type;
   final String kind;
   final String name;
@@ -31,9 +34,12 @@ class CostItemModel extends Equatable {
 
   bool get isPercent => kind == percentKind;
 
+  bool get isMaterial => materialId.isNotEmpty;
+
   factory CostItemModel.fromJson(Map<String, dynamic> json) {
     return CostItemModel(
       id: json['id'] as String? ?? '',
+      materialId: json['material_id'] as String? ?? '',
       type: json['type'] as String? ?? material,
       kind: json['kind'] as String? ?? fixed,
       name: json['name'] as String? ?? '',
@@ -46,6 +52,7 @@ class CostItemModel extends Equatable {
 
   Map<String, dynamic> toJson() {
     return {
+      'material_id': materialId,
       'type': type,
       'kind': kind,
       'name': name,
@@ -57,5 +64,5 @@ class CostItemModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, type, kind, name, quantity, unit, unitPrice, percent];
+  List<Object?> get props => [id, materialId, type, kind, name, quantity, unit, unitPrice, percent];
 }

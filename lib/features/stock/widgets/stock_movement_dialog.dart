@@ -39,6 +39,8 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
   final _supplierController = TextEditingController();
   late String _productId = widget.productId;
   bool _isSubmitted = false;
+  // รับเข้า = ผลิตเสร็จ → ตัดวัสดุตามใบต้นทุน (ปิดได้ถ้าเป็นของที่ทำไว้ก่อน)
+  bool _useMaterials = true;
 
   bool get _isIn => widget.type == MovementModel.stockIn;
 
@@ -63,6 +65,7 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
         note: _noteController.text.trim(),
         unitCost: _isIn ? MoneyUtil.parse(_unitCostController.text) : 0,
         supplier: _isIn ? _supplierController.text.trim() : '',
+        skipMaterials: _isIn && !_useMaterials,
       ),
     );
   }
@@ -81,7 +84,7 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
           saveLabel: _isIn ? 'stock.stock_in'.tr : 'stock.stock_out'.tr,
           cancelLabel: 'common.cancel'.tr,
           isSaving: state.saveStatus == AppStatus.loading,
-          errorText: hasError ? 'error.${state.saveErrorCode}'.tr : '',
+          errorText: hasError ? 'error.${state.saveErrorCode}'.trParams(state.saveErrorParams) : '',
           onSave: _onSave,
           child: _form(context, state.items),
         );
@@ -112,6 +115,15 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
             validator: ValidatorUtil.positiveInteger,
           ),
           if (_isIn) ..._costFields(context),
+          if (_isIn)
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: Text('stock.use_materials'.tr),
+              subtitle: Text('stock.use_materials_hint'.tr),
+              value: _useMaterials,
+              onChanged: (value) => setState(() => _useMaterials = value ?? true),
+            ),
           const SizedBox(height: AppSizes.spaceMedium),
           AppTextField(
             label: 'common.note'.tr,

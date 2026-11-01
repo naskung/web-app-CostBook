@@ -21,6 +21,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     on<ProductSearchChanged>(_onSearchChanged);
     on<ProductCategoryChanged>(_onCategoryChanged);
     on<ProductLowStockFilterChanged>(_onLowStockFilterChanged);
+    on<ProductKindChanged>(_onKindChanged);
     on<ProductSaved>(_onProductSaved);
     on<ProductDeleted>(_onProductDeleted);
   }
@@ -49,6 +50,10 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
 
   void _onLowStockFilterChanged(ProductLowStockFilterChanged event, Emitter<ProductState> emit) {
     emit(state.copyWith(onlyLow: event.onlyLow));
+  }
+
+  void _onKindChanged(ProductKindChanged event, Emitter<ProductState> emit) {
+    emit(state.copyWith(kind: event.kind));
   }
 
   // บันทึกสินค้าก่อน แล้วค่อยอัปโหลด / ลบรูป

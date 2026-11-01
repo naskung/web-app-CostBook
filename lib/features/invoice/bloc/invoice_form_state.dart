@@ -11,6 +11,7 @@ class InvoiceFormState extends Equatable {
     this.errorCode = '',
     this.submitStatus = AppStatus.initial,
     this.submitErrorCode = '',
+    this.submitErrorParams = const {},
     this.createdInvoice,
   });
 
@@ -23,6 +24,8 @@ class InvoiceFormState extends Equatable {
   final String errorCode;
   final AppStatus submitStatus;
   final String submitErrorCode;
+  // ค่าที่มากับ error เช่น วัสดุไม่พอ: ชื่อวัสดุ / ต้องใช้ / มีอยู่
+  final Map<String, String> submitErrorParams;
   final InvoiceModel? createdInvoice;
 
   DocumentAmounts get amounts {
@@ -48,6 +51,7 @@ class InvoiceFormState extends Equatable {
     String? errorCode,
     AppStatus? submitStatus,
     String? submitErrorCode,
+    Map<String, String>? submitErrorParams,
     InvoiceModel? createdInvoice,
   }) {
     return InvoiceFormState(
@@ -60,6 +64,7 @@ class InvoiceFormState extends Equatable {
       errorCode: errorCode ?? this.errorCode,
       submitStatus: submitStatus ?? this.submitStatus,
       submitErrorCode: submitErrorCode ?? this.submitErrorCode,
+      submitErrorParams: submitErrorParams ?? this.submitErrorParams,
       createdInvoice: createdInvoice ?? this.createdInvoice,
     );
   }
@@ -75,6 +80,7 @@ class InvoiceFormState extends Equatable {
     errorCode,
     submitStatus,
     submitErrorCode,
+    submitErrorParams,
     createdInvoice,
   ];
 }

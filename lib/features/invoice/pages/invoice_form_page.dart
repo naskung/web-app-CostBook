@@ -106,7 +106,7 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
       context.go(AppRoutes.invoiceDetailPath(invoice.id));
       return;
     }
-    SnackbarHelper.showError(context, 'error.${state.submitErrorCode}'.tr);
+    SnackbarHelper.showError(context, 'error.${state.submitErrorCode}'.trParams(state.submitErrorParams));
   }
 
   @override

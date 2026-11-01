@@ -167,4 +167,64 @@ void main() {
           const StockState(saveStatus: AppStatus.failure, saveErrorCode: 'stock_not_tracked', savedType: 'in'),
         ],
   );
+
+  blocTest<StockBloc, StockState>(
+    'StockMovementSaved วัสดุไม่พอ ได้ code พร้อมชื่อวัสดุ / ต้องใช้ / มีอยู่',
+    build: () {
+      whenSaveMovement(
+        () async =>
+            throw ApiException(
+              'material_not_enough',
+              params: const {'material': 'เส้น TPU', 'unit': 'กรัม', 'need': '300', 'have': '100'},
+            ),
+      );
+      return StockBloc(repository);
+    },
+    act: (bloc) => bloc.add(StockMovementSaved(type: 'in', productId: 'p1', quantity: 10, note: '')),
+    skip: 1,
+    expect:
+        () => [
+          const StockState(
+            saveStatus: AppStatus.failure,
+            saveErrorCode: 'material_not_enough',
+            saveErrorParams: {'material': 'เส้น TPU', 'unit': 'กรัม', 'need': '300', 'have': '100'},
+            savedType: 'in',
+          ),
+        ],
+  );
+
+  blocTest<StockBloc, StockState>(
+    'StockMovementSaved ติ๊กไม่ต้องตัดวัสดุ ส่ง skipMaterials ไปให้ API',
+    build: () {
+      when(
+        () => repository.addMovement(
+          type: any(named: 'type'),
+          productId: any(named: 'productId'),
+          quantity: any(named: 'quantity'),
+          note: any(named: 'note'),
+          unitCost: any(named: 'unitCost'),
+          supplier: any(named: 'supplier'),
+          skipMaterials: any(named: 'skipMaterials'),
+        ),
+      ).thenAnswer((_) async {});
+      when(() => repository.getStock()).thenAnswer((_) async => [ok]);
+      return StockBloc(repository, withHistory: false);
+    },
+    act:
+        (bloc) => bloc.add(StockMovementSaved(type: 'in', productId: 'p2', quantity: 5, note: '', skipMaterials: true)),
+    skip: 3,
+    verify: (_) {
+      verify(
+        () => repository.addMovement(
+          type: 'in',
+          productId: 'p2',
+          quantity: 5,
+          note: '',
+          unitCost: 0,
+          supplier: '',
+          skipMaterials: true,
+        ),
+      ).called(1);
+    },
+  );
 }

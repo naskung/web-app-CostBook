@@ -12,6 +12,7 @@ class MovementModel extends Equatable {
     this.invoiceNo = '',
     this.unitCost = 0,
     this.supplier = '',
+    this.isMaterial = false,
     required this.createdAt,
   });
 
@@ -28,6 +29,8 @@ class MovementModel extends Equatable {
   final String invoiceNo;
   final double unitCost;
   final String supplier;
+  // ตัด / คืนวัสดุที่ใช้ผลิตสินค้าอื่นอัตโนมัติ (note บอกว่าใช้ผลิตอะไร)
+  final bool isMaterial;
   final DateTime createdAt;
 
   bool get isIn => type == stockIn;
@@ -46,6 +49,7 @@ class MovementModel extends Equatable {
       invoiceNo: json['invoice_no'] as String? ?? '',
       unitCost: (json['unit_cost'] as num? ?? 0).toDouble(),
       supplier: json['supplier'] as String? ?? '',
+      isMaterial: json['is_material'] as bool? ?? false,
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? '')?.toLocal() ?? DateTime(1970),
     );
   }
@@ -62,6 +66,7 @@ class MovementModel extends Equatable {
       'invoice_no': invoiceNo,
       'unit_cost': unitCost,
       'supplier': supplier,
+      'is_material': isMaterial,
       'created_at': createdAt.toUtc().toIso8601String(),
     };
   }
@@ -78,6 +83,7 @@ class MovementModel extends Equatable {
     invoiceNo,
     unitCost,
     supplier,
+    isMaterial,
     createdAt,
   ];
 }

@@ -51,5 +51,11 @@ void main() {
       expect(movement.isIn, false);
       expect(movement.isFromInvoice, true);
     });
+
+    test('is_material = ตัด / คืนวัสดุอัตโนมัติ (ไม่มี = false)', () {
+      final used = MovementModel.fromJson({'id': 'm1', 'type': 'out', 'quantity': 300, 'is_material': true});
+      expect(used.isMaterial, true);
+      expect(MovementModel.fromJson({'id': 'm2', 'type': 'in', 'quantity': 1}).isMaterial, false);
+    });
   });
 }

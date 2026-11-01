@@ -60,6 +60,18 @@ void main() {
   InvoiceFormBloc buildBloc() => InvoiceFormBloc(repository, productRepository, settingsRepository);
 
   blocTest<InvoiceFormBloc, InvoiceFormState>(
+    'InvoiceFormOpened ไม่เอาวัสดุ (สินค้าที่ไม่ขาย) มาให้เลือกขาย',
+    build: () {
+      const pla = ProductModel(id: 'm1', name: 'เส้น PLA', unit: 'กรัม', forSale: false);
+      when(() => productRepository.getProducts()).thenAnswer((_) async => [coffee, pla]);
+      when(() => settingsRepository.getCompany()).thenAnswer((_) async => company);
+      return buildBloc();
+    },
+    act: (bloc) => bloc.add(InvoiceFormOpened()),
+    expect: () => [const InvoiceFormState(status: AppStatus.loading), ready],
+  );
+
+  blocTest<InvoiceFormBloc, InvoiceFormState>(
     'InvoiceFormOpened โหลดสินค้าและข้อมูลร้าน',
     build: () {
       when(() => productRepository.getProducts()).thenAnswer((_) async => [coffee]);

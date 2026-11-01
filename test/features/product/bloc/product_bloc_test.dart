@@ -261,4 +261,20 @@ void main() {
   test('เปิดหน้ามาแบบ onlyLow (จากหน้าภาพรวม) state เริ่มต้นกรองใกล้หมดเลย', () {
     expect(ProductBloc(repository, categoryRepository, onlyLow: true).state.onlyLow, true);
   });
+
+  const pla = ProductModel(id: '7', name: 'เส้น PLA', unit: 'กรัม', stock: 900, minStock: 200, forSale: false);
+
+  test('กรองวัสดุ เห็นแค่สินค้าที่ไม่ขาย / กรองสินค้าขาย ไม่เห็นวัสดุ', () {
+    const materials = ProductState(products: [coffee, pla], kind: ProductState.kindMaterial);
+    const forSale = ProductState(products: [coffee, pla], kind: ProductState.kindForSale);
+    expect(materials.visibleProducts, [pla]);
+    expect(forSale.visibleProducts, [coffee]);
+  });
+
+  blocTest<ProductBloc, ProductState>(
+    'ProductKindChanged เปลี่ยนตัวกรองขาย / วัสดุ ไม่โหลดใหม่',
+    build: () => ProductBloc(repository, categoryRepository),
+    act: (bloc) => bloc.add(ProductKindChanged(ProductState.kindMaterial)),
+    expect: () => [const ProductState(kind: ProductState.kindMaterial)],
+  );
 }

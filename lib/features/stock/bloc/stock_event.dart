@@ -13,6 +13,7 @@ class StockMovementSaved extends StockEvent {
     required this.note,
     this.unitCost = 0,
     this.supplier = '',
+    this.skipMaterials = false,
   });
 
   final String type;
@@ -21,4 +22,6 @@ class StockMovementSaved extends StockEvent {
   final String note;
   final double unitCost;
   final String supplier;
+  // รับเข้าโดยไม่ตัดวัสดุตามใบต้นทุน (ของที่ทำไว้ก่อน)
+  final bool skipMaterials;
 }

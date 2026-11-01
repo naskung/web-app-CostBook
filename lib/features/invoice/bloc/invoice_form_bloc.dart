@@ -38,7 +38,8 @@ class InvoiceFormBloc extends Bloc<InvoiceFormEvent, InvoiceFormState> {
 
   Future<void> _loadProducts(Emitter<InvoiceFormState> emit) async {
     try {
-      final products = await productRepository.getProducts();
+      // วัสดุ (ไม่ขาย) ไม่ขึ้นให้เลือกขาย
+      final products = (await productRepository.getProducts()).where((product) => product.forSale).toList();
       final company = await settingsRepository.getCompany();
       emit(state.copyWith(status: AppStatus.success, products: products, company: company));
     } catch (error) {
@@ -103,7 +104,13 @@ class InvoiceFormBloc extends Bloc<InvoiceFormEvent, InvoiceFormState> {
       final invoice = await repository.createInvoice(draft);
       emit(state.copyWith(submitStatus: AppStatus.success, createdInvoice: invoice));
     } catch (error) {
-      emit(state.copyWith(submitStatus: AppStatus.failure, submitErrorCode: ErrorUtil.codeOf(error)));
+      emit(
+        state.copyWith(
+          submitStatus: AppStatus.failure,
+          submitErrorCode: ErrorUtil.codeOf(error),
+          submitErrorParams: ErrorUtil.paramsOf(error),
+        ),
+      );
     }
   }
 

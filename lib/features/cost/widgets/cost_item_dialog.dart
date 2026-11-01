@@ -7,6 +7,7 @@ import 'package:costbook/core/utils/money_util.dart';
 import 'package:costbook/core/utils/validator_util.dart';
 import 'package:costbook/features/cost/models/cost_item_model.dart';
 import 'package:costbook/features/cost/models/cost_preset_model.dart';
+import 'package:costbook/features/product/models/product_model.dart';
 import 'package:costbook/shared/widgets/atoms/app_dropdown.dart';
 import 'package:costbook/shared/widgets/atoms/app_text_field.dart';
 import 'package:costbook/shared/widgets/organisms/form_dialog.dart';
@@ -20,21 +21,30 @@ class CostItemDialogResult {
 
 // forPreset = true → ใช้เพิ่ม / แก้รายการที่ใช้บ่อย (ไม่มีช่องจำนวน ไม่มีปุ่มเลือกจากรายการที่ใช้บ่อย)
 class CostItemDialog extends StatefulWidget {
-  const CostItemDialog({super.key, required this.item, required this.presets, this.forPreset = false});
+  const CostItemDialog({
+    super.key,
+    required this.item,
+    required this.presets,
+    this.materials = const [],
+    this.forPreset = false,
+  });
 
   final CostItemModel item;
   final List<CostPresetModel> presets;
+  // วัสดุในสต็อกที่เลือกผูกกับบรรทัดนี้ได้ (สินค้าที่ไม่ขาย)
+  final List<ProductModel> materials;
   final bool forPreset;
 
   static Future<CostItemDialogResult?> show(
     BuildContext context, {
     required CostItemModel item,
     required List<CostPresetModel> presets,
+    List<ProductModel> materials = const [],
     bool forPreset = false,
   }) {
     return showDialog<CostItemDialogResult>(
       context: context,
-      builder: (_) => CostItemDialog(item: item, presets: presets, forPreset: forPreset),
+      builder: (_) => CostItemDialog(item: item, presets: presets, materials: materials, forPreset: forPreset),
     );
   }
 
@@ -51,11 +61,34 @@ class _CostItemDialogState extends State<CostItemDialog> {
   late final _percentController = TextEditingController(text: _numberText(widget.item.percent));
   late String _type = widget.item.type;
   late String _kind = widget.item.kind;
+  late String _materialId = widget.item.materialId;
   bool _remember = false;
 
   bool get _isNew => widget.item.name.isEmpty;
 
   bool get _isPercent => _kind == CostItemModel.percentKind;
+
+  bool get _usesMaterial => _materialId.isNotEmpty && !_isPercent;
+
+  bool get _canPickMaterial => !widget.forPreset && widget.materials.isNotEmpty && !_isPercent;
+
+  // เลือกวัสดุ → ชื่อ / หน่วย / ราคาต่อหน่วยมาจากวัสดุ (ราคาอัปเดตเองเมื่อราคาวัสดุเปลี่ยน)
+  void _applyMaterial(String? materialId) {
+    final picked = widget.materials.where((material) => material.id == materialId).toList();
+    setState(() {
+      _materialId = picked.isEmpty ? '' : picked.first.id;
+      if (picked.isEmpty) return;
+      _type = CostItemModel.material;
+      _nameController.text = picked.first.name;
+      _unitController.text = picked.first.unit;
+      _unitPriceController.text = _numberText(picked.first.costPrice);
+    });
+  }
+
+  String _materialLabel(ProductModel material) {
+    final unit = material.unit.isEmpty ? '' : ' / ${material.unit}';
+    return '${material.name} (${MoneyUtil.format(material.costPrice)}$unit · ${'cost.material_left'.trParams({'stock': '${material.stock}', 'unit': material.unit})})';
+  }
 
   String get _title {
     if (widget.forPreset) return _isNew ? 'cost.preset_add_title'.tr : 'cost.preset_edit_title'.tr;
@@ -95,6 +128,7 @@ class _CostItemDialogState extends State<CostItemDialog> {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) return;
     final item = CostItemModel(
+      materialId: _usesMaterial ? _materialId : '',
       type: _type,
       kind: _kind,
       name: _nameController.text.trim(),
@@ -127,6 +161,22 @@ class _CostItemDialogState extends State<CostItemDialog> {
                 items: {for (final preset in widget.presets) preset.id: preset.name},
                 onChanged: _applyPreset,
               ),
+              const SizedBox(height: AppSizes.spaceMedium),
+            ],
+            if (_canPickMaterial) ...[
+              AppDropdown<String>(
+                label: 'cost.material'.tr,
+                value: _materialId,
+                items: {
+                  '': 'cost.no_material'.tr,
+                  for (final material in widget.materials) material.id: _materialLabel(material),
+                },
+                onChanged: _applyMaterial,
+              ),
+              if (_usesMaterial) ...[
+                const SizedBox(height: AppSizes.spaceXSmall),
+                Text('cost.material_hint'.tr, style: Theme.of(context).textTheme.bodySmall),
+              ],
               const SizedBox(height: AppSizes.spaceMedium),
             ],
             AppDropdown<String>(
@@ -179,13 +229,19 @@ class _CostItemDialogState extends State<CostItemDialog> {
   }
 
   Widget _unitField() {
-    return AppTextField(label: 'common.unit'.tr, hint: 'cost.unit_hint'.tr, controller: _unitController);
+    return AppTextField(
+      label: 'common.unit'.tr,
+      hint: 'cost.unit_hint'.tr,
+      controller: _unitController,
+      readOnly: _usesMaterial,
+    );
   }
 
   Widget _unitPriceField() {
     return AppTextField(
       label: 'cost.unit_price'.tr,
       controller: _unitPriceController,
+      readOnly: _usesMaterial,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       validator: ValidatorUtil.zeroOrMore,
       suffixText: 'common.baht'.tr,

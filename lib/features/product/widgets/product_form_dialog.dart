@@ -62,6 +62,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   late final _minStockController = TextEditingController(text: widget.product.minStock.toString());
   late final _descriptionController = TextEditingController(text: widget.product.description);
   late bool _trackStock = widget.product.trackStock;
+  late bool _forSale = widget.product.forSale;
   late final Map<String, String> _customValues = {...widget.product.customFields};
   bool _isSubmitted = false;
 
@@ -130,6 +131,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
       sellPrice: MoneyUtil.parse(_sellController.text),
       minStock: int.tryParse(_minStockController.text.trim()) ?? 0,
       trackStock: _trackStock,
+      forSale: _forSale,
       customFields: Map.fromEntries(_customValues.entries.where((entry) => entry.value.isNotEmpty)),
     );
     context.read<ProductBloc>().add(ProductSaved(product, image: _newImage, removeImage: _removeImage));
@@ -294,6 +296,13 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text('product.for_sale'.tr),
+          subtitle: Text(_forSale ? 'product.for_sale_on'.tr : 'product.for_sale_off'.tr),
+          value: _forSale,
+          onChanged: (value) => setState(() => _forSale = value),
+        ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           title: Text('product.track_stock'.tr),

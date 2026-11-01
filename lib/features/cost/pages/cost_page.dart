@@ -20,6 +20,7 @@ import 'package:costbook/features/cost/widgets/cost_item_dialog.dart';
 import 'package:costbook/features/cost/widgets/cost_presets_dialog.dart';
 import 'package:costbook/features/settings/bloc/settings_bloc.dart';
 import 'package:costbook/features/settings/models/company_model.dart';
+import 'package:costbook/shared/widgets/atoms/app_badge.dart';
 import 'package:costbook/shared/widgets/atoms/app_button.dart';
 import 'package:costbook/shared/widgets/atoms/app_dropdown.dart';
 import 'package:costbook/shared/widgets/atoms/app_loading.dart';
@@ -68,6 +69,7 @@ class _CostPageState extends State<CostPage> {
       context,
       item: CostItemModel(type: type, name: ''),
       presets: bloc.state.presets,
+      materials: bloc.state.materialsFor(bloc.state.sheet?.productId ?? ''),
     );
     if (result == null) return;
     bloc.add(CostItemAdded(result.item));
@@ -76,7 +78,12 @@ class _CostPageState extends State<CostPage> {
 
   Future<void> _editItem(CostItemModel item) async {
     final bloc = context.read<CostBloc>();
-    final result = await CostItemDialog.show(context, item: item, presets: bloc.state.presets);
+    final result = await CostItemDialog.show(
+      context,
+      item: item,
+      presets: bloc.state.presets,
+      materials: bloc.state.materialsFor(bloc.state.sheet?.productId ?? ''),
+    );
     if (result != null) bloc.add(CostItemChanged(oldItem: item, newItem: result.item));
   }
 

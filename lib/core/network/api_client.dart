@@ -59,7 +59,21 @@ class ApiClient {
 
     final code = _errorCode(response.body);
     if (code == 'unauthorized') onUnauthorized?.call();
-    throw ApiException(code);
+    throw ApiException(code, params: _errorParams(response.bodyBytes));
+  }
+
+  // ค่าอื่นที่มากับ error เช่น {"error":"material_not_enough","material":"เส้น TPU","need":300} → {material: เส้น TPU, need: 300}
+  Map<String, String> _errorParams(List<int> bodyBytes) {
+    try {
+      final data = jsonDecode(utf8.decode(bodyBytes));
+      if (data is! Map) return const {};
+      return {
+        for (final entry in data.entries)
+          if (entry.key != 'error') entry.key.toString(): entry.value.toString(),
+      };
+    } on FormatException {
+      return const {};
+    }
   }
 
   String _errorCode(String body) {

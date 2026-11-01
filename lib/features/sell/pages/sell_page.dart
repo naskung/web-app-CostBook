@@ -84,7 +84,7 @@ class _SellPageState extends State<SellPage> {
   Future<void> _onSubmitResult(BuildContext context, InvoiceFormState state) async {
     final invoice = state.createdInvoice;
     if (state.submitStatus != AppStatus.success || invoice == null) {
-      SnackbarHelper.showError(context, 'error.${state.submitErrorCode}'.tr);
+      SnackbarHelper.showError(context, 'error.${state.submitErrorCode}'.trParams(state.submitErrorParams));
       return;
     }
     final router = GoRouter.of(context);

@@ -18,6 +18,13 @@ class ProductCategoryChanged extends ProductEvent {
 }
 
 // image = รูปใหม่ที่เลือก (null = ไม่เปลี่ยน), removeImage = กดลบรูปเดิม
+// kind = '' ทั้งหมด / ProductState.kindForSale สินค้าที่ขาย / ProductState.kindMaterial วัสดุ (ไม่ขาย)
+class ProductKindChanged extends ProductEvent {
+  ProductKindChanged(this.kind);
+
+  final String kind;
+}
+
 // แสดงเฉพาะสินค้าใกล้หมด (นับสต็อก และคงเหลือ ≤ ขั้นต่ำ)
 class ProductLowStockFilterChanged extends ProductEvent {
   ProductLowStockFilterChanged({required this.onlyLow});

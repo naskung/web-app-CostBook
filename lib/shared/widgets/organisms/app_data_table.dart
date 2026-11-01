@@ -55,7 +55,9 @@ class AppDataTable extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.spaceMedium, vertical: AppSizes.spaceSmall),
       child: Row(
         children: [
-          for (var i = 0; i < columns.length; i++)
+          for (var i = 0; i < columns.length; i++) ...[
+            // เว้นช่องระหว่างคอลัมน์ ไม่ให้คอลัมน์ชิดขวา (เช่น จำนวน) ติดกับคอลัมน์ถัดไป
+            if (i > 0) const SizedBox(width: AppSizes.spaceMedium),
             Expanded(
               flex: columns[i].flex,
               child: Align(
@@ -63,6 +65,7 @@ class AppDataTable extends StatelessWidget {
                 child: i < cells.length ? cells[i] : const SizedBox(),
               ),
             ),
+          ],
         ],
       ),
     );

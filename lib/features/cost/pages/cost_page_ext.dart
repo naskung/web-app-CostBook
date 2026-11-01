@@ -122,7 +122,22 @@ extension _CostPageExt on _CostPageState {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [Text(item.name), Text(_itemDetail(item), style: textTheme.bodySmall)],
+              children: [
+                Row(
+                  children: [
+                    Flexible(child: Text(item.name)),
+                    if (item.isMaterial) ...[
+                      const SizedBox(width: AppSizes.spaceSmall),
+                      AppBadge(
+                        text: 'cost.from_stock'.tr,
+                        color: AppColors.textPrimary,
+                        backgroundColor: AppColors.warningSoft,
+                      ),
+                    ],
+                  ],
+                ),
+                Text(_itemDetail(item), style: textTheme.bodySmall),
+              ],
             ),
           ),
           MoneyText(sheet.amountOf(item)),

@@ -8,6 +8,7 @@ class ProductState extends Equatable {
     this.query = '',
     this.category = '',
     this.onlyLow = false,
+    this.kind = '',
     this.errorCode = '',
     this.saveStatus = AppStatus.initial,
     this.saveErrorCode = '',
@@ -23,6 +24,11 @@ class ProductState extends Equatable {
   // category = id ของหมวดที่กรอง ('' = ทุกหมวด)
   final String category;
   final bool onlyLow;
+  // '' = ทั้งหมด / kindForSale / kindMaterial
+  final String kind;
+
+  static const String kindForSale = 'sale';
+  static const String kindMaterial = 'material';
   final String errorCode;
   final AppStatus saveStatus;
   final String saveErrorCode;
@@ -36,7 +42,8 @@ class ProductState extends Equatable {
     return products.where((product) {
       final isInCategory = category.isEmpty || product.categoryId == category;
       final isShown = !onlyLow || product.isLowStock;
-      return isInCategory && isShown && product.matches(query);
+      final isKind = kind.isEmpty || (kind == kindMaterial) == !product.forSale;
+      return isInCategory && isShown && isKind && product.matches(query);
     }).toList();
   }
 
@@ -49,6 +56,7 @@ class ProductState extends Equatable {
     String? query,
     String? category,
     bool? onlyLow,
+    String? kind,
     String? errorCode,
     AppStatus? saveStatus,
     String? saveErrorCode,
@@ -63,6 +71,7 @@ class ProductState extends Equatable {
       query: query ?? this.query,
       category: category ?? this.category,
       onlyLow: onlyLow ?? this.onlyLow,
+      kind: kind ?? this.kind,
       errorCode: errorCode ?? this.errorCode,
       saveStatus: saveStatus ?? this.saveStatus,
       saveErrorCode: saveErrorCode ?? this.saveErrorCode,
@@ -80,6 +89,7 @@ class ProductState extends Equatable {
     query,
     category,
     onlyLow,
+    kind,
     errorCode,
     saveStatus,
     saveErrorCode,

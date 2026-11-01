@@ -24,6 +24,7 @@ class StockRepository {
     required String note,
     double unitCost = 0,
     String supplier = '',
+    bool skipMaterials = false,
   }) async {
     await api.post('/stock/$type', {
       'product_id': productId,
@@ -31,6 +32,7 @@ class StockRepository {
       'note': note,
       'unit_cost': unitCost,
       'supplier': supplier,
+      'skip_materials': skipMaterials,
     });
   }
 }

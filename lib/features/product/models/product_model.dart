@@ -17,6 +17,7 @@ class ProductModel extends Equatable {
     this.minStock = 0,
     this.batchQuantity = 1,
     this.trackStock = true,
+    this.forSale = true,
     this.customFields = const {},
     this.imageVersion = 0,
   });
@@ -35,6 +36,8 @@ class ProductModel extends Equatable {
   final int minStock;
   final int batchQuantity;
   final bool trackStock;
+  // forSale = false → วัสดุ / ส่วนประกอบ ไม่ขาย (ไม่ขึ้นในหน้าขาย) ใช้ในใบต้นทุนของสินค้าอื่น
+  final bool forSale;
   final Map<String, String> customFields;
 
   // เวลาที่เปลี่ยนรูปล่าสุด (มาจาก API) 0 = ไม่มีรูป — แก้ผ่าน ProductRepository.uploadImage / deleteImage เท่านั้น
@@ -73,6 +76,7 @@ class ProductModel extends Equatable {
       minStock: (json['min_stock'] as num? ?? 0).toInt(),
       batchQuantity: (json['batch_quantity'] as num? ?? 1).toInt(),
       trackStock: json['track_stock'] as bool? ?? true,
+      forSale: json['for_sale'] as bool? ?? true,
       customFields: customFields.map((key, value) => MapEntry(key.toString(), value.toString())),
       imageVersion: (json['image_version'] as num? ?? 0).toInt(),
     );
@@ -92,6 +96,7 @@ class ProductModel extends Equatable {
       'min_stock': minStock,
       'batch_quantity': batchQuantity,
       'track_stock': trackStock,
+      'for_sale': forSale,
       'custom_fields': customFields,
     };
   }
@@ -111,6 +116,7 @@ class ProductModel extends Equatable {
     minStock,
     batchQuantity,
     trackStock,
+    forSale,
     customFields,
     imageVersion,
   ];

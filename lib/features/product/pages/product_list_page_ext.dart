@@ -22,6 +22,16 @@ extension _ProductListPageExt on ProductListPage {
         ),
       ],
       children: [
+        SegmentedButton<String>(
+          showSelectedIcon: false,
+          segments: [
+            ButtonSegment(value: '', label: Text('product.kind_all'.tr)),
+            ButtonSegment(value: ProductState.kindForSale, label: Text('product.kind_for_sale'.tr)),
+            ButtonSegment(value: ProductState.kindMaterial, label: Text('product.kind_material'.tr)),
+          ],
+          selected: {state.kind},
+          onSelectionChanged: (selected) => bloc.add(ProductKindChanged(selected.first)),
+        ),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: AppSizes.formMaxWidth),
           child: SearchField(
@@ -110,7 +120,7 @@ extension _ProductListPageExt on ProductListPage {
       _nameCell(context, product),
       for (final field in listFields) Text(_fieldText(field, product.fieldValue(field.id))),
       MoneyText(product.costPrice),
-      MoneyText(product.sellPrice, style: textTheme.titleSmall),
+      product.forSale ? MoneyText(product.sellPrice, style: textTheme.titleSmall) : const Text('—'),
       _stockCell(context, product),
       _actions(context, product, fields, categories),
     ];
@@ -133,7 +143,19 @@ extension _ProductListPageExt on ProductListPage {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(product.name, style: textTheme.titleSmall),
+              Wrap(
+                spacing: AppSizes.spaceSmall,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(product.name, style: textTheme.titleSmall),
+                  if (!product.forSale)
+                    AppBadge(
+                      text: 'product.kind_material'.tr,
+                      color: AppColors.textPrimary,
+                      backgroundColor: AppColors.warningSoft,
+                    ),
+                ],
+              ),
               if (details.isNotEmpty) Text(details, style: textTheme.bodySmall),
             ],
           ),

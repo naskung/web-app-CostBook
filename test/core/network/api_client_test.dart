@@ -178,6 +178,35 @@ void main() {
     });
   });
 
+  group('ApiClient error ที่มีข้อมูลเพิ่ม', () {
+    test('วัสดุไม่พอ ได้ code + params (ชื่อวัสดุ / ต้องใช้ / มีอยู่) เป็นข้อความ', () async {
+      final api = ApiClient(
+        client: MockClient(
+          (request) async => http.Response.bytes(
+            utf8.encode('{"error":"material_not_enough","material":"เส้น TPU","unit":"กรัม","need":300,"have":100}'),
+            409,
+          ),
+        ),
+      );
+      try {
+        await api.post('/stock/in', {});
+        fail('ต้อง throw ApiException');
+      } on ApiException catch (e) {
+        expect(e.code, 'material_not_enough');
+        expect(e.params, {'material': 'เส้น TPU', 'unit': 'กรัม', 'need': '300', 'have': '100'});
+      }
+    });
+
+    test('error ธรรมดา params ว่าง', () async {
+      final api = clientThatReplies(409, '{"error":"stock_not_enough"}');
+      try {
+        await api.get('/stock');
+      } on ApiException catch (e) {
+        expect(e.params, isEmpty);
+      }
+    });
+  });
+
   group('ApiClient token หมดอายุ', () {
     test('ได้ 401 unauthorized เรียก onUnauthorized', () async {
       var called = false;

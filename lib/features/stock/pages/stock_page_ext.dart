@@ -60,6 +60,13 @@ extension _StockPageExt on StockPage {
   }
 
   Widget _typeBadge(MovementModel movement) {
+    if (movement.isMaterial) {
+      return AppBadge(
+        text: movement.isIn ? 'stock.material_returned'.tr : 'stock.material_used'.tr,
+        color: AppColors.textPrimary,
+        backgroundColor: AppColors.warningSoft,
+      );
+    }
     if (movement.isIn) {
       return AppBadge(text: 'stock.stock_in'.tr, color: AppColors.success, backgroundColor: AppColors.successSoft);
     }
@@ -72,7 +79,7 @@ extension _StockPageExt on StockPage {
   }
 
   String _noteText(MovementModel movement) {
-    if (!movement.isFromInvoice) {
+    if (!movement.isFromInvoice || movement.isMaterial) {
       final parts = [
         if (movement.unitCost > 0) 'stock.cost_detail'.trParams({'cost': MoneyUtil.format(movement.unitCost)}),
         if (movement.supplier.isNotEmpty) movement.supplier,

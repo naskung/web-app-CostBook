@@ -10,6 +10,7 @@ class StockState extends Equatable {
     this.errorCode = '',
     this.saveStatus = AppStatus.initial,
     this.saveErrorCode = '',
+    this.saveErrorParams = const {},
     this.savedType = '',
   });
 
@@ -19,6 +20,8 @@ class StockState extends Equatable {
   final String errorCode;
   final AppStatus saveStatus;
   final String saveErrorCode;
+  // ค่าที่มากับ error เช่น วัสดุไม่พอ: ชื่อวัสดุ / ต้องใช้ / มีอยู่
+  final Map<String, String> saveErrorParams;
   final String savedType;
 
   StockState copyWith({
@@ -28,6 +31,7 @@ class StockState extends Equatable {
     String? errorCode,
     AppStatus? saveStatus,
     String? saveErrorCode,
+    Map<String, String>? saveErrorParams,
     String? savedType,
   }) {
     return StockState(
@@ -37,10 +41,20 @@ class StockState extends Equatable {
       errorCode: errorCode ?? this.errorCode,
       saveStatus: saveStatus ?? this.saveStatus,
       saveErrorCode: saveErrorCode ?? this.saveErrorCode,
+      saveErrorParams: saveErrorParams ?? this.saveErrorParams,
       savedType: savedType ?? this.savedType,
     );
   }
 
   @override
-  List<Object?> get props => [status, items, movements, errorCode, saveStatus, saveErrorCode, savedType];
+  List<Object?> get props => [
+    status,
+    items,
+    movements,
+    errorCode,
+    saveStatus,
+    saveErrorCode,
+    saveErrorParams,
+    savedType,
+  ];
 }

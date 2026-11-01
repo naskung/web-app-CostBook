@@ -45,11 +45,18 @@ class StockBloc extends Bloc<StockEvent, StockState> {
         note: event.note,
         unitCost: event.unitCost,
         supplier: event.supplier,
+        skipMaterials: event.skipMaterials,
       );
       emit(state.copyWith(saveStatus: AppStatus.success));
       await _load(emit);
     } catch (error) {
-      emit(state.copyWith(saveStatus: AppStatus.failure, saveErrorCode: ErrorUtil.codeOf(error)));
+      emit(
+        state.copyWith(
+          saveStatus: AppStatus.failure,
+          saveErrorCode: ErrorUtil.codeOf(error),
+          saveErrorParams: ErrorUtil.paramsOf(error),
+        ),
+      );
     }
   }
 }

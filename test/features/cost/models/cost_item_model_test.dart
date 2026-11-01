@@ -25,6 +25,7 @@ void main() {
     test('toJson ไม่ส่ง id และ amount (API คิดจำนวนเงินเอง)', () {
       const item = CostItemModel(id: 'c1', type: 'overhead', kind: 'percent', name: 'เผื่อเสีย', percent: 10);
       expect(item.toJson(), {
+        'material_id': '',
         'type': 'overhead',
         'kind': 'percent',
         'name': 'เผื่อเสีย',
@@ -43,6 +44,18 @@ void main() {
 
     test('ประเภทต้นทุนมี 3 แบบ เรียง วัตถุดิบ ค่าแรง ค่าใช้จ่ายอื่น', () {
       expect(CostItemModel.types, ['material', 'labor', 'overhead']);
+    });
+
+    test('บรรทัดที่ผูกวัสดุ อ่าน material_id ได้ และ isMaterial = true / toJson ส่ง material_id', () {
+      final item = CostItemModel.fromJson({
+        'material_id': 'm1',
+        'type': 'material',
+        'name': 'เส้น PLA',
+        'unit_price': 0.45,
+      });
+      expect([item.materialId, item.isMaterial], ['m1', true]);
+      expect(item.toJson()['material_id'], 'm1');
+      expect(const CostItemModel(type: 'labor', name: 'ค่าแรง').isMaterial, false);
     });
   });
 }

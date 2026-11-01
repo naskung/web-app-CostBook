@@ -112,5 +112,12 @@ void main() {
       expect(['มังกร', 'p3d', 'ของเล่น', 'petg', ''].map(model.matches), [true, true, true, true, true]);
       expect(model.matches('กาแฟ'), false);
     });
+
+    test('ไม่มี for_sale (ข้อมูลเก่า) = ขาย / for_sale false = วัสดุ และ toJson ส่ง for_sale', () {
+      expect(ProductModel.fromJson({'id': 'p1', 'name': 'เคส'}).forSale, true);
+      final material = ProductModel.fromJson({'id': 'm1', 'name': 'เส้น PLA', 'for_sale': false});
+      expect(material.forSale, false);
+      expect(material.toJson()['for_sale'], false);
+    });
   });
 }
