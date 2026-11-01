@@ -83,6 +83,8 @@ void main() {
   const dashboard = DashboardModel(
     income: 12500,
     expense: 4300.5,
+    revenue: 12500,
+    operatingExpense: 4300.5,
     profit: 8199.5,
     invoiceCount: 8,
     lowStockCount: 1,

@@ -8,7 +8,10 @@ void main() {
     'month': '2026-10',
     'income': 2340,
     'expense': 5860.5,
-    'profit': -3520.5,
+    'profit': -4084.78,
+    'revenue': 2186.92,
+    'operating_expense': 5860.5,
+    'material_expense': 0,
     'invoice_count': 2,
     'invoice_total': 2340,
     'product_count': 4,
@@ -17,10 +20,16 @@ void main() {
       {'product_id': 'p1', 'name': 'กาแฟเย็น', 'unit': 'แก้ว', 'stock': 2, 'min_stock': 5},
     ],
     'sales': {'net_sales': 2186.92, 'cost': 411.2, 'gross_profit': 1775.72, 'gross_margin': 81.2, 'items_sold': 15},
-    'previous': {'month': '2026-09', 'income': 445, 'expense': 1250, 'profit': -805, 'net_sales': 415.89},
+    'previous': {
+      'month': '2026-09',
+      'revenue': 415.89,
+      'cost_of_sales': 100,
+      'operating_expense': 1250,
+      'profit': -934.11,
+    },
     'monthly_trend': [
-      {'month': '2026-09', 'income': 445, 'expense': 1250, 'profit': -805, 'net_sales': 415.89},
-      {'month': '2026-10', 'income': 2340, 'expense': 5860.5, 'profit': -3520.5, 'net_sales': 2186.92},
+      {'month': '2026-09', 'revenue': 415.89, 'cost_of_sales': 100, 'operating_expense': 1250, 'profit': -934.11},
+      {'month': '2026-10', 'revenue': 2186.92, 'cost_of_sales': 411.2, 'operating_expense': 5860.5, 'profit': -4084.78},
     ],
     'daily_sales': [
       {'date': '2026-10-05', 'net_sales': 1355.14, 'bills': 1},
@@ -72,8 +81,9 @@ void main() {
       final dashboard = DashboardModel.fromJson(json);
       expect(
         [dashboard.income, dashboard.expense, dashboard.profit, dashboard.invoiceCount],
-        [2340, 5860.5, -3520.5, 2],
+        [2340, 5860.5, -4084.78, 2],
       );
+      expect([dashboard.revenue, dashboard.operatingExpense, dashboard.materialExpense], [2186.92, 5860.5, 0]);
       expect(dashboard.lowStock, [
         const LowStockItemModel(productId: 'p1', name: 'กาแฟเย็น', unit: 'แก้ว', stock: 2, minStock: 5),
       ]);
@@ -123,7 +133,7 @@ void main() {
       expect(categories.map((item) => item.category), ['งานพิมพ์ 3D', 'งานบริการ', 'วัสดุ']);
     });
 
-    test('hasTrend เป็น false เมื่อ 6 เดือนไม่มีรายรับ-รายจ่ายเลย', () {
+    test('hasTrend เป็น false เมื่อ 6 เดือนไม่มีรายได้ / ต้นทุน / รายจ่ายเลย', () {
       expect(DashboardModel.fromJson(json).hasTrend, true);
       const empty = DashboardModel(monthlyTrend: [MonthTotalsModel(month: '2026-10')]);
       expect(empty.hasTrend, false);

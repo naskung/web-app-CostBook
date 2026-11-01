@@ -50,6 +50,19 @@ void main() {
       expect(month.monthDate, DateTime(2026, 10));
     });
 
+    test('fromJson อ่านรายได้ ต้นทุนสินค้า รายจ่าย และ totalCost = ต้นทุน + รายจ่าย', () {
+      final month = MonthTotalsModel.fromJson({
+        'month': '2026-11',
+        'revenue': 1300,
+        'cost_of_sales': 600,
+        'operating_expense': 350.5,
+        'profit': 349.5,
+      });
+      expect([month.revenue, month.costOfSales, month.operatingExpense], [1300, 600, 350.5]);
+      expect(month.totalCost, 950.5);
+      expect(month.revenue - month.totalCost, month.profit);
+    });
+
     test('เดือนว่าง monthDate เป็น null', () {
       expect(const MonthTotalsModel().monthDate, null);
     });

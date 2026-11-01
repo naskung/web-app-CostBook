@@ -37,6 +37,9 @@ class DashboardModel extends Equatable {
     this.income = 0,
     this.expense = 0,
     this.profit = 0,
+    this.revenue = 0,
+    this.operatingExpense = 0,
+    this.materialExpense = 0,
     this.invoiceCount = 0,
     this.invoiceTotal = 0,
     this.productCount = 0,
@@ -56,7 +59,11 @@ class DashboardModel extends Equatable {
 
   final double income;
   final double expense;
+  // profit = กำไรสุทธิ, revenue = รายได้, operatingExpense = รายจ่ายที่หักในกำไร (ไม่รวมซื้อวัตถุดิบ) — income / expense = เงินเข้า-ออก
   final double profit;
+  final double revenue;
+  final double operatingExpense;
+  final double materialExpense;
   final int invoiceCount;
   final double invoiceTotal;
   final int productCount;
@@ -75,7 +82,7 @@ class DashboardModel extends Equatable {
 
   bool get hasSales => invoiceCount > 0;
 
-  bool get hasTrend => monthlyTrend.any((month) => month.income != 0 || month.expense != 0);
+  bool get hasTrend => monthlyTrend.any((month) => month.revenue != 0 || month.totalCost != 0);
 
   List<double> get weekdaySales {
     final totals = List<double>.filled(7, 0);
@@ -92,6 +99,9 @@ class DashboardModel extends Equatable {
       income: (json['income'] as num? ?? 0).toDouble(),
       expense: (json['expense'] as num? ?? 0).toDouble(),
       profit: (json['profit'] as num? ?? 0).toDouble(),
+      revenue: (json['revenue'] as num? ?? 0).toDouble(),
+      operatingExpense: (json['operating_expense'] as num? ?? 0).toDouble(),
+      materialExpense: (json['material_expense'] as num? ?? 0).toDouble(),
       invoiceCount: (json['invoice_count'] as num? ?? 0).toInt(),
       invoiceTotal: (json['invoice_total'] as num? ?? 0).toDouble(),
       productCount: (json['product_count'] as num? ?? 0).toInt(),
@@ -120,6 +130,9 @@ class DashboardModel extends Equatable {
     income,
     expense,
     profit,
+    revenue,
+    operatingExpense,
+    materialExpense,
     invoiceCount,
     invoiceTotal,
     productCount,

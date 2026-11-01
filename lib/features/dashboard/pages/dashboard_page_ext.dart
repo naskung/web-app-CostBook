@@ -100,6 +100,14 @@ extension _DashboardPageExt on DashboardPage {
     String last(String value) => 'dashboard.last_month_value'.trParams({'value': value});
     final cards = [
       KpiCard(
+        label: 'dashboard.revenue'.tr,
+        value: MoneyUtil.format(dashboard.revenue),
+        icon: Icons.south_west,
+        iconColor: AppColors.chartIncome,
+        change: PercentUtil.change(current: dashboard.revenue, previous: previous.revenue),
+        caption: last(MoneyUtil.format(previous.revenue)),
+      ),
+      KpiCard(
         label: 'dashboard.gross_profit'.tr,
         value: MoneyUtil.format(dashboard.sales.grossProfit),
         icon: Icons.trending_up,
@@ -117,21 +125,13 @@ extension _DashboardPageExt on DashboardPage {
         caption: last(MoneyUtil.format(previous.profit)),
       ),
       KpiCard(
-        label: 'dashboard.bills'.tr,
-        value: '${dashboard.invoiceCount}',
-        icon: Icons.receipt_long_outlined,
-        iconColor: AppColors.chartIncome,
-        change: PercentUtil.change(current: dashboard.invoiceCount.toDouble(), previous: previous.bills.toDouble()),
-        caption: last('${previous.bills}'),
-      ),
-      KpiCard(
         label: 'dashboard.expense'.tr,
-        value: MoneyUtil.format(dashboard.expense),
+        value: MoneyUtil.format(dashboard.operatingExpense),
         icon: Icons.north_east,
         iconColor: AppColors.chartExpense,
-        change: PercentUtil.change(current: dashboard.expense, previous: previous.expense),
+        change: PercentUtil.change(current: dashboard.operatingExpense, previous: previous.operatingExpense),
         upIsGood: false,
-        caption: last(MoneyUtil.format(previous.expense)),
+        caption: last(MoneyUtil.format(previous.operatingExpense)),
       ),
     ];
     return Wrap(

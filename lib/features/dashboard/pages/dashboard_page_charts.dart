@@ -177,12 +177,12 @@ extension _DashboardPageCharts on DashboardPage {
                       TrendSeries(
                         label: 'dashboard.series_income'.tr,
                         color: AppColors.chartIncome,
-                        valueOf: (month) => month.income,
+                        valueOf: (month) => month.revenue,
                       ),
                       TrendSeries(
                         label: 'dashboard.series_expense'.tr,
                         color: AppColors.chartExpense,
-                        valueOf: (month) => month.expense,
+                        valueOf: (month) => month.totalCost,
                       ),
                       TrendSeries(
                         label: 'dashboard.series_profit'.tr,
@@ -224,8 +224,8 @@ extension _DashboardPageCharts on DashboardPage {
         for (final month in months.reversed)
           [
             Text(month.monthDate == null ? month.month : DateUtil.monthLabel(month.monthDate ?? DateTime(1970))),
-            money(month.income),
-            money(month.expense),
+            money(month.revenue),
+            money(month.totalCost),
             Text(
               MoneyUtil.format(month.profit),
               style: textTheme.titleSmall?.copyWith(color: month.profit < 0 ? AppColors.danger : AppColors.textPrimary),

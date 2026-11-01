@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'package:costbook/core/utils/money_util.dart';
+
 double _number(Object? value) => (value as num? ?? 0).toDouble();
 
 int _integer(Object? value) => (value as num? ?? 0).toInt();
@@ -51,17 +53,27 @@ class MonthTotalsModel extends Equatable {
     this.netSales = 0,
     this.bills = 0,
     this.grossProfit = 0,
+    this.revenue = 0,
+    this.costOfSales = 0,
+    this.operatingExpense = 0,
   });
 
   final String month;
   final double income;
   final double expense;
+  // กำไรสุทธิ = revenue − costOfSales − operatingExpense
   final double profit;
   final double netSales;
   final int bills;
   final double grossProfit;
+  final double revenue;
+  final double costOfSales;
+  final double operatingExpense;
 
   DateTime? get monthDate => DateTime.tryParse('$month-01');
+
+  // ต้นทุนสินค้าที่ขาย + รายจ่าย (เส้น "ต้นทุน + รายจ่าย" ในกราฟ) → รายได้ − ตัวนี้ = กำไรสุทธิ
+  double get totalCost => MoneyUtil.round2(costOfSales + operatingExpense);
 
   factory MonthTotalsModel.fromJson(Map<String, dynamic> json) {
     return MonthTotalsModel(
@@ -72,11 +84,25 @@ class MonthTotalsModel extends Equatable {
       netSales: _number(json['net_sales']),
       bills: _integer(json['bills']),
       grossProfit: _number(json['gross_profit']),
+      revenue: _number(json['revenue']),
+      costOfSales: _number(json['cost_of_sales']),
+      operatingExpense: _number(json['operating_expense']),
     );
   }
 
   @override
-  List<Object?> get props => [month, income, expense, profit, netSales, bills, grossProfit];
+  List<Object?> get props => [
+    month,
+    income,
+    expense,
+    profit,
+    netSales,
+    bills,
+    grossProfit,
+    revenue,
+    costOfSales,
+    operatingExpense,
+  ];
 }
 
 class DailySalesModel extends Equatable {

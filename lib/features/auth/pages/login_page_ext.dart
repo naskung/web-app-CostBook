@@ -54,7 +54,9 @@ extension _LoginPageExt on _LoginPageState {
   Widget _form(BuildContext context) {
     return Form(
       key: _formKey,
+      // ปิดหน้า login โดยไม่ได้ login สำเร็จ → ไม่ต้องให้ browser บันทึกรหัส
       child: AutofillGroup(
+        onDisposeAction: AutofillContextAction.cancel,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

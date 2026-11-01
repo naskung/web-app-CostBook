@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -72,7 +73,12 @@ class _LoginPageState extends State<LoginPage> {
       listeners: [
         BlocListener<AuthBloc, AuthState>(
           listenWhen: (previous, current) => current.status == AppStatus.success,
-          listener: (context, state) => context.go(AppRoutes.dashboard),
+          listener: (context, state) {
+            // ส่งฟอร์ม login ให้ browser ตอนนี้เลย (ก่อนเปลี่ยนหน้า) → Chrome ถามบันทึกรหัสครั้งเดียวตอน login
+            // ถ้ารอให้ส่งตอนปิดหน้า Chrome จะเดาจากการเปลี่ยนหน้าแทน แล้วถามซ้ำตอนเปลี่ยนหน้า
+            TextInput.finishAutofillContext();
+            context.go(AppRoutes.dashboard);
+          },
         ),
         BlocListener<AuthBloc, AuthState>(
           listenWhen: (previous, current) => current.savedEmail.isNotEmpty,

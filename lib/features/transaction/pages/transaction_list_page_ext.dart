@@ -55,31 +55,52 @@ extension _TransactionListPageExt on TransactionListPage {
     return null;
   }
 
+  // รายได้ → หักต้นทุนสินค้าที่ขาย → หักรายจ่าย → กำไรสุทธิ (API คิดให้ ดู TransactionSummaryModel)
   Widget _summary(TransactionState state) {
     final summary = state.summary;
     final isLoss = summary.profit < 0;
+    final money = MoneyUtil.format;
     return StatGrid(
+      maxColumns: 4,
+      minCardWidth: AppSizes.statCardCompactWidth,
       children: [
         StatCard(
-          label: 'transaction.income'.tr,
-          value: MoneyUtil.format(summary.income),
+          label: 'transaction.revenue'.tr,
+          value: money(summary.revenue),
           icon: Icons.south_west,
           color: AppColors.success,
           backgroundColor: AppColors.successSoft,
+          caption: 'transaction.revenue_caption'.trParams({
+            'sales': money(summary.sales),
+            'other': money(summary.otherIncome),
+          }),
+        ),
+        StatCard(
+          label: 'transaction.cost_of_sales'.tr,
+          value: money(summary.costOfSales),
+          icon: Icons.inventory_2_outlined,
+          color: AppColors.textSecondary,
+          backgroundColor: AppColors.neutralSoft,
+          caption: 'transaction.cost_caption'.trParams({'gross': money(summary.grossProfit)}),
         ),
         StatCard(
           label: 'transaction.expense'.tr,
-          value: MoneyUtil.format(summary.expense),
+          value: money(summary.operatingExpense),
           icon: Icons.north_east,
           color: AppColors.danger,
           backgroundColor: AppColors.dangerSoft,
+          caption:
+              summary.materialExpense > 0
+                  ? 'transaction.material_caption'.trParams({'amount': money(summary.materialExpense)})
+                  : null,
         ),
         StatCard(
-          label: 'transaction.profit'.tr,
-          value: MoneyUtil.format(summary.profit),
+          label: 'transaction.net_profit'.tr,
+          value: money(summary.profit),
           icon: Icons.savings_outlined,
           color: isLoss ? AppColors.danger : AppColors.primary,
-          backgroundColor: AppColors.primarySoft,
+          backgroundColor: isLoss ? AppColors.dangerSoft : AppColors.primarySoft,
+          caption: 'transaction.profit_caption'.tr,
         ),
       ],
     );
