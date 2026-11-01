@@ -159,23 +159,32 @@ extension _ProductListPageExt on ProductListPage {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Wrap(
-                spacing: AppSizes.spaceSmall,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(product.name, style: textTheme.titleSmall),
-                  if (!product.forSale)
-                    AppBadge(
-                      text: 'product.kind_material'.tr,
-                      color: AppColors.textPrimary,
-                      backgroundColor: AppColors.warningSoft,
-                    ),
-                ],
-              ),
-              if (details.isNotEmpty) Text(details, style: textTheme.bodySmall),
+              Text(product.name, style: textTheme.titleSmall),
+              if (!product.forSale || details.isNotEmpty) ...[
+                const SizedBox(height: AppSizes.spaceXSmall),
+                _nameDetails(context, product, details),
+              ],
             ],
           ),
         ),
+      ],
+    );
+  }
+
+  // บรรทัดที่ 2 ใต้ชื่อ: ป้ายวัสดุ + รหัส · หมวด · หน่วย — ป้ายอยู่ตรงนี้เสมอ ชื่อสั้น / ยาวหน้าตาเหมือนกัน
+  Widget _nameDetails(BuildContext context, ProductModel product, String details) {
+    return Wrap(
+      spacing: AppSizes.spaceSmall,
+      runSpacing: AppSizes.spaceXSmall,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        if (!product.forSale)
+          AppBadge(
+            text: 'product.kind_material'.tr,
+            color: AppColors.textPrimary,
+            backgroundColor: AppColors.warningSoft,
+          ),
+        if (details.isNotEmpty) Text(details, style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }

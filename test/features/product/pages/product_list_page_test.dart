@@ -15,6 +15,7 @@ import 'package:costbook/features/settings/repository/settings_repository.dart';
 import 'package:costbook/features/stock/bloc/stock_bloc.dart';
 import 'package:costbook/features/stock/models/stock_item_model.dart';
 import 'package:costbook/features/stock/repository/stock_repository.dart';
+import 'package:costbook/shared/widgets/atoms/app_badge.dart';
 
 class MockProductRepository extends Mock implements ProductRepository {}
 
@@ -102,6 +103,18 @@ void main() {
     expect(find.descendant(of: dialog, matching: find.text('stock.stock_in'.tr)), findsWidgets);
     expect(find.descendant(of: dialog, matching: find.text('stock.stock_out'.tr)), findsOneWidget);
     expect(find.descendant(of: dialog, matching: find.text('พวงกุญแจ')), findsOneWidget);
+  });
+
+  testWidgets('วัสดุ: ป้าย "วัสดุ" อยู่บรรทัดใต้ชื่อ คู่กับหน่วย (ไม่ต่อท้ายชื่อ)', (tester) async {
+    await pumpPage(tester);
+    final name = tester.getRect(find.text('เส้น PLA'));
+    final badge = tester.getRect(
+      find.descendant(of: find.byType(AppBadge), matching: find.text('product.kind_material'.tr)).first,
+    );
+    final unit = tester.getRect(find.text('กรัม').first);
+    expect(badge.top, greaterThanOrEqualTo(name.bottom));
+    expect(badge.center.dy, closeTo(unit.center.dy, 2));
+    expect(unit.left, greaterThan(badge.right));
   });
 
   testWidgets('จอแคบ ตารางเลื่อนซ้าย-ขวาได้ ไม่ล้น', (tester) async {
