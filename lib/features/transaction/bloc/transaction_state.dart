@@ -11,6 +11,8 @@ class TransactionState extends Equatable {
     this.saveErrorCode = '',
     this.deleteStatus = AppStatus.initial,
     this.deleteErrorCode = '',
+    this.hasMore = false,
+    this.moreStatus = AppStatus.initial,
   });
 
   final DateTime month;
@@ -22,6 +24,13 @@ class TransactionState extends Equatable {
   final String saveErrorCode;
   final AppStatus deleteStatus;
   final String deleteErrorCode;
+  // ยังมีรายการที่ยังไม่ได้โหลดไหม / สถานะของการโหลดหน้าต่อไป
+  final bool hasMore;
+  final AppStatus moreStatus;
+
+  // เลื่อนลงแล้วโหลดหน้าต่อไปเองได้ไหม (โหลดเพิ่มพัง → รอผู้ใช้กดลองใหม่ ไม่ยิงซ้ำเอง)
+  bool get canLoadMore =>
+      status == AppStatus.success && hasMore && moreStatus != AppStatus.loading && moreStatus != AppStatus.failure;
 
   TransactionState copyWith({
     DateTime? month,
@@ -33,6 +42,8 @@ class TransactionState extends Equatable {
     String? saveErrorCode,
     AppStatus? deleteStatus,
     String? deleteErrorCode,
+    bool? hasMore,
+    AppStatus? moreStatus,
   }) {
     return TransactionState(
       month: month ?? this.month,
@@ -44,6 +55,8 @@ class TransactionState extends Equatable {
       saveErrorCode: saveErrorCode ?? this.saveErrorCode,
       deleteStatus: deleteStatus ?? this.deleteStatus,
       deleteErrorCode: deleteErrorCode ?? this.deleteErrorCode,
+      hasMore: hasMore ?? this.hasMore,
+      moreStatus: moreStatus ?? this.moreStatus,
     );
   }
 
@@ -58,5 +71,7 @@ class TransactionState extends Equatable {
     saveErrorCode,
     deleteStatus,
     deleteErrorCode,
+    hasMore,
+    moreStatus,
   ];
 }

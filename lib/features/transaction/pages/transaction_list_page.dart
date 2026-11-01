@@ -20,6 +20,7 @@ import 'package:costbook/shared/widgets/molecules/error_view.dart';
 import 'package:costbook/shared/widgets/molecules/month_switcher.dart';
 import 'package:costbook/shared/widgets/molecules/stat_card.dart';
 import 'package:costbook/shared/widgets/organisms/app_data_table.dart';
+import 'package:costbook/shared/widgets/molecules/load_more_footer.dart';
 import 'package:costbook/shared/widgets/organisms/page_content.dart';
 import 'package:costbook/shared/widgets/organisms/page_toolbar.dart';
 import 'package:costbook/shared/widgets/organisms/stat_grid.dart';
@@ -49,12 +50,21 @@ class TransactionListPage extends StatelessWidget {
       child: BlocBuilder<TransactionBloc, TransactionState>(
         builder: (context, state) {
           final isLoaded = state.status == AppStatus.success;
+          final bloc = context.read<TransactionBloc>();
           return PageContent(
             centerChild: _stateView(context, state),
+            onLoadMore: state.canLoadMore ? () => bloc.add(TransactionsMoreRequested()) : null,
             children: [
               _toolbar(context, state),
               if (isLoaded) _summary(state),
-              if (isLoaded && state.transactions.isNotEmpty) _table(context, state.transactions),
+              if (isLoaded && state.transactions.isNotEmpty) ...[
+                _table(context, state.transactions),
+                LoadMoreFooter(
+                  status: state.moreStatus,
+                  retryLabel: 'common.load_more_failed'.tr,
+                  onRetry: () => bloc.add(TransactionsMoreRequested()),
+                ),
+              ],
             ],
           );
         },

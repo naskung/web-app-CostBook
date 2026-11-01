@@ -15,6 +15,7 @@ import 'package:costbook/shared/widgets/atoms/app_loading.dart';
 import 'package:costbook/shared/widgets/atoms/money_text.dart';
 import 'package:costbook/shared/widgets/molecules/empty_view.dart';
 import 'package:costbook/shared/widgets/molecules/error_view.dart';
+import 'package:costbook/shared/widgets/molecules/load_more_footer.dart';
 import 'package:costbook/shared/widgets/molecules/month_switcher.dart';
 import 'package:costbook/shared/widgets/organisms/app_data_table.dart';
 import 'package:costbook/shared/widgets/organisms/page_content.dart';
@@ -28,9 +29,21 @@ class InvoiceListPage extends StatelessWidget {
     return BlocBuilder<InvoiceListBloc, InvoiceListState>(
       builder: (context, state) {
         final stateView = _stateView(context, state);
+        final bloc = context.read<InvoiceListBloc>();
         return PageContent(
           centerChild: stateView,
-          children: [_toolbar(context, state), if (stateView == null) _table(context, state.invoices)],
+          onLoadMore: state.canLoadMore ? () => bloc.add(InvoicesMoreRequested()) : null,
+          children: [
+            _toolbar(context, state),
+            if (stateView == null) ...[
+              _table(context, state.invoices),
+              LoadMoreFooter(
+                status: state.moreStatus,
+                retryLabel: 'common.load_more_failed'.tr,
+                onRetry: () => bloc.add(InvoicesMoreRequested()),
+              ),
+            ],
+          ],
         );
       },
     );

@@ -12,6 +12,8 @@ class StockState extends Equatable {
     this.saveErrorCode = '',
     this.saveErrorParams = const {},
     this.savedType = '',
+    this.hasMore = false,
+    this.moreStatus = AppStatus.initial,
   });
 
   final AppStatus status;
@@ -23,6 +25,13 @@ class StockState extends Equatable {
   // ค่าที่มากับ error เช่น วัสดุไม่พอ: ชื่อวัสดุ / ต้องใช้ / มีอยู่
   final Map<String, String> saveErrorParams;
   final String savedType;
+  // ประวัติยังมีแถวที่ยังไม่ได้โหลดไหม / สถานะของการโหลดหน้าต่อไป
+  final bool hasMore;
+  final AppStatus moreStatus;
+
+  // เลื่อนลงแล้วโหลดหน้าต่อไปเองได้ไหม (โหลดเพิ่มพัง → รอผู้ใช้กดลองใหม่ ไม่ยิงซ้ำเอง)
+  bool get canLoadMore =>
+      status == AppStatus.success && hasMore && moreStatus != AppStatus.loading && moreStatus != AppStatus.failure;
 
   StockState copyWith({
     AppStatus? status,
@@ -33,6 +42,8 @@ class StockState extends Equatable {
     String? saveErrorCode,
     Map<String, String>? saveErrorParams,
     String? savedType,
+    bool? hasMore,
+    AppStatus? moreStatus,
   }) {
     return StockState(
       status: status ?? this.status,
@@ -43,6 +54,8 @@ class StockState extends Equatable {
       saveErrorCode: saveErrorCode ?? this.saveErrorCode,
       saveErrorParams: saveErrorParams ?? this.saveErrorParams,
       savedType: savedType ?? this.savedType,
+      hasMore: hasMore ?? this.hasMore,
+      moreStatus: moreStatus ?? this.moreStatus,
     );
   }
 
@@ -56,5 +69,7 @@ class StockState extends Equatable {
     saveErrorCode,
     saveErrorParams,
     savedType,
+    hasMore,
+    moreStatus,
   ];
 }

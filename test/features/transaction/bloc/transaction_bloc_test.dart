@@ -142,4 +142,55 @@ void main() {
           ),
         ],
   );
+
+  // รายการที่ n (id ไม่ซ้ำ)
+  TransactionModel transactionAt(int n) {
+    return TransactionModel(id: 'x$n', type: 'expense', category: 'other', amount: 10, date: '2026-10-01');
+  }
+
+  final loaded45 = [for (var n = 1; n <= 45; n++) transactionAt(n)];
+
+  blocTest<TransactionBloc, TransactionState>(
+    'บันทึกตอนเลื่อนโหลดไว้แล้ว 45 รายการ → โหลดใหม่ 45 รายการ (รายการไม่หดกลับเหลือ 20)',
+    build: () {
+      when(() => repository.saveTransaction(any())).thenAnswer((_) async {});
+      when(() => repository.getTransactions(any(), limit: any(named: 'limit'))).thenAnswer((_) async => loaded45);
+      when(() => repository.getSummary(any())).thenAnswer((_) async => summary);
+      return TransactionBloc(repository, month: october);
+    },
+    seed: () => TransactionState(month: october, status: AppStatus.success, transactions: loaded45, hasMore: true),
+    act: (bloc) => bloc.add(TransactionSaved(rent)),
+    verify: (bloc) {
+      verify(() => repository.getTransactions(october, limit: 45)).called(1);
+      expect(bloc.state.hasMore, true);
+    },
+  );
+
+  blocTest<TransactionBloc, TransactionState>(
+    'เลื่อนลงโหลดหน้าต่อไป ต่อท้าย (ตัวที่มีอยู่แล้วไม่ซ้ำ) ได้น้อยกว่า 20 = หมดแล้ว',
+    build: () {
+      when(
+        () => repository.getTransactions(any(), offset: 20),
+      ).thenAnswer((_) async => [transactionAt(20), transactionAt(21)]);
+      return TransactionBloc(repository, month: october);
+    },
+    seed:
+        () => TransactionState(
+          month: october,
+          status: AppStatus.success,
+          transactions: loaded45.take(20).toList(),
+          hasMore: true,
+        ),
+    act: (bloc) => bloc.add(TransactionsMoreRequested()),
+    skip: 1,
+    expect:
+        () => [
+          TransactionState(
+            month: october,
+            status: AppStatus.success,
+            transactions: loaded45.take(21).toList(),
+            moreStatus: AppStatus.success,
+          ),
+        ],
+  );
 }

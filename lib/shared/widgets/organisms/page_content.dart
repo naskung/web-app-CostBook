@@ -8,6 +8,8 @@ import 'package:costbook/core/theme/app_sizes.dart';
 
 // เนื้อหาของทุกหน้า: เลื่อนขึ้นลงได้ / header = แถบบนที่ติดอยู่กับที่ตอนเลื่อน (เช่น ปุ่มกลับ)
 // เลื่อนลงเกิน scrollTopThreshold → มีปุ่มลูกศรมุมขวาล่าง (เหนือปุ่มแชท) กดแล้วเลื่อนกลับขึ้นบนสุด
+// onLoadMore = รายการที่โหลดทีละหน้า: เลื่อนใกล้ล่างสุด (หรือรายการสั้นกว่าจอ) → เรียกให้โหลดหน้าต่อไป
+//   (เรียกซ้ำได้หลายครั้ง bloc ต้องไม่โหลดซ้ำเองถ้ากำลังโหลดอยู่ / หมดแล้ว)
 class PageContent extends StatefulWidget {
   const PageContent({
     super.key,
@@ -15,12 +17,14 @@ class PageContent extends StatefulWidget {
     this.centerChild,
     this.header,
     this.maxWidth = AppSizes.contentMaxWidth,
+    this.onLoadMore,
   });
 
   final List<Widget> children;
   final Widget? centerChild;
   final Widget? header;
   final double maxWidth;
+  final VoidCallback? onLoadMore;
 
   static const Duration scrollTopDuration = Duration(milliseconds: 400);
   static const Duration fadeDuration = Duration(milliseconds: 200);
@@ -47,6 +51,7 @@ class _PageContentState extends State<PageContent> {
   }
 
   void _onScroll() {
+    _checkLoadMore();
     final isScrolled = _controller.offset > 0;
     final showTopButton = _controller.offset > AppSizes.scrollTopThreshold;
     if (isScrolled == _isScrolled && showTopButton == _showTopButton) return;
@@ -56,12 +61,21 @@ class _PageContentState extends State<PageContent> {
     });
   }
 
+  // เหลือที่ให้เลื่อนลงไม่ถึง loadMoreDistance → ขอโหลดหน้าต่อไป
+  void _checkLoadMore() {
+    final onLoadMore = widget.onLoadMore;
+    if (onLoadMore == null || !mounted || !_controller.hasClients) return;
+    if (_controller.position.extentAfter < AppSizes.loadMoreDistance) onLoadMore();
+  }
+
   void _scrollToTop() {
     _controller.animateTo(0, duration: PageContent.scrollTopDuration, curve: Curves.easeOutCubic);
   }
 
   @override
   Widget build(BuildContext context) {
+    // วาดเสร็จแล้วเช็คอีกที: รายการสั้นกว่าจอ (เลื่อนไม่ได้) ก็ต้องโหลดเพิ่มจนเต็มจอ / หมด
+    if (widget.onLoadMore != null) WidgetsBinding.instance.addPostFrameCallback((_) => _checkLoadMore());
     final padding = _padding(context);
     final header = widget.header;
     return Stack(

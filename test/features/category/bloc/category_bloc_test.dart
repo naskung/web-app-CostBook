@@ -23,7 +23,7 @@ void main() {
   blocTest<CategoryBloc, CategoryState>(
     'CategoriesRequested สำเร็จ ได้หมวดทั้งหมด',
     build: () {
-      when(() => repository.getCategories()).thenAnswer((_) async => [print3d]);
+      when(() => repository.getCategoryPage(limit: any(named: 'limit'))).thenAnswer((_) async => [print3d]);
       return CategoryBloc(repository);
     },
     act: (bloc) => bloc.add(CategoriesRequested()),
@@ -37,7 +37,7 @@ void main() {
   blocTest<CategoryBloc, CategoryState>(
     'CategoriesRequested ล้มเหลว ได้ failure พร้อม code',
     build: () {
-      when(() => repository.getCategories()).thenThrow(ApiException('server_error'));
+      when(() => repository.getCategoryPage(limit: any(named: 'limit'))).thenThrow(ApiException('server_error'));
       return CategoryBloc(repository);
     },
     act: (bloc) => bloc.add(CategoriesRequested()),
@@ -52,7 +52,7 @@ void main() {
     'CategorySaved สำเร็จ บันทึกแล้วโหลดหมวดใหม่',
     build: () {
       when(() => repository.saveCategory(any())).thenAnswer((_) async {});
-      when(() => repository.getCategories()).thenAnswer((_) async => [print3d, keychain]);
+      when(() => repository.getCategoryPage(limit: any(named: 'limit'))).thenAnswer((_) async => [print3d, keychain]);
       return CategoryBloc(repository);
     },
     seed: () => const CategoryState(status: AppStatus.success, categories: [print3d]),

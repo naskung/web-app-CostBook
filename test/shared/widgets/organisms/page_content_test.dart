@@ -87,4 +87,57 @@ void main() {
     expect(find.text('แถว 0'), findsOneWidget);
     expect(topButtonShown(tester), isFalse);
   });
+
+  group('onLoadMore (รายการที่โหลดทีละหน้า)', () {
+    Future<int> pumpList(WidgetTester tester, {required int rows}) async {
+      var calls = 0;
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PageContent(
+              onLoadMore: () => calls++,
+              children: [for (var i = 0; i < rows; i++) SizedBox(height: 100, child: Text('row $i'))],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      return calls;
+    }
+
+    testWidgets('รายการสั้นกว่าจอ (เลื่อนไม่ได้) → ขอโหลดเพิ่มเลย ให้เต็มจอ', (tester) async {
+      expect(await pumpList(tester, rows: 3), greaterThan(0));
+    });
+
+    testWidgets('รายการยาว ยังไม่เลื่อน ไม่ขอโหลด / เลื่อนใกล้ล่างสุด → ขอโหลดหน้าต่อไป', (tester) async {
+      var calls = 0;
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PageContent(
+              onLoadMore: () => calls++,
+              children: [for (var i = 0; i < 50; i++) SizedBox(height: 100, child: Text('row $i'))],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(calls, 0);
+
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -4000));
+      await tester.pump();
+      expect(calls, greaterThan(0));
+    });
+
+    testWidgets('ไม่ส่ง onLoadMore (หน้าอื่น) ใช้ได้ปกติ', (tester) async {
+      await pumpPage(tester);
+      expect(tester.takeException(), isNull);
+    });
+  });
 }

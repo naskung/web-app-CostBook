@@ -12,6 +12,7 @@ import 'package:costbook/features/category/widgets/category_form_dialog.dart';
 import 'package:costbook/shared/widgets/atoms/app_loading.dart';
 import 'package:costbook/shared/widgets/molecules/empty_view.dart';
 import 'package:costbook/shared/widgets/molecules/error_view.dart';
+import 'package:costbook/shared/widgets/molecules/load_more_footer.dart';
 import 'package:costbook/shared/widgets/organisms/app_data_table.dart';
 import 'package:costbook/shared/widgets/organisms/page_content.dart';
 import 'package:costbook/shared/widgets/organisms/page_toolbar.dart';
@@ -46,9 +47,21 @@ class CategoryPage extends StatelessWidget {
       child: BlocBuilder<CategoryBloc, CategoryState>(
         builder: (context, state) {
           final stateView = _stateView(context, state);
+          final bloc = context.read<CategoryBloc>();
           return PageContent(
             centerChild: stateView,
-            children: [_toolbar(context), if (stateView == null) _table(context, state.categories)],
+            onLoadMore: state.canLoadMore ? () => bloc.add(CategoriesMoreRequested()) : null,
+            children: [
+              _toolbar(context),
+              if (stateView == null) ...[
+                _table(context, state.categories),
+                LoadMoreFooter(
+                  status: state.moreStatus,
+                  retryLabel: 'common.load_more_failed'.tr,
+                  onRetry: () => bloc.add(CategoriesMoreRequested()),
+                ),
+              ],
+            ],
           );
         },
       ),

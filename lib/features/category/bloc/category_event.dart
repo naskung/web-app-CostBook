@@ -4,6 +4,9 @@ abstract class CategoryEvent {}
 
 class CategoriesRequested extends CategoryEvent {}
 
+// เลื่อนใกล้ล่างสุด / กดลองใหม่ → โหลดหน้าต่อไป
+class CategoriesMoreRequested extends CategoryEvent {}
+
 class CategorySaved extends CategoryEvent {
   CategorySaved(this.category);
 

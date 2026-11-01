@@ -7,6 +7,7 @@ import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/theme/app_theme.dart';
 import 'package:costbook/features/category/repository/category_repository.dart';
 import 'package:costbook/features/product/bloc/product_bloc.dart';
+import 'package:costbook/features/product/models/product_counts_model.dart';
 import 'package:costbook/features/product/models/product_model.dart';
 import 'package:costbook/features/product/pages/product_list_page.dart';
 import 'package:costbook/features/product/repository/product_repository.dart';
@@ -44,7 +45,19 @@ void main() {
     productRepository = MockProductRepository();
     categoryRepository = MockCategoryRepository();
     stockRepository = MockStockRepository();
-    when(() => productRepository.getProducts()).thenAnswer((_) async => [keychain, service, pla]);
+    when(
+      () => productRepository.getProductPage(
+        query: any(named: 'query'),
+        categoryId: any(named: 'categoryId'),
+        kind: any(named: 'kind'),
+        onlyLow: any(named: 'onlyLow'),
+        offset: any(named: 'offset'),
+        limit: any(named: 'limit'),
+      ),
+    ).thenAnswer((_) async => [keychain, service, pla]);
+    when(
+      () => productRepository.getCounts(),
+    ).thenAnswer((_) async => const ProductCountsModel(all: 3, forSale: 2, material: 1, low: 1));
     when(() => categoryRepository.getCategories()).thenAnswer((_) async => []);
     when(() => stockRepository.getStock()).thenAnswer(
       (_) async => const [

@@ -72,19 +72,27 @@ extension _ProductListPageExt on ProductListPage {
         onRetry: () => context.read<ProductBloc>().add(ProductsRequested()),
       );
     }
-    if (state.products.isEmpty) return EmptyView(message: 'product.empty'.tr, icon: Icons.inventory_2_outlined);
-    if (state.visibleProducts.isEmpty && state.onlyLow) {
+    if (state.counts.all == 0) return EmptyView(message: 'product.empty'.tr, icon: Icons.inventory_2_outlined);
+    if (state.products.isEmpty && state.onlyLow) {
       return EmptyView(message: 'stock.low_empty'.tr, icon: Icons.check_circle_outline);
     }
     if (state.kind == ProductState.kindMaterial && state.kindCount(ProductState.kindMaterial) == 0) {
       return EmptyView(message: 'product.material_empty'.tr, icon: Icons.layers_outlined);
     }
-    if (state.visibleProducts.isEmpty) return EmptyView(message: 'product.not_found'.tr, icon: Icons.search_off);
+    if (state.products.isEmpty) return EmptyView(message: 'product.not_found'.tr, icon: Icons.search_off);
     return null;
   }
 
+  // แถบโหลดบาง ๆ เหนือตาราง ตอนโหลดใหม่ตามตัวกรองที่เพิ่งเปลี่ยน (จองที่ไว้เสมอ ตารางไม่กระตุก)
+  Widget _filteringBar(ProductState state) {
+    return SizedBox(
+      height: AppSizes.filteringBarHeight,
+      child: state.isFiltering ? const LinearProgressIndicator() : null,
+    );
+  }
+
   Widget _table(BuildContext context, ProductState state, SettingsState settings) {
-    final products = state.visibleProducts;
+    final products = state.products;
     final listFields = settings.listFields;
     return AppDataTable(
       header: _kindTabs(context, state),

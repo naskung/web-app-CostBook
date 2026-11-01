@@ -1,3 +1,4 @@
+import 'package:costbook/core/constants/api_constants.dart';
 import 'package:costbook/core/network/api_client.dart';
 import 'package:costbook/core/utils/date_util.dart';
 import 'package:costbook/features/transaction/models/transaction_model.dart';
@@ -8,8 +9,13 @@ class TransactionRepository {
 
   final ApiClient api;
 
-  Future<List<TransactionModel>> getTransactions(DateTime month) async {
-    return _transactions(await api.get(_listPath(month)));
+  // โหลดทีละหน้า: offset = ข้ามไปกี่รายการ / limit ไม่ส่ง = 1 หน้า (20 รายการ)
+  Future<List<TransactionModel>> getTransactions(
+    DateTime month, {
+    int offset = 0,
+    int limit = ApiConstants.pageSize,
+  }) async {
+    return _transactions(await api.get(_listPath(month, offset, limit)));
   }
 
   Future<TransactionSummaryModel> getSummary(DateTime month) async {
@@ -19,7 +25,7 @@ class TransactionRepository {
 
   // ของที่เคยโหลด (โชว์ก่อนระหว่างโหลดใหม่) / ไม่เคยโหลด = null
   List<TransactionModel>? cachedTransactions(DateTime month) {
-    final data = api.cached(_listPath(month));
+    final data = api.cached(_listPath(month, 0, ApiConstants.pageSize));
     if (data == null) return null;
     return _transactions(data);
   }
@@ -30,7 +36,9 @@ class TransactionRepository {
     return TransactionSummaryModel.fromJson(data as Map<String, dynamic>);
   }
 
-  String _listPath(DateTime month) => '/transactions?month=${DateUtil.toApiMonth(month)}';
+  String _listPath(DateTime month, int offset, int limit) {
+    return '/transactions?month=${DateUtil.toApiMonth(month)}&limit=$limit&offset=$offset';
+  }
 
   String _summaryPath(DateTime month) => '/transactions/summary?month=${DateUtil.toApiMonth(month)}';
 

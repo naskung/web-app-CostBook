@@ -9,6 +9,8 @@ class CategoryState extends Equatable {
     this.saveErrorCode = '',
     this.deleteStatus = AppStatus.initial,
     this.deleteErrorCode = '',
+    this.hasMore = false,
+    this.moreStatus = AppStatus.initial,
   });
 
   final AppStatus status;
@@ -18,6 +20,13 @@ class CategoryState extends Equatable {
   final String saveErrorCode;
   final AppStatus deleteStatus;
   final String deleteErrorCode;
+  // ยังมีหมวดที่ยังไม่ได้โหลดไหม / สถานะของการโหลดหน้าต่อไป
+  final bool hasMore;
+  final AppStatus moreStatus;
+
+  // เลื่อนลงแล้วโหลดหน้าต่อไปเองได้ไหม (โหลดเพิ่มพัง → รอผู้ใช้กดลองใหม่ ไม่ยิงซ้ำเอง)
+  bool get canLoadMore =>
+      status == AppStatus.success && hasMore && moreStatus != AppStatus.loading && moreStatus != AppStatus.failure;
 
   CategoryState copyWith({
     AppStatus? status,
@@ -27,6 +36,8 @@ class CategoryState extends Equatable {
     String? saveErrorCode,
     AppStatus? deleteStatus,
     String? deleteErrorCode,
+    bool? hasMore,
+    AppStatus? moreStatus,
   }) {
     return CategoryState(
       status: status ?? this.status,
@@ -36,9 +47,21 @@ class CategoryState extends Equatable {
       saveErrorCode: saveErrorCode ?? this.saveErrorCode,
       deleteStatus: deleteStatus ?? this.deleteStatus,
       deleteErrorCode: deleteErrorCode ?? this.deleteErrorCode,
+      hasMore: hasMore ?? this.hasMore,
+      moreStatus: moreStatus ?? this.moreStatus,
     );
   }
 
   @override
-  List<Object?> get props => [status, categories, errorCode, saveStatus, saveErrorCode, deleteStatus, deleteErrorCode];
+  List<Object?> get props => [
+    status,
+    categories,
+    errorCode,
+    saveStatus,
+    saveErrorCode,
+    deleteStatus,
+    deleteErrorCode,
+    hasMore,
+    moreStatus,
+  ];
 }

@@ -15,6 +15,10 @@ class ProductState extends Equatable {
     this.deleteStatus = AppStatus.initial,
     this.deleteErrorCode = '',
     this.imageErrorCode = '',
+    this.counts = const ProductCountsModel(),
+    this.hasMore = false,
+    this.moreStatus = AppStatus.initial,
+    this.isFiltering = false,
   });
 
   final AppStatus status;
@@ -38,23 +42,32 @@ class ProductState extends Equatable {
   // บันทึกสินค้าแล้ว แต่อัปโหลด / ลบรูปไม่สำเร็จ ('' = ไม่มีปัญหา)
   final String imageErrorCode;
 
-  List<ProductModel> get visibleProducts {
-    return products.where((product) {
-      final isInCategory = category.isEmpty || product.categoryId == category;
-      final isShown = !onlyLow || product.isLowStock;
-      return isInCategory && isShown && _isKind(product, kind) && product.matches(query);
-    }).toList();
+  // products = สินค้าที่โหลดมาแล้วของตัวกรองตอนนี้ (API ค้น / กรองให้ โหลดทีละหน้า)
+  // counts = จำนวนสินค้าทั้งร้าน / hasMore = ยังมีหน้าต่อไป / isFiltering = กำลังโหลดใหม่ตามตัวกรองที่เพิ่งเปลี่ยน
+  final ProductCountsModel counts;
+  final bool hasMore;
+  final AppStatus moreStatus;
+  final bool isFiltering;
+
+  // จำนวนสินค้าของแต่ละแท็บ (ทั้งหมด / สินค้าขาย / วัสดุ) นับจากสินค้าทั้งร้าน
+  int kindCount(String kind) {
+    if (kind == kindForSale) return counts.forSale;
+    if (kind == kindMaterial) return counts.material;
+    return counts.all;
   }
 
-  // จำนวนสินค้าของแต่ละแท็บ (ทั้งหมด / สินค้าขาย / วัสดุ) นับจากสินค้าทั้งหมด
-  int kindCount(String kind) => products.where((product) => _isKind(product, kind)).length;
+  int get lowStockCount => counts.low;
 
-  static bool _isKind(ProductModel product, String kind) {
-    if (kind.isEmpty) return true;
-    return (kind == kindMaterial) == !product.forSale;
-  }
+  // ตัวกรองตอนนี้ เทียบกับตอนเริ่มโหลด → เปลี่ยนไปแล้ว = ผลที่ได้มาเป็นของตัวกรองเก่า ทิ้งได้
+  String get filterKey => '${query.trim()}|$category|$kind|$onlyLow';
 
-  int get lowStockCount => products.where((product) => product.isLowStock).length;
+  // เลื่อนลงแล้วโหลดหน้าต่อไปเองได้ไหม (โหลดเพิ่มพัง → รอผู้ใช้กดลองใหม่ ไม่ยิงซ้ำเอง)
+  bool get canLoadMore =>
+      status == AppStatus.success &&
+      hasMore &&
+      !isFiltering &&
+      moreStatus != AppStatus.loading &&
+      moreStatus != AppStatus.failure;
 
   ProductState copyWith({
     AppStatus? status,
@@ -70,6 +83,10 @@ class ProductState extends Equatable {
     AppStatus? deleteStatus,
     String? deleteErrorCode,
     String? imageErrorCode,
+    ProductCountsModel? counts,
+    bool? hasMore,
+    AppStatus? moreStatus,
+    bool? isFiltering,
   }) {
     return ProductState(
       status: status ?? this.status,
@@ -85,6 +102,10 @@ class ProductState extends Equatable {
       deleteStatus: deleteStatus ?? this.deleteStatus,
       deleteErrorCode: deleteErrorCode ?? this.deleteErrorCode,
       imageErrorCode: imageErrorCode ?? this.imageErrorCode,
+      counts: counts ?? this.counts,
+      hasMore: hasMore ?? this.hasMore,
+      moreStatus: moreStatus ?? this.moreStatus,
+      isFiltering: isFiltering ?? this.isFiltering,
     );
   }
 
@@ -103,5 +124,9 @@ class ProductState extends Equatable {
     deleteStatus,
     deleteErrorCode,
     imageErrorCode,
+    counts,
+    hasMore,
+    moreStatus,
+    isFiltering,
   ];
 }

@@ -4,6 +4,9 @@ abstract class ProductEvent {}
 
 class ProductsRequested extends ProductEvent {}
 
+// เลื่อนใกล้ล่างสุด / กดลองใหม่ → โหลดหน้าต่อไป
+class ProductsMoreRequested extends ProductEvent {}
+
 class ProductSearchChanged extends ProductEvent {
   ProductSearchChanged(this.query);
 

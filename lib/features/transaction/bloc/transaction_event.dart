@@ -4,6 +4,9 @@ abstract class TransactionEvent {}
 
 class TransactionsRequested extends TransactionEvent {}
 
+// เลื่อนใกล้ล่างสุด / กดลองใหม่ → โหลดหน้าต่อไป
+class TransactionsMoreRequested extends TransactionEvent {}
+
 class TransactionMonthChanged extends TransactionEvent {
   TransactionMonthChanged(this.monthCount);
 

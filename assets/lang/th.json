@@ -736,5 +736,6 @@
   "common.clear": "ล้าง",
   "stock.profit": "กำไร",
   "stock.sold": "ขาย",
-  "stock.profit_detail": "ขาย {sale} · ทุน {cost}"
+  "stock.profit_detail": "ขาย {sale} · ทุน {cost}",
+  "common.load_more_failed": "โหลดเพิ่มไม่สำเร็จ แตะเพื่อลองใหม่"
 }

@@ -98,6 +98,9 @@ class AppSizes {
   // ปุ่มเลื่อนขึ้นบนสุด (FloatingActionButton.small) วางกึ่งกลางเหนือปุ่มแชท / ขึ้นเมื่อเลื่อนลงเกิน scrollTopThreshold
   static const double scrollTopButtonSize = 40;
   static const double scrollTopThreshold = 400;
+  // เลื่อนจนเหลือที่ให้เลื่อนน้อยกว่านี้ → โหลดหน้าต่อไปล่วงหน้า (ผู้ใช้ไม่ต้องรอที่ล่างสุด)
+  static const double loadMoreDistance = 600;
+  static const double filteringBarHeight = 3;
   static const double scrollTopRight = spaceLarge + (chatFabSize - scrollTopButtonSize) / 2;
   static const double scrollTopBottom = spaceLarge + chatFabSize + spaceMedium;
   static const double panelRadius = 16;

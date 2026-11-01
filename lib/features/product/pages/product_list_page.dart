@@ -26,6 +26,7 @@ import 'package:costbook/features/product/widgets/product_image.dart';
 import 'package:costbook/shared/widgets/molecules/app_tabs.dart';
 import 'package:costbook/shared/widgets/molecules/empty_view.dart';
 import 'package:costbook/shared/widgets/molecules/error_view.dart';
+import 'package:costbook/shared/widgets/molecules/load_more_footer.dart';
 import 'package:costbook/shared/widgets/molecules/search_field.dart';
 import 'package:costbook/shared/widgets/organisms/app_data_table.dart';
 import 'package:costbook/shared/widgets/organisms/page_content.dart';
@@ -74,14 +75,24 @@ class ProductListPage extends StatelessWidget {
       child: BlocBuilder<ProductBloc, ProductState>(
         builder: (context, state) {
           final settings = context.watch<SettingsBloc>().state;
-          // มีสินค้าแล้ว → แสดงตาราง (พร้อมแท็บ) เสมอ แม้กรองแล้วไม่เจอ จะได้กดแท็บอื่นได้
-          final hasProducts = state.status == AppStatus.success && state.products.isNotEmpty;
+          // ร้านมีสินค้าแล้ว → แสดงตาราง (พร้อมแท็บ) เสมอ แม้กรองแล้วไม่เจอ จะได้กดแท็บอื่นได้
+          final hasProducts = state.status == AppStatus.success && state.counts.all > 0;
+          final bloc = context.read<ProductBloc>();
           return PageContent(
             centerChild: _stateView(context, state),
+            onLoadMore: state.canLoadMore ? () => bloc.add(ProductsMoreRequested()) : null,
             children: [
               _toolbar(context, state, settings.fields),
               _filters(context, state),
-              if (hasProducts) _table(context, state, settings),
+              _filteringBar(state),
+              if (hasProducts) ...[
+                _table(context, state, settings),
+                LoadMoreFooter(
+                  status: state.moreStatus,
+                  retryLabel: 'common.load_more_failed'.tr,
+                  onRetry: () => bloc.add(ProductsMoreRequested()),
+                ),
+              ],
             ],
           );
         },

@@ -736,5 +736,6 @@
   "common.clear": "Clear",
   "stock.profit": "Profit",
   "stock.sold": "Sold",
-  "stock.profit_detail": "Sales {sale} · Cost {cost}"
+  "stock.profit_detail": "Sales {sale} · Cost {cost}",
+  "common.load_more_failed": "Couldn't load more. Tap to retry"
 }

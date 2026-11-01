@@ -145,6 +145,18 @@ Page ──(add Event)──▶ Bloc ──▶ Repository ──▶ ApiClient �
 - Repository คืนค่าเป็น **Model** เสมอ (ไม่คืน `Map`)
 - การคำนวณ (ต้นทุน, VAT) อยู่ใน `core/utils` — bloc และ page เรียกใช้
 
+### โหลดทีละหน้า — เลื่อนลงแล้วโหลดเพิ่มทีละ 20 (ผู้ใช้ขอ 2026-11-02)
+
+ใช้กับ: รายการสินค้า, หมวดหมู่, ประวัติสต็อก, รายรับ-รายจ่าย, เอกสารขาย (ดูฝั่ง API: `../api-Costbook/docs/ARCHITECTURE.md` หัวข้อ "โหลดทีละหน้า")
+
+- `ApiConstants.pageSize` = 20 / repository ส่ง `?limit=&offset=` (`getXxx(offset:, limit:)`) — หน้าที่ต้องใช้ข้อมูลครบ (หน้าขาย / ต้นทุน / ฟอร์มสินค้า / AI) ยังเรียกแบบทั้งหมด (`getProducts()`, `getCategories()`)
+- `PageContent(onLoadMore:)`: เลื่อนจนเหลือที่ให้เลื่อนน้อยกว่า `AppSizes.loadMoreDistance` (600) หรือรายการสั้นกว่าจอ → เรียก (เรียกซ้ำได้ bloc กันเอง) / ท้ายรายการใส่ `LoadMoreFooter` (กำลังโหลด = วงกลมหมุน / พัง = ปุ่ม "โหลดเพิ่มไม่สำเร็จ แตะเพื่อลองใหม่")
+- bloc: state มี `hasMore` (ได้ครบ 20 = อาจยังมี — `PageUtil.hasMore`) + `moreStatus` + `canLoadMore` (success + hasMore + ไม่ได้กำลังโหลด + โหลดเพิ่มไม่ได้พัง → พังแล้วรอกดลองใหม่ ไม่ยิงซ้ำเอง) / event `XxxMoreRequested` → `getXxx(offset: จำนวนที่มีแล้ว)` ต่อท้ายด้วย `PageUtil.append` (id ซ้ำไม่เพิ่มซ้ำ)
+- บันทึก / ลบแล้วโหลดใหม่ **เท่าที่เลื่อนไว้แล้ว** (`PageUtil.reloadLimit`: ไม่น้อยกว่า 20 ไม่เกิน 200) → รายการไม่หดกลับเหลือหน้าแรก
+- เปลี่ยนเดือน / ตัวกรองระหว่างรอ → ทิ้งผลเก่า (เทียบ `month` / `ProductState.filterKey` ก่อน emit)
+- **รายการสินค้า**: ค้นหา / หมวด / แท็บ / เฉพาะใกล้หมด ให้ API ทำ (`getProductPage(query:, categoryId:, kind:, onlyLow:, offset:, limit:)`) เปลี่ยนตัวกรอง = โหลดหน้าแรกใหม่ (`_reloadFirstPage`, รายการเดิมยังโชว์ + แถบโหลดบาง ๆ `isFiltering`) / พิมพ์ค้นหารอ `ProductBloc.searchDelay` (300 ms) ถามครั้งเดียวด้วยคำล่าสุด / ตัวเลขบนแท็บ + ใกล้หมด จาก `GET /products/counts` (`ProductCountsModel`) / "ร้านยังไม่มีสินค้า" ดูจาก `counts.all`
+- ลองใน Chrome กับสำเนา DB (สินค้า 63 / ประวัติ 75 แถว): เลื่อนลงยิง offset 0 → 20 → 40 → 60 แล้วหยุด, ค้นหายิงครั้งเดียว
+
 ### เก็บข้อมูลไว้ (cache) — เปลี่ยนหน้าไปมาไม่ต้องรอโหลด ไม่ยิง API ซ้ำ
 
 ทำ 2 ชั้น (ผู้ใช้ขอ 2026-11-01 "เปลี่ยนหน้าแล้วยิง API ทุกครั้ง เปลืองไหม / มีของใหม่ค่อยขึ้นมาเนียน ๆ"):

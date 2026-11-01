@@ -73,4 +73,87 @@ void main() {
           InvoiceListState(month: october, status: AppStatus.failure, errorCode: 'server_error'),
         ],
   );
+
+  // ใบที่ n ของเดือน (id ไม่ซ้ำ)
+  InvoiceSummaryModel invoiceAt(int n) {
+    return InvoiceSummaryModel(
+      id: 'i$n',
+      invoiceNo: 'RC-2026-$n',
+      issueDate: '2026-10-31',
+      status: 'issued',
+      customerName: '',
+      total: 100,
+    );
+  }
+
+  final firstPage = [for (var n = 1; n <= 20; n++) invoiceAt(n)];
+  final lastPage = [invoiceAt(21), invoiceAt(22)];
+
+  blocTest<InvoiceListBloc, InvoiceListState>(
+    'ได้ครบ 20 ใบ = ยังมีอีก (hasMore) / เลื่อนลงโหลดหน้าต่อไป ต่อท้าย ได้น้อยกว่า 20 = หมดแล้ว',
+    build: () {
+      when(() => repository.getInvoices(any())).thenAnswer((_) async => firstPage);
+      when(() => repository.getInvoices(any(), offset: 20)).thenAnswer((_) async => lastPage);
+      return InvoiceListBloc(repository, month: october);
+    },
+    act: (bloc) async {
+      bloc.add(InvoicesRequested());
+      await Future<void>.delayed(Duration.zero);
+      bloc.add(InvoicesMoreRequested());
+    },
+    skip: 2,
+    expect:
+        () => [
+          InvoiceListState(
+            month: october,
+            status: AppStatus.success,
+            invoices: firstPage,
+            hasMore: true,
+            moreStatus: AppStatus.loading,
+          ),
+          InvoiceListState(
+            month: october,
+            status: AppStatus.success,
+            invoices: [...firstPage, ...lastPage],
+            moreStatus: AppStatus.success,
+          ),
+        ],
+  );
+
+  blocTest<InvoiceListBloc, InvoiceListState>(
+    'หมดแล้ว (hasMore = false) / กำลังโหลดอยู่ → ไม่โหลดซ้ำ',
+    build: () => InvoiceListBloc(repository, month: october),
+    seed: () => InvoiceListState(month: october, status: AppStatus.success, invoices: [summary]),
+    act: (bloc) => bloc.add(InvoicesMoreRequested()),
+    expect: () => <InvoiceListState>[],
+    verify: (_) => verifyNever(() => repository.getInvoices(any(), offset: any(named: 'offset'))),
+  );
+
+  blocTest<InvoiceListBloc, InvoiceListState>(
+    'โหลดหน้าต่อไปไม่สำเร็จ → moreStatus failure (รายการเดิมยังอยู่ รอกดลองใหม่) / canLoadMore = false',
+    build: () {
+      when(() => repository.getInvoices(any(), offset: 20)).thenThrow(ApiException('network_error'));
+      return InvoiceListBloc(repository, month: october);
+    },
+    seed: () => InvoiceListState(month: october, status: AppStatus.success, invoices: firstPage, hasMore: true),
+    act: (bloc) => bloc.add(InvoicesMoreRequested()),
+    expect:
+        () => [
+          InvoiceListState(
+            month: october,
+            status: AppStatus.success,
+            invoices: firstPage,
+            hasMore: true,
+            moreStatus: AppStatus.loading,
+          ),
+          InvoiceListState(
+            month: october,
+            status: AppStatus.success,
+            invoices: firstPage,
+            hasMore: true,
+            moreStatus: AppStatus.failure,
+          ),
+        ],
+    verify: (bloc) => expect(bloc.state.canLoadMore, false),
+  );
 }

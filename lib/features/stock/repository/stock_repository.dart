@@ -1,3 +1,4 @@
+import 'package:costbook/core/constants/api_constants.dart';
 import 'package:costbook/core/network/api_client.dart';
 import 'package:costbook/features/stock/models/movement_model.dart';
 import 'package:costbook/features/stock/models/stock_item_model.dart';
@@ -12,7 +13,12 @@ class StockRepository {
 
   Future<List<StockItemModel>> getStock() async => _items(await api.get(_stockPath));
 
-  Future<List<MovementModel>> getMovements() async => _movements(await api.get(_movementsPath));
+  // ประวัติทีละหน้า (ล่าสุดก่อน): offset = ข้ามไปกี่แถว / limit ไม่ส่ง = 1 หน้า (20 แถว)
+  Future<List<MovementModel>> getMovements({int offset = 0, int limit = ApiConstants.pageSize}) async {
+    return _movements(await api.get(_movementsPagePath(offset, limit)));
+  }
+
+  String _movementsPagePath(int offset, int limit) => '$_movementsPath?limit=$limit&offset=$offset';
 
   // ของที่เคยโหลด (โชว์ก่อนระหว่างโหลดใหม่) / ไม่เคยโหลด = null
   List<StockItemModel>? cachedStock() {
@@ -22,7 +28,7 @@ class StockRepository {
   }
 
   List<MovementModel>? cachedMovements() {
-    final data = api.cached(_movementsPath);
+    final data = api.cached(_movementsPagePath(0, ApiConstants.pageSize));
     if (data == null) return null;
     return _movements(data);
   }

@@ -5,6 +5,9 @@ abstract class StockEvent {}
 // โหลดสินค้าที่นับสต็อก (ไว้เลือกในกล่องรับเข้า / เบิกออก) + ประวัติ
 class StockRequested extends StockEvent {}
 
+// เลื่อนใกล้ล่างสุด / กดลองใหม่ → โหลดประวัติหน้าต่อไป
+class StockMovementsMoreRequested extends StockEvent {}
+
 class StockMovementSaved extends StockEvent {
   StockMovementSaved({
     required this.type,

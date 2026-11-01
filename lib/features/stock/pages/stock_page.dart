@@ -14,6 +14,7 @@ import 'package:costbook/shared/widgets/atoms/app_badge.dart';
 import 'package:costbook/shared/widgets/atoms/app_loading.dart';
 import 'package:costbook/shared/widgets/molecules/empty_view.dart';
 import 'package:costbook/shared/widgets/molecules/error_view.dart';
+import 'package:costbook/shared/widgets/molecules/load_more_footer.dart';
 import 'package:costbook/shared/widgets/organisms/app_data_table.dart';
 import 'package:costbook/shared/widgets/organisms/page_content.dart';
 import 'package:costbook/shared/widgets/organisms/page_toolbar.dart';
@@ -36,9 +37,21 @@ class StockPage extends StatelessWidget {
       child: BlocBuilder<StockBloc, StockState>(
         builder: (context, state) {
           final stateView = _stateView(context, state);
+          final bloc = context.read<StockBloc>();
           return PageContent(
             centerChild: stateView,
-            children: [_toolbar(context), if (stateView == null) _history(context, state.movements)],
+            onLoadMore: state.canLoadMore ? () => bloc.add(StockMovementsMoreRequested()) : null,
+            children: [
+              _toolbar(context),
+              if (stateView == null) ...[
+                _history(context, state.movements),
+                LoadMoreFooter(
+                  status: state.moreStatus,
+                  retryLabel: 'common.load_more_failed'.tr,
+                  onRetry: () => bloc.add(StockMovementsMoreRequested()),
+                ),
+              ],
+            ],
           );
         },
       ),
