@@ -8,6 +8,7 @@ import 'package:costbook/core/network/api_exception.dart';
 import 'package:costbook/core/theme/app_theme.dart';
 import 'package:costbook/features/dashboard/bloc/dashboard_bloc.dart';
 import 'package:costbook/features/dashboard/models/dashboard_model.dart';
+import 'package:costbook/features/dashboard/models/dashboard_sales_model.dart';
 import 'package:costbook/features/dashboard/pages/dashboard_page.dart';
 import 'package:costbook/features/dashboard/repository/dashboard_repository.dart';
 import 'package:costbook/features/assistant/bloc/assistant_bloc.dart';
@@ -106,6 +107,55 @@ void main() {
       expect(find.text('4,300.50'), findsOneWidget);
       expect(find.text('กาแฟเย็น'), findsOneWidget);
       expect(find.text('ตุลาคม 2569'), findsOneWidget);
+    });
+  });
+
+  // ร้านที่มีข้อมูลเต็มทุกกล่อง: ขายดี 5 / รายจ่าย 8 หมวด / เทียบราคา 5 / ใกล้หมด 5 — จอคอมแต่ละแถวสูงเท่ากัน ต้องไม่ล้นกล่อง
+  final fullDashboard = DashboardModel(
+    revenue: 52000,
+    profit: 9800,
+    operatingExpense: 7200,
+    invoiceCount: 120,
+    lowStockCount: 5,
+    lowStock: [
+      for (var i = 0; i < 5; i++)
+        LowStockItemModel(productId: 'l$i', name: 'สินค้าใกล้หมด $i', unit: 'ชิ้น', stock: i, minStock: 10),
+    ],
+    topProducts: [
+      for (var i = 0; i < 5; i++)
+        ProductSalesModel(
+          productId: 'p$i',
+          name: 'สินค้าขายดีอันดับ $i',
+          unit: 'ชิ้น',
+          quantity: 40 - i,
+          netSales: 9000.0 - i * 900,
+          margin: 32.5,
+        ),
+    ],
+    expenseByCategory: [
+      for (final category in ['rent', 'salary', 'utilities', 'shipping', 'marketing', 'equipment', 'tax', 'other'])
+        CategoryAmountModel(category: category, amount: 900, percent: 12.5),
+    ],
+    market: [
+      for (var i = 0; i < 5; i++)
+        MarketPositionModel(
+          productId: 'm$i',
+          name: 'สินค้าเทียบราคา $i',
+          customerPrice: 120,
+          retailLow: 90,
+          retailHigh: 150,
+          retailTypical: 120,
+          position: 'within',
+        ),
+    ],
+  );
+
+  screenSizes.forEach((name, size) {
+    testWidgets('$name ร้านที่มีข้อมูลเต็มทุกกล่อง แสดงได้ไม่ล้นกล่อง', (tester) async {
+      when(() => repository.getDashboard(any())).thenAnswer((_) async => fullDashboard);
+      await pumpDashboard(tester, size);
+      expect(tester.takeException(), isNull);
+      expect(find.text('9,800.00'), findsOneWidget);
     });
   });
 

@@ -51,93 +51,97 @@ extension _DashboardPageExt on DashboardPage {
     return null;
   }
 
+  // จอกว้าง: แถวละ 2 กล่อง สูงเท่ากันทุกกล่องในแถว (กำหนดความสูงต่อแถว) / จอแคบ: เรียงลงมาทีละกล่อง สูงตามเนื้อหา
   Widget _body(BuildContext context, DashboardState state) {
     final dashboard = state.dashboard;
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= AppSizes.dashboardWideBreak;
-        final rowHeight = isWide ? AppSizes.dashboardRowHeight : null;
+        double? heightOf(double height) => isWide ? height : null;
+        final chartHeight = heightOf(AppSizes.dashboardRowHeight);
+        final listHeight = heightOf(AppSizes.dashboardListRowHeight);
+        final compactHeight = heightOf(AppSizes.dashboardCompactRowHeight);
         const gap = SizedBox(width: AppSizes.spaceMedium, height: AppSizes.spaceMedium);
-        Widget row(Widget left, Widget right, {int leftFlex = 3, int rightFlex = 2}) {
+        Widget row(Widget left, Widget right) {
           if (!isWide) return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [left, gap, right]);
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [Expanded(flex: leftFlex, child: left), gap, Expanded(flex: rightFlex, child: right)],
+            children: [Expanded(flex: 3, child: left), gap, Expanded(flex: 2, child: right)],
           );
         }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _kpis(dashboard, constraints.maxWidth),
+            _kpis(dashboard),
+            row(_salesPanel(context, state, chartHeight), _weekdayPanel(context, dashboard, chartHeight)),
             gap,
-            row(_salesPanel(context, state, rowHeight, isWide), _weekdayPanel(context, dashboard, rowHeight)),
+            row(_topProductsPanel(context, dashboard, listHeight), _marginPanel(context, dashboard, listHeight)),
             gap,
-            row(
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [_topProductsPanel(context, dashboard), gap, _expensePanel(dashboard)],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [_marginPanel(context, dashboard), gap, const AiAskCard()],
-              ),
-            ),
+            row(_expensePanel(context, dashboard, compactHeight), AiAskCard(height: compactHeight)),
             gap,
             _trendPanel(context, dashboard),
             gap,
-            row(_marketPanel(context, dashboard), _stockPanel(context, dashboard)),
+            row(_marketPanel(context, dashboard, compactHeight), _stockPanel(context, dashboard, compactHeight)),
           ],
         );
       },
     );
   }
 
-  Widget _kpis(DashboardModel dashboard, double width) {
+  // 4 การ์ดบน แบบเดียวกับหน้ารายรับ-รายจ่าย: รายได้ → กำไรขั้นต้น → รายจ่าย → กำไรสุทธิ (การ์ดผลลัพธ์พื้นเข้ม)
+  Widget _kpis(DashboardModel dashboard) {
     final previous = dashboard.previous;
-    final columns = width >= AppSizes.kpiFourColumnBreak ? 4 : (width >= AppSizes.kpiTwoColumnBreak ? 2 : 1);
-    final cardWidth = (width - AppSizes.spaceMedium * (columns - 1)) / columns;
-    String last(String value) => 'dashboard.last_month_value'.trParams({'value': value});
-    final cards = [
-      KpiCard(
-        label: 'dashboard.revenue'.tr,
-        value: MoneyUtil.format(dashboard.revenue),
-        icon: Icons.south_west,
-        iconColor: AppColors.chartIncome,
-        change: PercentUtil.change(current: dashboard.revenue, previous: previous.revenue),
-        caption: last(MoneyUtil.format(previous.revenue)),
-      ),
-      KpiCard(
-        label: 'dashboard.gross_profit'.tr,
-        value: MoneyUtil.format(dashboard.sales.grossProfit),
-        icon: Icons.trending_up,
-        iconColor: AppColors.primary,
-        change: PercentUtil.change(current: dashboard.sales.grossProfit, previous: previous.grossProfit),
-        caption: last(MoneyUtil.format(previous.grossProfit)),
-      ),
-      KpiCard(
-        label: 'dashboard.profit'.tr,
-        value: MoneyUtil.format(dashboard.profit),
-        valueColor: dashboard.profit < 0 ? AppColors.danger : AppColors.textPrimary,
-        icon: Icons.savings_outlined,
-        iconColor: AppColors.success,
-        change: PercentUtil.change(current: dashboard.profit, previous: previous.profit),
-        caption: last(MoneyUtil.format(previous.profit)),
-      ),
-      KpiCard(
-        label: 'dashboard.expense'.tr,
-        value: MoneyUtil.format(dashboard.operatingExpense),
-        icon: Icons.north_east,
-        iconColor: AppColors.chartExpense,
-        change: PercentUtil.change(current: dashboard.operatingExpense, previous: previous.operatingExpense),
-        upIsGood: false,
-        caption: last(MoneyUtil.format(previous.operatingExpense)),
-      ),
-    ];
-    return Wrap(
-      spacing: AppSizes.spaceMedium,
-      runSpacing: AppSizes.spaceMedium,
-      children: [for (final card in cards) SizedBox(width: cardWidth, child: card)],
+    final isLoss = dashboard.profit < 0;
+    String last(double value) => 'dashboard.last_month_value'.trParams({'value': MoneyUtil.format(value)});
+    Widget change(double current, double before, {bool upIsGood = true}) {
+      return DeltaPill(change: PercentUtil.change(current: current, previous: before), upIsGood: upIsGood);
+    }
+
+    // การ์ดเล็กพอให้มือถือเป็น 2 × 2 ไม่ต้องเลื่อนยาว
+    return StatGrid(
+      maxColumns: 4,
+      minCardWidth: AppSizes.statCardMiniWidth,
+      children: [
+        StatCard(
+          label: 'dashboard.revenue'.tr,
+          value: MoneyUtil.format(dashboard.revenue),
+          icon: Icons.south_west,
+          color: AppColors.success,
+          backgroundColor: AppColors.successSoft,
+          caption: last(previous.revenue),
+          badge: change(dashboard.revenue, previous.revenue),
+        ),
+        StatCard(
+          label: 'dashboard.gross_profit'.tr,
+          value: MoneyUtil.format(dashboard.sales.grossProfit),
+          icon: Icons.trending_up,
+          color: AppColors.info,
+          backgroundColor: AppColors.infoSoft,
+          caption: last(previous.grossProfit),
+          badge: change(dashboard.sales.grossProfit, previous.grossProfit),
+        ),
+        StatCard(
+          label: 'dashboard.expense'.tr,
+          value: MoneyUtil.format(dashboard.operatingExpense),
+          icon: Icons.north_east,
+          color: AppColors.danger,
+          backgroundColor: AppColors.dangerSoft,
+          caption: last(previous.operatingExpense),
+          badge: change(dashboard.operatingExpense, previous.operatingExpense, upIsGood: false),
+        ),
+        StatCard(
+          label: 'dashboard.profit'.tr,
+          value: MoneyUtil.format(dashboard.profit),
+          icon: Icons.savings_outlined,
+          color: isLoss ? AppColors.danger : AppColors.primary,
+          backgroundColor: isLoss ? AppColors.dangerSoft : AppColors.primarySoft,
+          caption: last(previous.profit),
+          valueColor: isLoss ? AppColors.dangerOnDark : null,
+          isHighlighted: true,
+          badge: change(dashboard.profit, previous.profit),
+        ),
+      ],
     );
   }
 }

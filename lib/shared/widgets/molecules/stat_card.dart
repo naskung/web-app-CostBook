@@ -6,7 +6,7 @@ import 'package:costbook/core/utils/percent_util.dart';
 
 // การ์ดตัวเลขสรุป: ไอคอน + ชื่อ → ตัวเลขใหญ่ → คำอธิบาย → แถบสัดส่วน (ชิดล่าง แถบทุกใบอยู่ระดับเดียวกัน)
 // isHighlighted = การ์ดผลลัพธ์ของหน้า (เช่น กำไรสุทธิ) พื้นเข้ม ตัวเลขใหญ่กว่า มีแถบเฉียงสีที่มุม (แบบหน้า login)
-// share = % ที่ใช้วาดแถบ (null = ไม่มีแถบ), shareLabel = ข้อความข้างแถบ
+// share = % ที่ใช้วาดแถบ (null = ไม่มีแถบ), shareLabel = ข้อความข้างแถบ, badge = ป้ายท้ายชื่อ (เช่น % เทียบเดือนก่อน)
 class StatCard extends StatelessWidget {
   const StatCard({
     super.key,
@@ -20,6 +20,7 @@ class StatCard extends StatelessWidget {
     this.isHighlighted = false,
     this.share,
     this.shareLabel = '',
+    this.badge,
   });
 
   final String label;
@@ -32,6 +33,7 @@ class StatCard extends StatelessWidget {
   final bool isHighlighted;
   final double? share;
   final String shareLabel;
+  final Widget? badge;
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +56,7 @@ class StatCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final caption = this.caption;
     final share = this.share;
+    final badge = this.badge;
     final secondary = isHighlighted ? AppColors.onDarkSecondary : AppColors.textSecondary;
     final mainColor = valueColor ?? (isHighlighted ? AppColors.onDark : AppColors.textPrimary);
     return Column(
@@ -71,6 +74,7 @@ class StatCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+            if (badge != null) ...[const SizedBox(width: AppSizes.spaceSmall), badge],
           ],
         ),
         const SizedBox(height: AppSizes.spaceMedium),

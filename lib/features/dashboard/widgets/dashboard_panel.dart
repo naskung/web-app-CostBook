@@ -11,6 +11,8 @@ class DashboardPanel extends StatelessWidget {
     this.subtitle,
     this.trailing,
     this.height,
+    this.scrollable = false,
+    this.centered = false,
   });
 
   final String title;
@@ -18,6 +20,10 @@ class DashboardPanel extends StatelessWidget {
   final Widget child;
   final Widget? trailing;
   final double? height;
+
+  // ใช้เมื่อกำหนด height (แถวบนจอคอมสูงเท่ากัน): scrollable = รายการยาวเกินเลื่อนดูในกล่อง, centered = เนื้อหาอยู่กลางกล่อง
+  final bool scrollable;
+  final bool centered;
 
   @override
   Widget build(BuildContext context) {
@@ -45,9 +51,15 @@ class DashboardPanel extends StatelessWidget {
             Text(subtitle ?? '', style: textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
           ],
           const SizedBox(height: AppSizes.spaceMedium),
-          if (hasHeight) Expanded(child: child) else child,
+          if (hasHeight) Expanded(child: _fill()) else child,
         ],
       ),
     );
+  }
+
+  Widget _fill() {
+    if (scrollable) return SingleChildScrollView(child: child);
+    if (centered) return Center(child: child);
+    return child;
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'package:costbook/core/theme/app_colors.dart';
@@ -19,6 +21,9 @@ class RankedBarList extends StatelessWidget {
   final Color color;
   final String emptyText;
 
+  // ชื่อกว้างไม่เกิน 35% ของกล่อง → จอแคบชื่อหดลง (ตัดเป็น …) ตัวเลขด้านขวาไม่ล้นจอ
+  static const double _labelShare = 0.35;
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -26,10 +31,15 @@ class RankedBarList extends StatelessWidget {
       return Text(emptyText, style: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary));
     }
     final largest = items.map((item) => item.value).fold(0.0, (max, value) => value > max ? value : max);
-    return Column(children: [for (final item in items) _row(context, item, largest)]);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final labelWidth = math.min(AppSizes.rankedLabelWidth, constraints.maxWidth * _labelShare);
+        return Column(children: [for (final item in items) _row(context, item, largest, labelWidth)]);
+      },
+    );
   }
 
-  Widget _row(BuildContext context, RankedBarItem item, double largest) {
+  Widget _row(BuildContext context, RankedBarItem item, double largest, double labelWidth) {
     final textTheme = Theme.of(context).textTheme;
     final fraction = largest <= 0 ? 0.0 : (item.value / largest).clamp(0.0, 1.0);
     return Tooltip(
@@ -39,7 +49,7 @@ class RankedBarList extends StatelessWidget {
         child: Row(
           children: [
             SizedBox(
-              width: AppSizes.rankedLabelWidth,
+              width: labelWidth,
               child: Text(item.label, style: textTheme.bodyMedium, overflow: TextOverflow.ellipsis),
             ),
             const SizedBox(width: AppSizes.spaceSmall),

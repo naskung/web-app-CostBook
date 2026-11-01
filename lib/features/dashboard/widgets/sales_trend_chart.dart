@@ -20,7 +20,6 @@ class SalesTrendChart extends StatelessWidget {
     required this.currentLabel,
     required this.previousLabel,
     required this.dayLabel,
-    required this.caption,
   });
 
   final List<DailySalesModel> days;
@@ -30,7 +29,6 @@ class SalesTrendChart extends StatelessWidget {
   final String currentLabel;
   final String previousLabel;
   final String Function(int day) dayLabel;
-  final String caption;
 
   @override
   Widget build(BuildContext context) {
@@ -41,8 +39,6 @@ class SalesTrendChart extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(caption, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
-        const SizedBox(height: AppSizes.spaceXSmall),
         ChartLegend(
           items: [
             ChartLegendItem(label: currentLabel, color: AppColors.chartIncome),
@@ -92,7 +88,17 @@ class SalesTrendChart extends StatelessWidget {
       barWidth: AppSizes.chartLineWidth,
       isStrokeCapRound: true,
       isStrokeJoinRound: true,
-      dotData: const FlDotData(show: false),
+      // จุดที่วันล่าสุด: เห็นยอดวันนี้ แม้ต้นเดือนมีข้อมูลแค่วันเดียว (เส้นยังไม่เกิด)
+      dotData: FlDotData(
+        checkToShowDot: (spot, bar) => spot.x == bar.spots.last.x,
+        getDotPainter:
+            (spot, percent, bar, index) => FlDotCirclePainter(
+              radius: AppSizes.chartDotRadius,
+              color: AppColors.chartIncome,
+              strokeWidth: AppSizes.chartLineWidth,
+              strokeColor: AppColors.surface,
+            ),
+      ),
       belowBarData: BarAreaData(show: true, color: AppColors.chartIncome.withValues(alpha: 0.1)),
     );
   }

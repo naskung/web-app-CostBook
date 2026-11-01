@@ -8,7 +8,9 @@ import 'package:costbook/features/assistant/bloc/assistant_bloc.dart';
 import 'package:costbook/features/dashboard/widgets/dashboard_panel.dart';
 
 class AiAskCard extends StatefulWidget {
-  const AiAskCard({super.key});
+  const AiAskCard({super.key, this.height});
+
+  final double? height;
 
   @override
   State<AiAskCard> createState() => _AiAskCardState();
@@ -36,6 +38,8 @@ class _AiAskCardState extends State<AiAskCard> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return DashboardPanel(
+      height: widget.height,
+      centered: true,
       title: 'dashboard.ai_title'.tr,
       trailing: IconButton(
         tooltip: 'dashboard.ai_open'.tr,
@@ -43,6 +47,7 @@ class _AiAskCardState extends State<AiAskCard> {
         icon: const Icon(Icons.open_in_full, size: AppSizes.iconSmall, color: AppColors.textSecondary),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             width: AppSizes.orbSize,

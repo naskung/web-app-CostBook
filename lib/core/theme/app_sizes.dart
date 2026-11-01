@@ -47,6 +47,7 @@ class AppSizes {
   static const double contentMaxWidth = 1200;
   static const double statCardWidth = 260;
   static const double statCardCompactWidth = 220;
+  static const double statCardMiniWidth = 160;
   static const double sellTileWidth = 140;
   static const double sellCartWidth = 440;
   static const double iconSmall = 20;
@@ -83,9 +84,10 @@ class AppSizes {
   static const double panelRadius = 16;
   static const double panelPadding = 20;
   static const double dashboardWideBreak = 960;
-  static const double dashboardRowHeight = 420;
-  static const double kpiFourColumnBreak = 900;
-  static const double kpiTwoColumnBreak = 520;
+  static const double dashboardRowHeight = 460;
+  static const double dashboardListRowHeight = 380;
+  static const double dashboardCompactRowHeight = 330;
+  static const double emptyStateIcon = 32;
   static const double heroFont = 34;
   static const double kpiFont = 26;
   static const double statIconBox = 40;

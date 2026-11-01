@@ -1,46 +1,37 @@
 part of 'dashboard_page.dart';
 
 extension _DashboardPageCharts on DashboardPage {
-  Widget _emptyText(BuildContext context, String text) {
-    return Text(text, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary));
+  // ยังไม่มีข้อมูล: ไอคอน + ข้อความ อยู่กลางกล่อง
+  Widget _emptyState(BuildContext context, IconData icon, String text) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: AppSizes.emptyStateIcon, color: AppColors.chartMuted),
+        const SizedBox(height: AppSizes.spaceSmall),
+        Text(
+          text,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+        ),
+      ],
+    );
   }
 
-  Widget _salesPanel(BuildContext context, DashboardState state, double? height, bool isWide) {
+  // ตัวเลขยอดขายใหญ่ + % เทียบเดือนก่อน แถวบน → กราฟยอดขายสะสมเต็มความกว้าง → ยอดตามหมวด
+  Widget _salesPanel(BuildContext context, DashboardState state, double? height) {
     final dashboard = state.dashboard;
     final textTheme = Theme.of(context).textTheme;
     final sales = dashboard.sales;
     final now = DateTime.now();
     final isThisMonth = state.month.year == now.year && state.month.month == now.month;
-    final hero = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          MoneyUtil.format(sales.netSales),
-          style: textTheme.headlineMedium?.copyWith(fontSize: AppSizes.heroFont, fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: AppSizes.spaceSmall),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DeltaPill(change: PercentUtil.change(current: sales.netSales, previous: dashboard.previous.netSales)),
-            const SizedBox(width: AppSizes.spaceSmall),
-            Text('dashboard.vs_last_month'.tr, style: textTheme.bodySmall),
-          ],
-        ),
-        const SizedBox(height: AppSizes.spaceMedium),
-        Text(
-          'dashboard.net_sales_caption'.trParams({
-            'count': '${dashboard.invoiceCount}',
-            'average': MoneyUtil.format(sales.averageBill),
-          }),
-          style: textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
-        ),
-        Text(
-          'dashboard.items_sold'.trParams({'count': '${sales.itemsSold}', 'vat': MoneyUtil.format(sales.vat)}),
-          style: textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
-        ),
-      ],
-    );
+    final change = PercentUtil.change(current: sales.netSales, previous: dashboard.previous.netSales);
+    final details = [
+      'dashboard.net_sales_caption'.trParams({
+        'count': '${dashboard.invoiceCount}',
+        'average': MoneyUtil.format(sales.averageBill),
+      }),
+      'dashboard.items_sold'.trParams({'count': '${sales.itemsSold}', 'vat': MoneyUtil.format(sales.vat)}),
+    ].join(' · ');
     final chart = SalesTrendChart(
       days: dashboard.dailySales,
       previousDays: dashboard.previousDailySales,
@@ -49,33 +40,37 @@ extension _DashboardPageCharts on DashboardPage {
       currentLabel: 'dashboard.this_month'.tr,
       previousLabel: 'dashboard.last_month'.tr,
       dayLabel: (day) => 'dashboard.day_label'.trParams({'day': '$day'}),
-      caption: 'dashboard.sales_trend_caption'.tr,
     );
-    final top =
-        isWide
-            ? Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(width: AppSizes.rankedLabelWidth * 1.6, child: hero),
-                const SizedBox(width: AppSizes.spaceMedium),
-                Expanded(child: chart),
-              ],
-            )
-            : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                hero,
-                const SizedBox(height: AppSizes.spaceMedium),
-                SizedBox(height: AppSizes.salesChartHeight, child: chart),
-              ],
-            );
     return DashboardPanel(
       title: 'dashboard.net_sales'.tr,
+      subtitle: 'dashboard.sales_trend_caption'.tr,
       height: height,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (isWide) Expanded(child: top) else top,
+          Wrap(
+            spacing: AppSizes.spaceMedium,
+            runSpacing: AppSizes.spaceXSmall,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                MoneyUtil.format(sales.netSales),
+                style: textTheme.headlineMedium?.copyWith(fontSize: AppSizes.heroFont, fontWeight: FontWeight.w700),
+              ),
+              if (change != null)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DeltaPill(change: change),
+                    const SizedBox(width: AppSizes.spaceSmall),
+                    Text('dashboard.vs_last_month'.tr, style: textTheme.bodySmall),
+                  ],
+                ),
+            ],
+          ),
+          Text(details, style: textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
+          const SizedBox(height: AppSizes.spaceMedium),
+          if (height == null) SizedBox(height: AppSizes.salesChartHeight, child: chart) else Expanded(child: chart),
           if (dashboard.topCategories.isNotEmpty) ...[
             const SizedBox(height: AppSizes.spaceMedium),
             CategorySplit(
@@ -115,15 +110,18 @@ extension _DashboardPageCharts on DashboardPage {
     );
   }
 
-  Widget _topProductsPanel(BuildContext context, DashboardModel dashboard) {
+  Widget _topProductsPanel(BuildContext context, DashboardModel dashboard, double? height) {
+    final hasProducts = dashboard.topProducts.isNotEmpty;
     return DashboardPanel(
+      height: height,
+      scrollable: hasProducts,
+      centered: !hasProducts,
       title: 'dashboard.top_products'.tr,
       subtitle: 'dashboard.top_products_caption'.tr,
       trailing: TextButton(onPressed: () => context.go(AppRoutes.products), child: Text('common.view_all'.tr)),
       child:
-          dashboard.topProducts.isEmpty
-              ? _emptyText(context, 'dashboard.no_sales'.tr)
-              : TopProductsTable(
+          hasProducts
+              ? TopProductsTable(
                 products: dashboard.topProducts,
                 labels: TopProductsColumns(
                   rank: 'dashboard.rank'.tr,
@@ -133,16 +131,20 @@ extension _DashboardPageCharts on DashboardPage {
                   profit: 'dashboard.profit_short'.tr,
                   margin: 'dashboard.margin'.tr,
                 ),
-              ),
+              )
+              : _emptyState(context, Icons.emoji_events_outlined, 'dashboard.no_sales'.tr),
     );
   }
 
-  Widget _marginPanel(BuildContext context, DashboardModel dashboard) {
+  Widget _marginPanel(BuildContext context, DashboardModel dashboard, double? height) {
     final margin = dashboard.sales.grossMargin;
     final useCostPage = context.watch<SettingsBloc>().state.company.useCostPage;
     return DashboardPanel(
+      height: height,
+      centered: true,
       title: 'dashboard.margin_title'.tr,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           MarginGauge(
             percent: margin < 0 ? 0 : margin,
@@ -195,12 +197,12 @@ extension _DashboardPageCharts on DashboardPage {
                   _trendNumbers(context, months),
                 ],
               )
-              : _emptyText(context, 'dashboard.no_trend'.tr),
+              : _emptyState(context, Icons.show_chart, 'dashboard.no_trend'.tr),
     );
   }
 
+  // ตารางตัวเลขรายเดือน พับไว้ก่อน (กดดูได้) หน้าไม่ยาวเกิน
   Widget _trendNumbers(BuildContext context, List<MonthTotalsModel> months) {
-    if (ResponsiveHelper.screenType(context) != ScreenType.mobile) return _trendTable(context, months);
     return ExpansionTile(
       title: Text('dashboard.show_numbers'.tr, style: Theme.of(context).textTheme.titleSmall),
       tilePadding: EdgeInsets.zero,
@@ -236,26 +238,33 @@ extension _DashboardPageCharts on DashboardPage {
     );
   }
 
-  Widget _expensePanel(DashboardModel dashboard) {
+  Widget _expensePanel(BuildContext context, DashboardModel dashboard, double? height) {
+    final hasExpense = dashboard.expenseByCategory.isNotEmpty;
     return DashboardPanel(
+      height: height,
+      scrollable: hasExpense,
+      centered: !hasExpense,
       title: 'dashboard.expense_by_category'.tr,
       subtitle: 'dashboard.expense_by_category_caption'.tr,
-      child: RankedBarList(
-        color: AppColors.chartExpense,
-        emptyText: 'dashboard.no_expense'.tr,
-        items: [
-          for (final item in dashboard.expenseByCategory)
-            RankedBarItem(
-              label: 'transaction.category.${item.category}'.tr,
-              value: item.amount,
-              valueText: '${MoneyUtil.format(item.amount)} · ${PercentUtil.format(item.percent)}',
-            ),
-        ],
-      ),
+      child:
+          hasExpense
+              ? RankedBarList(
+                color: AppColors.chartExpense,
+                emptyText: 'dashboard.no_expense'.tr,
+                items: [
+                  for (final item in dashboard.expenseByCategory)
+                    RankedBarItem(
+                      label: 'transaction.category.${item.category}'.tr,
+                      value: item.amount,
+                      valueText: '${MoneyUtil.format(item.amount)} · ${PercentUtil.format(item.percent)}',
+                    ),
+                ],
+              )
+              : _emptyState(context, Icons.receipt_long_outlined, 'dashboard.no_expense'.tr),
     );
   }
 
-  Widget _stockPanel(BuildContext context, DashboardModel dashboard) {
+  Widget _stockPanel(BuildContext context, DashboardModel dashboard, double? height) {
     final textTheme = Theme.of(context).textTheme;
     Widget figure(String label, String value) {
       return Expanded(
@@ -270,6 +279,8 @@ extension _DashboardPageCharts on DashboardPage {
     }
 
     return DashboardPanel(
+      height: height,
+      scrollable: true,
       title: 'dashboard.stock_title'.tr,
       trailing: TextButton(onPressed: () => context.go(AppRoutes.lowStockProducts), child: Text('common.view_all'.tr)),
       child: Column(
@@ -314,18 +325,22 @@ extension _DashboardPageCharts on DashboardPage {
     );
   }
 
-  Widget _marketPanel(BuildContext context, DashboardModel dashboard) {
+  Widget _marketPanel(BuildContext context, DashboardModel dashboard, double? height) {
+    final hasMarket = dashboard.market.isNotEmpty;
     return DashboardPanel(
+      height: height,
+      scrollable: hasMarket,
+      centered: !hasMarket,
       title: 'dashboard.market'.tr,
       subtitle: 'dashboard.market_caption'.tr,
       trailing: TextButton(onPressed: () => context.go(AppRoutes.products), child: Text('dashboard.market_check'.tr)),
       child:
-          dashboard.market.isEmpty
-              ? _emptyText(context, 'dashboard.market_empty'.tr)
-              : Column(
+          hasMarket
+              ? Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [for (final item in dashboard.market) _marketRow(context, item)],
-              ),
+              )
+              : _emptyState(context, Icons.travel_explore, 'dashboard.market_empty'.tr),
     );
   }
 
