@@ -43,10 +43,25 @@ void main() {
   }
 
   blocTest<StockBloc, StockState>(
-    'StockRequested สำเร็จ ได้คงเหลือของทุกสินค้า',
+    'StockRequested สำเร็จ ได้สินค้าที่นับสต็อก + ประวัติ',
     build: () {
       when(() => repository.getStock()).thenAnswer((_) async => [low, ok]);
+      when(() => repository.getMovements()).thenAnswer((_) async => [movement]);
       return StockBloc(repository);
+    },
+    act: (bloc) => bloc.add(StockRequested()),
+    expect:
+        () => [
+          const StockState(status: AppStatus.loading),
+          StockState(status: AppStatus.success, items: const [low, ok], movements: [movement]),
+        ],
+  );
+
+  blocTest<StockBloc, StockState>(
+    'StockRequested แบบไม่เอาประวัติ (หน้ารายการสินค้า) ไม่โหลดประวัติ',
+    build: () {
+      when(() => repository.getStock()).thenAnswer((_) async => [low, ok]);
+      return StockBloc(repository, withHistory: false);
     },
     act: (bloc) => bloc.add(StockRequested()),
     expect:
@@ -54,6 +69,7 @@ void main() {
           const StockState(status: AppStatus.loading),
           const StockState(status: AppStatus.success, items: [low, ok]),
         ],
+    verify: (_) => verifyNever(() => repository.getMovements()),
   );
 
   blocTest<StockBloc, StockState>(
@@ -70,44 +86,12 @@ void main() {
         ],
   );
 
-  test('เลือกเฉพาะใกล้หมด เห็นแค่สินค้าที่ใกล้หมด', () {
-    const state = StockState(items: [low, ok], onlyLow: true);
-    expect(state.visibleItems, [low]);
-  });
-
-  blocTest<StockBloc, StockState>(
-    'StockFilterChanged ไม่โหลดใหม่ แค่เปลี่ยนตัวกรอง',
-    build: () => StockBloc(repository),
-    seed: () => const StockState(status: AppStatus.success, items: [low, ok]),
-    act: (bloc) => bloc.add(StockFilterChanged(onlyLow: true)),
-    expect:
-        () => [
-          const StockState(status: AppStatus.success, items: [low, ok], onlyLow: true),
-        ],
-    verify: (_) => verifyNever(() => repository.getStock()),
-  );
-
-  blocTest<StockBloc, StockState>(
-    'StockViewChanged ไปหน้าประวัติ โหลดประวัติด้วย',
-    build: () {
-      when(() => repository.getStock()).thenAnswer((_) async => [low]);
-      when(() => repository.getMovements()).thenAnswer((_) async => [movement]);
-      return StockBloc(repository);
-    },
-    act: (bloc) => bloc.add(StockViewChanged(showHistory: true)),
-    expect:
-        () => [
-          const StockState(status: AppStatus.loading, showHistory: true),
-          StockState(status: AppStatus.success, showHistory: true, items: const [low], movements: [movement]),
-        ],
-  );
-
   blocTest<StockBloc, StockState>(
     'StockMovementSaved สำเร็จ บันทึกแล้วโหลดคงเหลือใหม่',
     build: () {
       whenSaveMovement(() async {});
       when(() => repository.getStock()).thenAnswer((_) async => [ok]);
-      return StockBloc(repository);
+      return StockBloc(repository, withHistory: false);
     },
     act: (bloc) => bloc.add(StockMovementSaved(type: 'in', productId: 'p2', quantity: 10, note: '')),
     expect:
@@ -142,7 +126,7 @@ void main() {
     build: () {
       whenSaveMovement(() async {});
       when(() => repository.getStock()).thenAnswer((_) async => [ok]);
-      return StockBloc(repository);
+      return StockBloc(repository, withHistory: false);
     },
     act:
         (bloc) => bloc.add(

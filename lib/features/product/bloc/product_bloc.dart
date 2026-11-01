@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:costbook/core/constants/app_status.dart';
 import 'package:costbook/core/utils/error_util.dart';
+import 'package:costbook/features/category/models/product_category_model.dart';
+import 'package:costbook/features/category/repository/category_repository.dart';
 import 'package:costbook/features/product/models/product_model.dart';
 import 'package:costbook/features/product/repository/product_repository.dart';
 
@@ -12,21 +14,26 @@ part 'product_event.dart';
 part 'product_state.dart';
 
 class ProductBloc extends Bloc<ProductEvent, ProductState> {
-  ProductBloc(this.repository) : super(const ProductState()) {
+  // onlyLow = เปิดหน้ามาแบบกรองเฉพาะใกล้หมด (เช่น กดจากหน้าภาพรวม)
+  ProductBloc(this.repository, this.categoryRepository, {bool onlyLow = false})
+    : super(ProductState(onlyLow: onlyLow)) {
     on<ProductsRequested>(_onProductsRequested);
     on<ProductSearchChanged>(_onSearchChanged);
     on<ProductCategoryChanged>(_onCategoryChanged);
+    on<ProductLowStockFilterChanged>(_onLowStockFilterChanged);
     on<ProductSaved>(_onProductSaved);
     on<ProductDeleted>(_onProductDeleted);
   }
 
   final ProductRepository repository;
+  final CategoryRepository categoryRepository;
 
   Future<void> _onProductsRequested(ProductsRequested event, Emitter<ProductState> emit) async {
     emit(state.copyWith(status: AppStatus.loading));
     try {
       final products = await repository.getProducts();
-      emit(state.copyWith(status: AppStatus.success, products: products));
+      final categories = await categoryRepository.getCategories();
+      emit(state.copyWith(status: AppStatus.success, products: products, categories: categories));
     } catch (error) {
       emit(state.copyWith(status: AppStatus.failure, errorCode: ErrorUtil.codeOf(error)));
     }
@@ -38,6 +45,10 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
 
   void _onCategoryChanged(ProductCategoryChanged event, Emitter<ProductState> emit) {
     emit(state.copyWith(category: event.category));
+  }
+
+  void _onLowStockFilterChanged(ProductLowStockFilterChanged event, Emitter<ProductState> emit) {
+    emit(state.copyWith(onlyLow: event.onlyLow));
   }
 
   // บันทึกสินค้าก่อน แล้วค่อยอัปโหลด / ลบรูป

@@ -3,6 +3,9 @@ class AppRoutes {
   static const String dashboard = '/';
   static const String sell = '/sell';
   static const String products = '/products';
+  static const String productCategories = '/products/categories';
+  // หน้ารายการสินค้าแบบกรองเฉพาะใกล้หมด
+  static const String lowStockProducts = '/products?low=1';
   static const String cost = '/cost';
   static const String stock = '/stock';
   static const String transactions = '/transactions';

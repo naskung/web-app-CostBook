@@ -6,9 +6,19 @@ extension _ProductListPageExt on ProductListPage {
     return PageToolbar(
       actions: [
         FilledButton.icon(
-          onPressed: () => ProductFormDialog.show(context, const ProductModel(name: ''), fields),
+          onPressed: () => ProductFormDialog.show(context, const ProductModel(name: ''), fields, state.categories),
           icon: const Icon(Icons.add),
           label: Text('product.add'.tr),
+        ),
+        OutlinedButton.icon(
+          onPressed: () => StockMovementDialog.show(context, type: MovementModel.stockIn),
+          icon: const Icon(Icons.add_circle_outline),
+          label: Text('stock.stock_in'.tr),
+        ),
+        OutlinedButton.icon(
+          onPressed: () => StockMovementDialog.show(context, type: MovementModel.stockOut),
+          icon: const Icon(Icons.remove_circle_outline),
+          label: Text('stock.stock_out'.tr),
         ),
       ],
       children: [
@@ -19,17 +29,38 @@ extension _ProductListPageExt on ProductListPage {
             onChanged: (query) => bloc.add(ProductSearchChanged(query)),
           ),
         ),
-        if (state.categories.isNotEmpty)
-          DropdownButton<String>(
-            value: state.category,
-            underline: const SizedBox(),
-            items: [
-              DropdownMenuItem(value: '', child: Text('product.all_categories'.tr)),
-              for (final category in state.categories) DropdownMenuItem(value: category, child: Text(category)),
-            ],
-            onChanged: (category) => bloc.add(ProductCategoryChanged(category ?? '')),
-          ),
       ],
+    );
+  }
+
+  // ตัวกรอง: หมวด (จากเมนู หมวดหมู่สินค้า) + เฉพาะใกล้หมด
+  Widget _filters(BuildContext context, ProductState state) {
+    final bloc = context.read<ProductBloc>();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSizes.spaceMedium),
+      child: Wrap(
+        spacing: AppSizes.spaceSmall,
+        runSpacing: AppSizes.spaceSmall,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          ChoiceChip(
+            label: Text('product.all_categories'.tr),
+            selected: state.category.isEmpty,
+            onSelected: (_) => bloc.add(ProductCategoryChanged('')),
+          ),
+          for (final category in state.categories)
+            ChoiceChip(
+              label: Text(category.name),
+              selected: state.category == category.id,
+              onSelected: (_) => bloc.add(ProductCategoryChanged(category.id)),
+            ),
+          FilterChip(
+            label: Text('product.only_low'.trParams({'count': '${state.lowStockCount}'})),
+            selected: state.onlyLow,
+            onSelected: (selected) => bloc.add(ProductLowStockFilterChanged(onlyLow: selected)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -43,11 +74,15 @@ extension _ProductListPageExt on ProductListPage {
       );
     }
     if (state.products.isEmpty) return EmptyView(message: 'product.empty'.tr, icon: Icons.inventory_2_outlined);
+    if (state.visibleProducts.isEmpty && state.onlyLow) {
+      return EmptyView(message: 'stock.low_empty'.tr, icon: Icons.check_circle_outline);
+    }
     if (state.visibleProducts.isEmpty) return EmptyView(message: 'product.not_found'.tr, icon: Icons.search_off);
     return null;
   }
 
-  Widget _table(BuildContext context, List<ProductModel> products, SettingsState settings) {
+  Widget _table(BuildContext context, ProductState state, SettingsState settings) {
+    final products = state.visibleProducts;
     final listFields = settings.listFields;
     return AppDataTable(
       columns: [
@@ -56,10 +91,10 @@ extension _ProductListPageExt on ProductListPage {
         AppDataColumn(label: 'product.cost_price'.tr, flex: 2, alignEnd: true),
         AppDataColumn(label: 'product.sell_price'.tr, flex: 2, alignEnd: true),
         AppDataColumn(label: 'product.stock'.tr, flex: 2, alignEnd: true),
-        const AppDataColumn(label: '', flex: 3, alignEnd: true),
+        const AppDataColumn(label: '', flex: 4, alignEnd: true),
       ],
-      onRowTap: (index) => ProductFormDialog.show(context, products[index], settings.fields),
-      rows: [for (final product in products) _row(context, product, listFields, settings.fields)],
+      onRowTap: (index) => ProductFormDialog.show(context, products[index], settings.fields, state.categories),
+      rows: [for (final product in products) _row(context, product, listFields, settings.fields, state.categories)],
     );
   }
 
@@ -68,6 +103,7 @@ extension _ProductListPageExt on ProductListPage {
     ProductModel product,
     List<ProductFieldModel> listFields,
     List<ProductFieldModel> fields,
+    List<ProductCategoryModel> categories,
   ) {
     final textTheme = Theme.of(context).textTheme;
     return [
@@ -76,7 +112,7 @@ extension _ProductListPageExt on ProductListPage {
       MoneyText(product.costPrice),
       MoneyText(product.sellPrice, style: textTheme.titleSmall),
       _stockCell(context, product),
-      _actions(context, product, fields),
+      _actions(context, product, fields, categories),
     ];
   }
 
@@ -125,10 +161,27 @@ extension _ProductListPageExt on ProductListPage {
     );
   }
 
-  Widget _actions(BuildContext context, ProductModel product, List<ProductFieldModel> fields) {
+  Widget _actions(
+    BuildContext context,
+    ProductModel product,
+    List<ProductFieldModel> fields,
+    List<ProductCategoryModel> categories,
+  ) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (product.trackStock) ...[
+          IconButton(
+            tooltip: 'stock.stock_in'.tr,
+            onPressed: () => StockMovementDialog.show(context, type: MovementModel.stockIn, productId: product.id),
+            icon: const Icon(Icons.add_circle_outline, color: AppColors.success),
+          ),
+          IconButton(
+            tooltip: 'stock.stock_out'.tr,
+            onPressed: () => StockMovementDialog.show(context, type: MovementModel.stockOut, productId: product.id),
+            icon: const Icon(Icons.remove_circle_outline, color: AppColors.danger),
+          ),
+        ],
         IconButton(
           tooltip: 'market.check_tooltip'.tr,
           onPressed: () => context.go(AppRoutes.marketPath(product.id)),
@@ -136,7 +189,7 @@ extension _ProductListPageExt on ProductListPage {
         ),
         IconButton(
           tooltip: 'common.edit'.tr,
-          onPressed: () => ProductFormDialog.show(context, product, fields),
+          onPressed: () => ProductFormDialog.show(context, product, fields, categories),
           icon: const Icon(Icons.edit_outlined),
         ),
         IconButton(

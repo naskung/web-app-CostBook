@@ -11,6 +11,9 @@ import 'package:costbook/features/assistant/repository/ai_repository.dart';
 import 'package:costbook/features/auth/bloc/auth_bloc.dart';
 import 'package:costbook/features/auth/pages/login_page.dart';
 import 'package:costbook/features/auth/repository/auth_repository.dart';
+import 'package:costbook/features/category/bloc/category_bloc.dart';
+import 'package:costbook/features/category/pages/category_page.dart';
+import 'package:costbook/features/category/repository/category_repository.dart';
 import 'package:costbook/features/cost/bloc/cost_bloc.dart';
 import 'package:costbook/features/cost/pages/cost_page.dart';
 import 'package:costbook/features/cost/repository/cost_repository.dart';
@@ -70,6 +73,7 @@ final appRouter = GoRouter(
         _menuRoute(AppRoutes.dashboard, _dashboardPage),
         _menuRoute(AppRoutes.sell, _sellPage),
         _menuRoute(AppRoutes.products, _productPage),
+        _menuRoute(AppRoutes.productCategories, _categoryPage),
         _menuRoute(AppRoutes.market, _marketPage),
         _menuRoute(AppRoutes.cost, _costPage),
         _menuRoute(AppRoutes.stock, _stockPage),
@@ -116,10 +120,27 @@ Widget _dashboardPage(GoRouterState state) {
   );
 }
 
+// สินค้า + สต็อกอยู่หน้าเดียว: StockBloc ไว้รับเข้า / เบิกออกจากหน้ารายการ / ?low=1 = เปิดมาแบบกรองเฉพาะใกล้หมด
 Widget _productPage(GoRouterState state) {
-  return BlocProvider(
-    create: (_) => ProductBloc(ProductRepository(ApiClient()))..add(ProductsRequested()),
+  final onlyLow = state.uri.queryParameters['low'] == '1';
+  return MultiBlocProvider(
+    providers: [
+      BlocProvider(
+        create:
+            (_) =>
+                ProductBloc(ProductRepository(ApiClient()), CategoryRepository(ApiClient()), onlyLow: onlyLow)
+                  ..add(ProductsRequested()),
+      ),
+      BlocProvider(create: (_) => StockBloc(StockRepository(ApiClient()), withHistory: false)..add(StockRequested())),
+    ],
     child: const ProductListPage(),
+  );
+}
+
+Widget _categoryPage(GoRouterState state) {
+  return BlocProvider(
+    create: (_) => CategoryBloc(CategoryRepository(ApiClient()))..add(CategoriesRequested()),
+    child: const CategoryPage(),
   );
 }
 

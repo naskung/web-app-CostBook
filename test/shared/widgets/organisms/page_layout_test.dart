@@ -26,7 +26,7 @@ void main() {
     logoutCount = 0;
   });
 
-  Future<void> pumpLayout(WidgetTester tester, Size screenSize) async {
+  Future<void> pumpLayout(WidgetTester tester, Size screenSize, {String currentPath = AppRoutes.dashboard}) async {
     tester.view.physicalSize = screenSize;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -40,7 +40,7 @@ void main() {
           appName: 'app.name'.tr,
           logoutLabel: 'common.logout'.tr,
           menuButtonLabel: 'common.toggle_menu'.tr,
-          currentPath: AppRoutes.dashboard,
+          currentPath: currentPath,
           onNavigate: navigatedRoutes.add,
           onLogout: () => logoutCount++,
           child: const Text('page-content'),
@@ -117,17 +117,18 @@ void main() {
     }
   });
 
-  testWidgets('จอคอม เมนูหดอยู่ กดไอคอนสินค้า ไปหน้า /products', (tester) async {
+  testWidgets('จอคอม เมนูหดอยู่ เมนูย่อยเป็นไอคอน กดรายการสินค้า ไปหน้า /products', (tester) async {
     await pumpLayout(tester, const Size(1440, 900));
     await toggleMenu(tester);
-    await tester.tap(find.byIcon(Icons.inventory_2_outlined));
+    await tester.tap(find.byIcon(Icons.list_alt));
     expect(navigatedRoutes, [AppRoutes.products]);
   });
 
-  testWidgets('จอคอม เมนูหดอยู่ ชี้ไอคอนแล้วเห็นชื่อเมนู', (tester) async {
+  testWidgets('จอคอม เมนูหดอยู่ ชี้ไอคอนแล้วเห็นชื่อเมนูย่อย', (tester) async {
     await pumpLayout(tester, const Size(1440, 900));
     await toggleMenu(tester);
-    expect(find.byTooltip('menu.products'.tr), findsOneWidget);
+    expect(find.byTooltip('menu.product_list'.tr), findsOneWidget);
+    expect(find.byTooltip('menu.stock_history'.tr), findsOneWidget);
   });
 
   testWidgets('มือถือ ซ่อนเมนูไว้ กดปุ่ม ☰ แล้วเมนูเลื่อนออกมา', (tester) async {
@@ -138,20 +139,30 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('แสดงชื่อเมนูครบ 7 หน้า และปุ่มออกจากระบบ', (tester) async {
+  testWidgets('แสดงชื่อเมนูหลักครบ 7 อัน และปุ่มออกจากระบบ / เมนูย่อยยังหุบอยู่', (tester) async {
     await pumpLayout(tester, const Size(1440, 900));
     for (final key in [
       'menu.dashboard',
+      'menu.sell',
       'menu.products',
       'menu.cost',
-      'menu.stock',
       'menu.transactions',
       'menu.invoices',
       'menu.settings',
     ]) {
-      expect(find.descendant(of: find.byType(AppSideMenu), matching: find.text(key.tr)), findsOneWidget);
+      expect(menuLabel(key), findsOneWidget);
     }
+    expect(menuLabel('menu.stock_history'), findsNothing);
     expect(find.text('common.logout'.tr), findsOneWidget);
+  });
+
+  testWidgets('อยู่หน้าประวัติสต็อก กลุ่มสินค้ากางเอง และเมนูย่อยนั้นเป็นสีส้ม', (tester) async {
+    await pumpLayout(tester, const Size(1440, 900), currentPath: AppRoutes.stock);
+    expect(menuLabel('menu.product_list'), findsOneWidget);
+    final selectedTile = tester.widget<Material>(
+      find.ancestor(of: menuLabel('menu.stock_history'), matching: find.byType(Material)).first,
+    );
+    expect(selectedTile.color, AppColors.primary);
   });
 
   testWidgets('เมนูของหน้าที่เปิดอยู่ เป็นสีส้ม', (tester) async {
@@ -167,16 +178,28 @@ void main() {
     expect(selectedTile.color, AppColors.primary);
   });
 
-  testWidgets('จอคอม กดเมนูสินค้า ไปหน้า /products', (tester) async {
+  testWidgets('จอคอม กดกลุ่มสินค้า กางเมนูย่อย (ไม่เปลี่ยนหน้า) แล้วกดรายการสินค้า ไปหน้า /products', (tester) async {
     await pumpLayout(tester, const Size(1440, 900));
-    await tester.tap(find.text('menu.products'.tr));
+    await tester.tap(menuLabel('menu.products'));
+    await tester.pumpAndSettle();
+    expect(navigatedRoutes, isEmpty);
+    await tester.tap(menuLabel('menu.product_list'));
     expect(navigatedRoutes, [AppRoutes.products]);
   });
 
-  testWidgets('มือถือ กดเมนูสต็อก ไปหน้า /stock และปิดเมนู', (tester) async {
+  testWidgets('จอคอม กดกลุ่มที่กางอยู่อีกครั้ง เมนูย่อยหุบ', (tester) async {
+    await pumpLayout(tester, const Size(1440, 900), currentPath: AppRoutes.stock);
+    await tester.tap(menuLabel('menu.products'));
+    await tester.pumpAndSettle();
+    expect(menuLabel('menu.stock_history'), findsNothing);
+  });
+
+  testWidgets('มือถือ กางกลุ่มสินค้า กดประวัติสต็อก ไปหน้า /stock และปิดเมนู', (tester) async {
     await pumpLayout(tester, const Size(375, 667));
     await openDrawer(tester);
-    await tester.tap(find.text('menu.stock'.tr));
+    await tester.tap(menuLabel('menu.products'));
+    await tester.pumpAndSettle();
+    await tester.tap(menuLabel('menu.stock_history'));
     await tester.pumpAndSettle();
     expect(navigatedRoutes, [AppRoutes.stock]);
     expect(find.byType(AppSideMenu), findsNothing);

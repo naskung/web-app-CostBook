@@ -40,6 +40,18 @@ void main() {
       expect(withImage.imageUrl, endsWith('/products/p1/image?v=1793466948000'));
     });
 
+    test('fromJson อ่าน category_id กับชื่อหมวด / toJson ส่ง category_id ไม่ส่งชื่อหมวด', () {
+      final withCategory = ProductModel.fromJson({
+        'id': 'p1',
+        'name': 'เคส',
+        'category_id': 'c1',
+        'category': 'งานพิมพ์ 3D',
+      });
+      expect([withCategory.categoryId, withCategory.category], ['c1', 'งานพิมพ์ 3D']);
+      expect(withCategory.toJson()['category_id'], 'c1');
+      expect(withCategory.toJson().containsKey('category'), false);
+    });
+
     test('toJson แล้ว fromJson กลับมา ได้ค่าเดิม', () {
       expect(ProductModel.fromJson(product.toJson()), product);
     });

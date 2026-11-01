@@ -11,34 +11,24 @@ part 'stock_event.dart';
 part 'stock_state.dart';
 
 class StockBloc extends Bloc<StockEvent, StockState> {
-  StockBloc(this.repository) : super(const StockState()) {
+  // withHistory = false → โหลดแค่สินค้า (หน้ารายการสินค้าใช้กล่องรับเข้า / เบิกออก ไม่ต้องโหลดประวัติ)
+  StockBloc(this.repository, {this.withHistory = true}) : super(const StockState()) {
     on<StockRequested>(_onStockRequested);
-    on<StockFilterChanged>(_onFilterChanged);
-    on<StockViewChanged>(_onViewChanged);
     on<StockMovementSaved>(_onMovementSaved);
   }
 
   final StockRepository repository;
+  final bool withHistory;
 
   Future<void> _onStockRequested(StockRequested event, Emitter<StockState> emit) async {
     emit(state.copyWith(status: AppStatus.loading));
     await _load(emit);
   }
 
-  void _onFilterChanged(StockFilterChanged event, Emitter<StockState> emit) {
-    emit(state.copyWith(onlyLow: event.onlyLow));
-  }
-
-  Future<void> _onViewChanged(StockViewChanged event, Emitter<StockState> emit) async {
-    emit(state.copyWith(status: AppStatus.loading, showHistory: event.showHistory));
-    await _load(emit);
-  }
-
   Future<void> _load(Emitter<StockState> emit) async {
     try {
       final items = await repository.getStock();
-      var movements = state.movements;
-      if (state.showHistory) movements = await repository.getMovements();
+      final movements = withHistory ? await repository.getMovements() : state.movements;
       emit(state.copyWith(status: AppStatus.success, items: items, movements: movements));
     } catch (error) {
       emit(state.copyWith(status: AppStatus.failure, errorCode: ErrorUtil.codeOf(error)));

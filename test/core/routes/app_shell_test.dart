@@ -100,12 +100,14 @@ void main() {
     expect(find.text('dashboard-page'), findsOneWidget);
   });
 
-  testWidgets('กดเมนูสินค้า ไปหน้าสินค้า และหัวข้อเปลี่ยนตาม', (tester) async {
+  testWidgets('กางกลุ่มสินค้า กดรายการสินค้า ไปหน้าสินค้า และหัวข้อเป็นชื่อเมนูย่อย', (tester) async {
     await pumpShell(tester);
     await tester.tap(find.text('menu.products'.tr));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('menu.product_list'.tr));
+    await tester.pumpAndSettle();
     expect(find.text('products-page'), findsOneWidget);
-    expect(find.widgetWithText(AppBar, 'menu.products'.tr), findsOneWidget);
+    expect(find.widgetWithText(AppBar, 'menu.product_list'.tr), findsOneWidget);
   });
 
   testWidgets('กดออกจากระบบ เรียก logout แล้วกลับไปหน้า login', (tester) async {

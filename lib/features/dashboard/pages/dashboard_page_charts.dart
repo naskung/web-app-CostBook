@@ -271,7 +271,7 @@ extension _DashboardPageCharts on DashboardPage {
 
     return DashboardPanel(
       title: 'dashboard.stock_title'.tr,
-      trailing: TextButton(onPressed: () => context.go(AppRoutes.stock), child: Text('common.view_all'.tr)),
+      trailing: TextButton(onPressed: () => context.go(AppRoutes.lowStockProducts), child: Text('common.view_all'.tr)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

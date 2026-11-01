@@ -4,8 +4,10 @@ class ProductState extends Equatable {
   const ProductState({
     this.status = AppStatus.initial,
     this.products = const [],
+    this.categories = const [],
     this.query = '',
     this.category = '',
+    this.onlyLow = false,
     this.errorCode = '',
     this.saveStatus = AppStatus.initial,
     this.saveErrorCode = '',
@@ -16,8 +18,11 @@ class ProductState extends Equatable {
 
   final AppStatus status;
   final List<ProductModel> products;
+  final List<ProductCategoryModel> categories;
   final String query;
+  // category = id ของหมวดที่กรอง ('' = ทุกหมวด)
   final String category;
+  final bool onlyLow;
   final String errorCode;
   final AppStatus saveStatus;
   final String saveErrorCode;
@@ -29,22 +34,21 @@ class ProductState extends Equatable {
 
   List<ProductModel> get visibleProducts {
     return products.where((product) {
-      final isInCategory = category.isEmpty || product.category == category;
-      return isInCategory && product.matches(query);
+      final isInCategory = category.isEmpty || product.categoryId == category;
+      final isShown = !onlyLow || product.isLowStock;
+      return isInCategory && isShown && product.matches(query);
     }).toList();
   }
 
-  List<String> get categories {
-    final names = products.map((product) => product.category).where((name) => name.isNotEmpty).toSet().toList();
-    names.sort();
-    return names;
-  }
+  int get lowStockCount => products.where((product) => product.isLowStock).length;
 
   ProductState copyWith({
     AppStatus? status,
     List<ProductModel>? products,
+    List<ProductCategoryModel>? categories,
     String? query,
     String? category,
+    bool? onlyLow,
     String? errorCode,
     AppStatus? saveStatus,
     String? saveErrorCode,
@@ -55,8 +59,10 @@ class ProductState extends Equatable {
     return ProductState(
       status: status ?? this.status,
       products: products ?? this.products,
+      categories: categories ?? this.categories,
       query: query ?? this.query,
       category: category ?? this.category,
+      onlyLow: onlyLow ?? this.onlyLow,
       errorCode: errorCode ?? this.errorCode,
       saveStatus: saveStatus ?? this.saveStatus,
       saveErrorCode: saveErrorCode ?? this.saveErrorCode,
@@ -70,8 +76,10 @@ class ProductState extends Equatable {
   List<Object?> get props => [
     status,
     products,
+    categories,
     query,
     category,
+    onlyLow,
     errorCode,
     saveStatus,
     saveErrorCode,

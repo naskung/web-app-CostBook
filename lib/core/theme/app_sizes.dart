@@ -97,6 +97,8 @@ class AppSizes {
   static const double sideMenuCompactBreak = 160;
   static const double menuLogoSize = 40;
   static const double menuItemPaddingY = 12;
+  static const double menuChildIndent = 44;
+  static const double menuChildPaddingY = 9;
 
   static const double loginBandRatio = 0.5;
   static const double curveDepth = 48;

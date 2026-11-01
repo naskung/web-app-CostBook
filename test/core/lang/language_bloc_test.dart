@@ -18,7 +18,7 @@ void main() {
     build: LanguageBloc.new,
     act: (bloc) => bloc.add(ChangeLanguage('en')),
     expect: () => ['en'],
-    verify: (_) => expect('menu.products'.tr, 'Products'),
+    verify: (_) => expect('menu.products'.tr, 'Products & stock'),
   );
 
   test('เปลี่ยนภาษาแล้ว จำไว้ในเครื่อง เปิดแอปครั้งหน้าได้ภาษาเดิม', () async {

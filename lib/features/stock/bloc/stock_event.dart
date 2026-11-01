@@ -2,19 +2,8 @@ part of 'stock_bloc.dart';
 
 abstract class StockEvent {}
 
+// โหลดสินค้าที่นับสต็อก (ไว้เลือกในกล่องรับเข้า / เบิกออก) + ประวัติ
 class StockRequested extends StockEvent {}
-
-class StockFilterChanged extends StockEvent {
-  StockFilterChanged({required this.onlyLow});
-
-  final bool onlyLow;
-}
-
-class StockViewChanged extends StockEvent {
-  StockViewChanged({required this.showHistory});
-
-  final bool showHistory;
-}
 
 class StockMovementSaved extends StockEvent {
   StockMovementSaved({

@@ -7,6 +7,7 @@ class ProductModel extends Equatable {
     this.id = '',
     this.code = '',
     required this.name,
+    this.categoryId = '',
     this.category = '',
     this.description = '',
     this.unit = '',
@@ -23,6 +24,8 @@ class ProductModel extends Equatable {
   final String id;
   final String code;
   final String name;
+  // categoryId = หมวดที่เลือก ('' = ไม่มีหมวด) / category = ชื่อหมวดจาก API ไว้แสดง (เปลี่ยนหมวดด้วย categoryId)
+  final String categoryId;
   final String category;
   final String description;
   final String unit;
@@ -60,6 +63,7 @@ class ProductModel extends Equatable {
       id: json['id'] as String? ?? '',
       code: json['code'] as String? ?? '',
       name: json['name'] as String? ?? '',
+      categoryId: json['category_id'] as String? ?? '',
       category: json['category'] as String? ?? '',
       description: json['description'] as String? ?? '',
       unit: json['unit'] as String? ?? '',
@@ -79,7 +83,7 @@ class ProductModel extends Equatable {
       'id': id,
       'code': code,
       'name': name,
-      'category': category,
+      'category_id': categoryId,
       'description': description,
       'unit': unit,
       'cost_price': costPrice,
@@ -97,6 +101,7 @@ class ProductModel extends Equatable {
     id,
     code,
     name,
+    categoryId,
     category,
     description,
     unit,

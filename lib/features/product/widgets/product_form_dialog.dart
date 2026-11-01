@@ -10,26 +10,38 @@ import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
 import 'package:costbook/core/utils/money_util.dart';
 import 'package:costbook/core/utils/validator_util.dart';
+import 'package:costbook/features/category/models/product_category_model.dart';
 import 'package:costbook/features/product/bloc/product_bloc.dart';
 import 'package:costbook/features/product/models/product_model.dart';
 import 'package:costbook/features/product/widgets/custom_field_input.dart';
 import 'package:costbook/features/product/widgets/product_image.dart';
 import 'package:costbook/features/settings/models/product_field_model.dart';
+import 'package:costbook/shared/widgets/atoms/app_dropdown.dart';
 import 'package:costbook/shared/widgets/atoms/app_image_box.dart';
 import 'package:costbook/shared/widgets/atoms/app_text_field.dart';
 import 'package:costbook/shared/widgets/organisms/form_dialog.dart';
 
 class ProductFormDialog extends StatefulWidget {
-  const ProductFormDialog({super.key, required this.product, required this.fields});
+  const ProductFormDialog({super.key, required this.product, required this.fields, required this.categories});
 
   final ProductModel product;
   final List<ProductFieldModel> fields;
+  final List<ProductCategoryModel> categories;
 
-  static Future<void> show(BuildContext context, ProductModel product, List<ProductFieldModel> fields) {
+  static Future<void> show(
+    BuildContext context,
+    ProductModel product,
+    List<ProductFieldModel> fields,
+    List<ProductCategoryModel> categories,
+  ) {
     final bloc = context.read<ProductBloc>();
     return showDialog<void>(
       context: context,
-      builder: (_) => BlocProvider.value(value: bloc, child: ProductFormDialog(product: product, fields: fields)),
+      builder:
+          (_) => BlocProvider.value(
+            value: bloc,
+            child: ProductFormDialog(product: product, fields: fields, categories: categories),
+          ),
     );
   }
 
@@ -41,7 +53,9 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   final _formKey = GlobalKey<FormState>();
   late final _nameController = TextEditingController(text: widget.product.name);
   late final _codeController = TextEditingController(text: widget.product.code);
-  late final _categoryController = TextEditingController(text: widget.product.category);
+  // หมวดที่เลือก ('' = ไม่มีหมวด) — หมวดที่ถูกลบไปแล้วถือว่าไม่มีหมวด
+  late String _categoryId =
+      widget.categories.any((category) => category.id == widget.product.categoryId) ? widget.product.categoryId : '';
   late final _unitController = TextEditingController(text: widget.product.unit);
   late final _costController = TextEditingController(text: _numberText(widget.product.costPrice));
   late final _sellController = TextEditingController(text: _numberText(widget.product.sellPrice));
@@ -62,7 +76,6 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   void dispose() {
     _nameController.dispose();
     _codeController.dispose();
-    _categoryController.dispose();
     _unitController.dispose();
     _costController.dispose();
     _sellController.dispose();
@@ -110,7 +123,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
       id: widget.product.id,
       code: _codeController.text.trim(),
       name: _nameController.text.trim(),
-      category: _categoryController.text.trim(),
+      categoryId: _categoryId,
       description: _descriptionController.text.trim(),
       unit: _unitController.text.trim(),
       costPrice: MoneyUtil.parse(_costController.text),
@@ -161,10 +174,14 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
           const SizedBox(height: AppSizes.spaceMedium),
           _twoFields(
             AppTextField(label: 'product.code'.tr, hint: 'product.code_hint'.tr, controller: _codeController),
-            AppTextField(
+            AppDropdown<String>(
               label: 'product.category'.tr,
-              hint: 'product.category_hint'.tr,
-              controller: _categoryController,
+              value: _categoryId,
+              items: {
+                '': 'product.no_category'.tr,
+                for (final category in widget.categories) category.id: category.name,
+              },
+              onChanged: (value) => setState(() => _categoryId = value ?? ''),
             ),
           ),
           const SizedBox(height: AppSizes.spaceMedium),

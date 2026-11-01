@@ -10,6 +10,7 @@ class ProductSearchChanged extends ProductEvent {
   final String query;
 }
 
+// category = id ของหมวด ('' = ทุกหมวด)
 class ProductCategoryChanged extends ProductEvent {
   ProductCategoryChanged(this.category);
 
@@ -17,6 +18,13 @@ class ProductCategoryChanged extends ProductEvent {
 }
 
 // image = รูปใหม่ที่เลือก (null = ไม่เปลี่ยน), removeImage = กดลบรูปเดิม
+// แสดงเฉพาะสินค้าใกล้หมด (นับสต็อก และคงเหลือ ≤ ขั้นต่ำ)
+class ProductLowStockFilterChanged extends ProductEvent {
+  ProductLowStockFilterChanged({required this.onlyLow});
+
+  final bool onlyLow;
+}
+
 class ProductSaved extends ProductEvent {
   ProductSaved(this.product, {this.image, this.removeImage = false});
 

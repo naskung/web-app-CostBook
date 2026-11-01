@@ -9,7 +9,6 @@ import 'package:costbook/core/utils/date_util.dart';
 import 'package:costbook/core/utils/money_util.dart';
 import 'package:costbook/features/stock/bloc/stock_bloc.dart';
 import 'package:costbook/features/stock/models/movement_model.dart';
-import 'package:costbook/features/stock/models/stock_item_model.dart';
 import 'package:costbook/features/stock/widgets/stock_movement_dialog.dart';
 import 'package:costbook/shared/widgets/atoms/app_badge.dart';
 import 'package:costbook/shared/widgets/atoms/app_loading.dart';
@@ -39,7 +38,7 @@ class StockPage extends StatelessWidget {
           final stateView = _stateView(context, state);
           return PageContent(
             centerChild: stateView,
-            children: [_toolbar(context, state), if (stateView == null) _content(context, state)],
+            children: [_toolbar(context), if (stateView == null) _history(context, state.movements)],
           );
         },
       ),
