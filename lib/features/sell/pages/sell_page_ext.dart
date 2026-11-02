@@ -223,8 +223,10 @@ extension _SellPageExt on _SellPageState {
     );
   }
 
+  // การ์ดกว้างประมาณ sellTileWidth ทุกขนาดจอ (จอกว้าง = แถวละหลายใบขึ้น ไม่ใช่การ์ดใหญ่ขึ้น) อย่างน้อยแถวละ 2 ใบ
   double _tileWidth(double areaWidth) {
-    final columns = (areaWidth / AppSizes.sellTileWidth).floor().clamp(2, 6);
+    final fitColumns = (areaWidth / AppSizes.sellTileWidth).floor();
+    final columns = fitColumns < 2 ? 2 : fitColumns;
     return (areaWidth - AppSizes.spaceSmall * (columns - 1)) / columns;
   }
 

@@ -30,7 +30,7 @@
 ## Phase 2 — Core
 
 - [x] theme: `AppColors`, `AppSizes`, `AppTheme` + ฟอนต์ LINESeedSansTH
-- [x] รองรับทุกขนาดจอ: `ScreenType`, `ResponsiveUtil` + test, `ResponsiveHelper`, `ScreenScaler` (จอใหญ่ขยายทั้งแอป) + test
+- [x] รองรับทุกขนาดจอ: `ScreenType`, `ResponsiveUtil` + test, `ResponsiveHelper` + test (เลิกใช้ `ScreenScaler` แล้ว 2026-11-02)
 - [x] `AppStatus`
 - [x] ภาษา: `AppLang` + `.tr` + `th.json` / `en.json`
 - [x] `LanguageBloc` (เปลี่ยนภาษาในหน้าตั้งค่า + จำไว้ในเครื่อง)
@@ -118,6 +118,7 @@
 
 | วันที่ | ทำอะไร | หมายเหตุ |
 |---|---|---|
+| 2026-11-02 | **จอใหญ่ (2K / 4K) ไม่ขยายทั้งแอปแล้ว** (ผู้ใช้แจ้งว่าจอ 2K ใหญ่เกิน — เดิม `ScreenScaler` ขยาย 2560 ÷ 1440 = 1.78 เท่า): ลบ `ScreenScaler` + `ResponsiveUtil.designWidth` / `maxScale` / `scaleOf` และ test ของมัน, จอใหญ่ = ขนาดเท่าจอคอมปกติแต่เห็นของมากขึ้น (หน้าทั่วไปเนื้อหาอยู่กลางจอกว้างไม่เกิน `contentMaxWidth` 1200) / หน้าขาย: เลิกจำกัดแถวละ 6 การ์ด → การ์ดกว้างประมาณ `sellTileWidth` ทุกจอ / แก้ skill `simple-code` + `docs/ARCHITECTURE.md` หัวข้อรองรับทุกขนาดจอ — analyze ผ่าน, test 647 ผ่าน (ลบ test การขยาย 9, เพิ่ม test หน้าขายจอ 2560 1) + ดูภาพจริง (build web + Chrome headless 2560x1440) หน้าขาย / ภาพรวม / สินค้า ขนาดปกติ ไม่ล้น | จอใหญ่หน้าภาพรวม / สินค้า มีที่ว่างซ้าย-ขวาเยอะ (ถ้าอยากให้เนื้อหากว้างขึ้น ปรับ `contentMaxWidth`) |
 | 2026-11-02 | **สินค้าคงเหลือ 0 เพิ่มลงบิลไม่ได้** (ผู้ใช้แจ้ง — เดิมกดได้ ไปโดน API ตอบ `stock_not_enough` ตอนรับเงิน): `ProductModel.isOutOfStock` (นับสต็อก + เหลือ ≤ 0), `InvoiceFormBloc._addProduct` ไม่ลงบิล นับ `outOfStockCount` เพิ่ม → หน้าขาย / หน้าออกเอกสาร ขึ้นแจ้งเตือน `invoice.out_of_stock` (ใช้ทั้งแตะการ์ด, สแกน, เลือกจาก dropdown) / สินค้าไม่นับสต็อก (งานบริการ) ยังเพิ่มได้ตามเดิม — analyze ผ่าน, test 655 ผ่าน (ใหม่: model 2, bloc 3) | ยังไม่ได้ลองใน Chrome / เพิ่มเกินคงเหลือ (เช่น มี 3 กด 4) ยังได้เหมือนเดิม แค่ขึ้น "เกินคงเหลือ" |
 | 2026-11-02 | **เลื่อนลงแล้วโหลดเพิ่มทีละ 20 ทุกหน้ารายการ** (ผู้ใช้ขอ): สินค้า (ค้นหา / หมวด / แท็บ / ใกล้หมด ย้ายไปให้ API ทำ + พิมพ์ค้นหารอ 300 ms + ตัวเลขบนแท็บจาก `/products/counts`), หมวดหมู่, ประวัติสต็อก, รายรับ-รายจ่าย, เอกสารขาย / ส่วนกลาง: `ApiConstants.pageSize`, `PageUtil` (append / hasMore / reloadLimit), `PageContent(onLoadMore:)`, `LoadMoreFooter`, ภาษา `common.load_more_failed` / บันทึก-ลบแล้วโหลดใหม่เท่าที่เลื่อนไว้ / เปลี่ยนเดือน-ตัวกรองระหว่างรอ ทิ้งผลเก่า — analyze ผ่าน, test 650 ผ่าน (ใหม่: bloc โหลดเพิ่ม 5 หน้า, สินค้าเขียน test ใหม่ทั้งชุด, PageUtil, path ที่ส่ง API, LoadMoreFooter, PageContent) + ลองใน Chrome กับสำเนา DB | ต้อง restart `make run` (API ใหม่) |
 | 2026-11-01 | **กำไรของที่ขายในประวัติสต็อก** (ผู้ใช้ขอ, API ส่ง `has_profit` / `sale_amount` / `cost_amount` / `profit`): คอลัมน์ "กำไร" (เขียว / ขาดทุนแดง + ยอดขาย · ทุน) + ป้าย "ขาย" ให้แถวที่ขาย (`isSale`) / **การ์ดหน้าขาย: รูปเต็มความกว้างการ์ด สี่เหลี่ยมจัตุรัส ครอปตรงกลาง** (ผู้ใช้ขอ — เดิมรูปแคบชิดซ้าย เพราะ Stack ของวงกลมจำนวนทำให้รูปไม่ยืด) `sellTileImageRatio` — test ผ่าน (ใหม่: model กำไร / isSale, หน้าประวัติสต็อก 2 กรณี, รูปการ์ดเต็มความกว้าง) + ดูใน Chrome กับสำเนา DB | |

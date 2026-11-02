@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:costbook/core/lang/app_lang.dart';
+import 'package:costbook/core/theme/app_sizes.dart';
 import 'package:costbook/core/theme/app_theme.dart';
 import 'package:costbook/features/invoice/bloc/invoice_form_bloc.dart';
 import 'package:costbook/features/invoice/models/invoice_draft_model.dart';
@@ -13,6 +14,7 @@ import 'package:costbook/features/invoice/repository/invoice_repository.dart';
 import 'package:costbook/features/product/models/product_model.dart';
 import 'package:costbook/features/product/repository/product_repository.dart';
 import 'package:costbook/features/sell/pages/sell_page.dart';
+import 'package:costbook/features/sell/widgets/sell_product_tile.dart';
 import 'package:costbook/features/settings/models/company_model.dart';
 import 'package:costbook/features/settings/repository/settings_repository.dart';
 
@@ -182,6 +184,15 @@ void main() {
     await tester.pump();
     final pay = find.widgetWithText(ElevatedButton, 'sell.pay'.trParams({'total': '150.00'}));
     expect(tester.getRect(pay).bottom, lessThanOrEqualTo(720));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('จอ 2K 2560x1440: การ์ดสินค้าขนาดเท่าจอคอมปกติ (แถวละหลายใบขึ้น ไม่ใช่การ์ดใหญ่ขึ้น)', (tester) async {
+    final many = [for (var i = 0; i < 20; i++) ProductModel(id: 'x$i', name: 'สินค้า $i', sellPrice: 10, stock: 99)];
+    when(() => productRepository.getProducts()).thenAnswer((_) async => many);
+    await pumpPage(tester, size: const Size(2560, 1440));
+    final tileWidth = tester.getSize(find.byType(SellProductTile).first).width;
+    expect(tileWidth, lessThan(AppSizes.sellTileWidth * 1.5));
     expect(tester.takeException(), isNull);
   });
 

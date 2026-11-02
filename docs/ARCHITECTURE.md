@@ -87,7 +87,7 @@ web-app-CostBook/
 │   │       ├── atoms/       app_button, app_text_field, app_dropdown, app_loading, app_badge, money_text, shop_logo, app_image_box (รูปมุมมน / ไม่มีรูป = กล่องไอคอน)
 │   │       ├── molecules/   empty_view, error_view, stat_card (การ์ดตัวเลขสรุป ใช้ทั้งภาพรวม / รายรับ-รายจ่าย / ราคาตลาด), month_switcher, search_field, section_card, notice_banner,
 │   │       │                chart_legend, ranked_bar_list (แท่งแนวนอนเรียงมากไปน้อย), market_range_bar (ราคาเรา vs ช่วงราคาตลาด)
-│   │       └── organisms/   page_layout, app_side_menu, screen_scaler, page_content (ขอบ + ความกว้างหน้า + เว้นที่ล่างให้ปุ่มแชท), page_toolbar,
+│   │       └── organisms/   page_layout, app_side_menu, page_content (ขอบ + ความกว้างหน้า + เว้นที่ล่างให้ปุ่มแชท), page_toolbar,
 │   │                        app_data_table (จอคอม = ตาราง / มือถือ = การ์ด / แคบกว่า minWidth รวม = เลื่อนซ้าย-ขวา), app_dialog (โครง dialog กลาง + แท็บใต้หัวได้), form_dialog (กล่องฟอร์ม),
 │   │                        app_alert_dialog (กล่องยืนยัน / แจ้งผล ไอคอนวงกลม), stat_grid
 │   └── features/          ทุก feature: models → repository → bloc → pages (+ _ext ถ้ายาว) → widgets
@@ -570,7 +570,7 @@ token หมดอายุ (7 วัน) / ถูกปฏิเสธ: API ต
 **เนื้อหาของทุกหน้า** (`PageContent` — ทุกหน้ายกเว้น login): เลื่อนขึ้นลงได้ / `header:` = แถบบนติดอยู่กับที่ตอนเลื่อน (มีเส้นบาง ๆ ใต้แถบเมื่อเลื่อนแล้ว) ใช้กับปุ่มกลับ: เช็คราคาตลาด, ออกเอกสารขาย, ดูเอกสารขาย (ทั้งแถบปุ่ม พิมพ์ / ดาวน์โหลด) / เลื่อนลงเกิน `AppSizes.scrollTopThreshold` → ปุ่มลูกศรกลม (`FloatingActionButton.small`) มุมขวาล่าง กึ่งกลางเหนือปุ่มแชท (`scrollTopRight` / `scrollTopBottom` คิดจากขนาดปุ่มแชท) กดแล้วเลื่อนกลับขึ้นบนสุด
 
 **การ์ดตัวเลขสรุป** (`StatCard` ใน `StatGrid`): ไอคอน + ชื่อ อยู่บน → ตัวเลขใหญ่ (`AppSizes.kpiFont` สีเข้ม, ยาวเกินย่อเอง) → คำอธิบาย (ไม่เกิน 2 บรรทัด) เรียงจากบนแบบเดียวกันทุกใบ ตัวเลขจึงอยู่ระดับเดียวกัน + แถบสัดส่วนชิดล่าง (`share` = %, `shareLabel`; ราง = สีเดียวกันแบบอ่อน, `PercentUtil.fraction` แปลง % เป็นความยาว) / การ์ดผลลัพธ์ของหน้า (1 ใบต่อหน้า) ใส่ `isHighlighted: true` → พื้นเข้มไล่สี + ตัวเลขใหญ่สีขาว + แถบเฉียงสีที่มุมขวาบนแบบหน้า login (`_CornerStripesPainter`) เช่น กำไรสุทธิ, ราคาแนะนำ — ขาดทุนส่ง `valueColor: AppColors.dangerOnDark` — `StatGrid` วางเป็นแถว การ์ดในแถวเดียวกัน**สูงเท่ากัน** (`IntrinsicHeight` + `Row` stretch) และเกลี่ยจำนวนต่อแถวให้เท่า ๆ กัน (`ResponsiveUtil.gridColumns`: 4 ใบ จอพอ 3 คอลัมน์ → 2 × 2)
-| **organisms** | ส่วนใหญ่ของหน้า | atoms, molecules | `PageLayout`, `AppSideMenu`, `AppTopBar`, `AppDataTable`, `FormCard`, `ScreenScaler` |
+| **organisms** | ส่วนใหญ่ของหน้า | atoms, molecules | `PageLayout`, `AppSideMenu`, `AppTopBar`, `AppDataTable`, `FormCard` |
 | **pages** | หน้าจอจริง (อยู่ใน feature) | ทุกระดับ + bloc | `ProductListPage` |
 
 กฎของ widget กลาง (`shared/widgets`):
@@ -671,28 +671,21 @@ class ProductListPage extends StatelessWidget {
 
 ### รองรับทุกขนาดจอ (Responsive)
 
-แอปใช้แบบ cross platform ต้องใช้ได้ตั้งแต่มือถือจนถึงจอใหญ่ แบ่งเป็น 2 วิธี:
-
-1. **จอเล็กถึงจอคอมทั่วไป (≤ 1440)** — จัด layout ใหม่ตามประเภทจอ
-2. **จอใหญ่ (> 1440)** — ไม่จัด layout ใหม่ แต่**ขยายทั้งแอปตามสัดส่วนเหมือนขยายรูปภาพ** หน้าตาเหมือนจอ 1440 ทุกอย่าง แค่ใหญ่ขึ้น
+แอปใช้แบบ cross platform ต้องใช้ได้ตั้งแต่มือถือจนถึงจอใหญ่ — จัด layout ตามประเภทจอ
+จอใหญ่ (เช่น 2K / 4K) **ไม่ขยายตัวหนังสือ / ปุ่ม** ขนาดเท่าจอคอมทั่วไป แต่ได้พื้นที่เห็นของมากขึ้น
+(ความคมชัดตามจอ ระบบปฏิบัติการ / browser จัดการให้แล้ว อยากให้ใหญ่ขึ้น ผู้ใช้กด Ctrl + ใน browser เอง)
 
 | ความกว้างจอ | `ScreenType` | layout |
 |---|---|---|
 | < 600 | `mobile` | 1 คอลัมน์, เมนูเป็น Drawer, ตาราง → รายการแบบการ์ด |
 | 600 – 1023 | `tablet` | 1–2 คอลัมน์, เมนูเป็น Drawer |
-| 1024 – 1440 | `desktop` | เมนูข้างแสดงตลอด, หลายคอลัมน์ |
-| > 1440 | `desktop` | เหมือน 1440 แล้ว `ScreenScaler` ขยายทั้งแอป (สูงสุด 2 เท่า) |
+| ≥ 1024 | `desktop` | เมนูข้างแสดงตลอด, หลายคอลัมน์ / เนื้อหาหน้ากว้างไม่เกิน `AppSizes.contentMaxWidth` อยู่กลางจอ (`PageContent`) / หน้าขาย: การ์ดสินค้าขนาดเท่าเดิม แถวละหลายใบขึ้น |
 
 | ไฟล์ | หน้าที่ |
 |---|---|
 | `core/constants/screen_type.dart` | `enum ScreenType { mobile, tablet, desktop }` |
-| `core/utils/responsive_util.dart` | ตัวเลขทั้งหมด (`tabletMinWidth`, `desktopMinWidth`, `designWidth`, `maxScale`) + `typeOf(width)`, `scaleOf(width)` — แก้ตัวเลขที่นี่ที่เดียว |
+| `core/utils/responsive_util.dart` | ตัวเลข breakpoint (`tabletMinWidth`, `desktopMinWidth`) + `typeOf(width)`, `gridColumns(...)` — แก้ตัวเลขที่นี่ที่เดียว |
 | `core/helpers/responsive_helper.dart` | `ResponsiveHelper.screenType(context)` ใช้ในหน้าเพื่อเลือก layout |
-| `shared/widgets/organisms/screen_scaler.dart` | ขยายทั้งแอปบนจอใหญ่ ใส่ใน `builder` ของ `MaterialApp` ครั้งเดียว |
-
-`ScreenScaler` ทำงานยังไง: จอกว้าง 2160 → `scale = 2160 ÷ 1440 = 1.5` → บอกแอปผ่าน `MediaQuery` ว่าจอกว้าง 1440
-แล้วใช้ `FittedBox` ขยายภาพทั้งแอปขึ้น 1.5 เท่าให้เต็มจอ ตัวอักษร ปุ่ม ระยะห่าง ใหญ่ขึ้นเท่ากันหมด และยังกดได้ปกติ
-ตัวอักษรยังคมชัด เพราะ Flutter วาดใหม่ที่ขนาดจริง ไม่ได้ยืดภาพ pixel ส่วนรูปภาพจะเลือกไฟล์ความละเอียดสูง (2x, 3x) ให้เอง ถ้ามีใน `assets/images/`
 
 ```dart
 // เลือก layout ในหน้า — ใช้ if ธรรมดา
@@ -704,7 +697,7 @@ return ProductTable(products: products);
 
 กฎ:
 - ห้ามพิมพ์ตัวเลข breakpoint เอง → ใช้ `ResponsiveHelper.screenType(context)`
-- ห้ามคูณขนาดด้วย scale เอง และไม่ใช้ package แบบ screenutil — `ScreenScaler` จัดการให้ทั้งแอปแล้ว
+- ห้ามขยายขนาดตามความกว้างจอ (คูณ scale เอง / package แบบ screenutil) — จอใหญ่ = เห็นของมากขึ้น ไม่ใช่ของใหญ่ขึ้น
 - ใช้ `Expanded` / `Flexible` / `Wrap` แทนความกว้างตายตัว ส่วนที่อาจยาวเกินจอใส่ใน `ListView` / `SingleChildScrollView`
 - ลองทุกหน้าที่ความกว้าง 375, 768, 1280, 1920, 2560
 
@@ -944,7 +937,6 @@ class App extends StatelessWidget {
             title: 'CostBook',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.light,
-            builder: (context, child) => ScreenScaler(child: child ?? const SizedBox()), // จอใหญ่ → ขยายทั้งแอป
             routerConfig: appRouter,
           );
         },

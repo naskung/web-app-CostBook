@@ -15,7 +15,6 @@ import 'package:costbook/features/auth/bloc/auth_bloc.dart';
 import 'package:costbook/features/auth/pages/login_page.dart';
 import 'package:costbook/features/auth/repository/auth_repository.dart';
 import 'package:costbook/shared/widgets/atoms/app_button.dart';
-import 'package:costbook/shared/widgets/organisms/screen_scaler.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 
@@ -61,7 +60,6 @@ void main() {
     await tester.pumpWidget(
       MaterialApp.router(
         theme: AppTheme.light,
-        builder: (context, child) => ScreenScaler(child: child ?? const SizedBox()),
         routerConfig: router,
       ),
     );

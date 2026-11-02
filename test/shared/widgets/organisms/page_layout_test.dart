@@ -9,7 +9,6 @@ import 'package:costbook/core/theme/app_sizes.dart';
 import 'package:costbook/core/theme/app_theme.dart';
 import 'package:costbook/shared/widgets/organisms/app_side_menu.dart';
 import 'package:costbook/shared/widgets/organisms/page_layout.dart';
-import 'package:costbook/shared/widgets/organisms/screen_scaler.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -33,7 +32,6 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
-        builder: (context, child) => ScreenScaler(child: child ?? const SizedBox()),
         home: PageLayout(
           title: 'menu.dashboard'.tr,
           menuItems: AppMenu.items,
