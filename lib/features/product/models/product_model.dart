@@ -51,6 +51,8 @@ class ProductModel extends Equatable {
 
   bool get isLowStock => trackStock && stock <= minStock;
 
+  bool get isOutOfStock => trackStock && stock <= 0;
+
   String fieldValue(String fieldId) => customFields[fieldId] ?? '';
 
   bool matches(String query) {

@@ -35,6 +35,8 @@ void main() {
     total: 107,
   );
   const coffee = ProductModel(id: 'p1', code: 'CF001', name: 'กาแฟเย็น', unit: 'แก้ว', sellPrice: 45, stock: 10);
+  const soldOutTea = ProductModel(id: 'p2', code: 'TE001', name: 'ชาเย็น', unit: 'แก้ว', sellPrice: 40, stock: 0);
+  const delivery = ProductModel(id: 'p3', name: 'ค่าส่ง', sellPrice: 50, stock: 0, trackStock: false);
   const company = CompanyModel(name: 'ร้านตัวอย่าง', taxId: '0105555555555');
   const coffeeLine = InvoiceDraftItemModel(
     productId: 'p1',
@@ -115,6 +117,44 @@ void main() {
     expect:
         () => [
           ready.copyWith(items: [coffeeLine.copyWith(quantity: 2)]),
+        ],
+  );
+
+  blocTest<InvoiceFormBloc, InvoiceFormState>(
+    'เพิ่มสินค้าที่คงเหลือ 0 ไม่ลงบิล นับ outOfStockCount เพิ่ม',
+    build: buildBloc,
+    seed: () => ready.copyWith(products: [soldOutTea]),
+    act: (bloc) => bloc.add(InvoiceItemAdded('p2')),
+    expect: () => [ready.copyWith(products: [soldOutTea], outOfStockCount: 1)],
+  );
+
+  blocTest<InvoiceFormBloc, InvoiceFormState>(
+    'สแกนสินค้าที่คงเหลือ 0 ไม่ลงบิล นับ outOfStockCount เพิ่ม',
+    build: buildBloc,
+    seed: () => ready.copyWith(products: [soldOutTea]),
+    act: (bloc) => bloc.add(InvoiceCodeScanned('TE001')),
+    expect: () => [ready.copyWith(products: [soldOutTea], outOfStockCount: 1)],
+  );
+
+  blocTest<InvoiceFormBloc, InvoiceFormState>(
+    'สินค้าไม่นับสต็อก คงเหลือ 0 ก็ยังเพิ่มลงบิลได้',
+    build: buildBloc,
+    seed: () => ready.copyWith(products: [delivery]),
+    act: (bloc) => bloc.add(InvoiceItemAdded('p3')),
+    expect:
+        () => [
+          ready.copyWith(
+            products: [delivery],
+            items: [
+              const InvoiceDraftItemModel(
+                productId: 'p3',
+                name: 'ค่าส่ง',
+                trackStock: false,
+                quantity: 1,
+                unitPrice: 50,
+              ),
+            ],
+          ),
         ],
   );
 

@@ -197,6 +197,7 @@
   "invoice.unit_price": "Unit price",
   "invoice.line_amount": "Amount",
   "invoice.in_stock": "{stock} in stock",
+  "invoice.out_of_stock": "Out of stock. Can't add it to the bill",
   "invoice.subtotal": "Amount before VAT",
   "invoice.vat": "VAT 7%",
   "invoice.grand_total": "Grand total",

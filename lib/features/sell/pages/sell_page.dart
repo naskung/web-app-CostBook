@@ -121,6 +121,10 @@ class _SellPageState extends State<SellPage> {
           listener: (context, state) => SnackbarHelper.showError(context, 'sell.code_not_found'.tr),
         ),
         BlocListener<InvoiceFormBloc, InvoiceFormState>(
+          listenWhen: (previous, current) => previous.outOfStockCount != current.outOfStockCount,
+          listener: (context, state) => SnackbarHelper.showError(context, 'invoice.out_of_stock'.tr),
+        ),
+        BlocListener<InvoiceFormBloc, InvoiceFormState>(
           listenWhen:
               (previous, current) =>
                   previous.submitStatus == AppStatus.loading && current.submitStatus != AppStatus.loading,

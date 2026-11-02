@@ -237,7 +237,7 @@ extension _SellPageExt on _SellPageState {
       name: product.name,
       price: product.sellPrice,
       stockText: stockText,
-      isOut: product.trackStock && product.stock <= 0,
+      isOut: product.isOutOfStock,
       quantityInCart: state.quantityOf(product.id),
       onTap: () => context.read<InvoiceFormBloc>().add(InvoiceItemAdded(product.id)),
     );

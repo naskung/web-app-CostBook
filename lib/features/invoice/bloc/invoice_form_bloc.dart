@@ -76,7 +76,12 @@ class InvoiceFormBloc extends Bloc<InvoiceFormEvent, InvoiceFormState> {
     _addProduct(emit, products.first);
   }
 
+  // นับสต็อกแล้วเหลือ 0 → ไม่ลงบิล นับ outOfStockCount เพิ่ม (หน้าจอขึ้นแจ้งเตือน)
   void _addProduct(Emitter<InvoiceFormState> emit, ProductModel product) {
+    if (product.isOutOfStock) {
+      emit(state.copyWith(outOfStockCount: state.outOfStockCount + 1));
+      return;
+    }
     final existing = state.items.where((item) => item.productId == product.id).toList();
     if (existing.isNotEmpty) {
       final item = existing.first;

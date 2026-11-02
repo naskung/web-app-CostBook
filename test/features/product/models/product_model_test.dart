@@ -65,6 +65,15 @@ void main() {
       expect(product.isLowStock, false);
     });
 
+    test('isOutOfStock เป็น true เมื่อนับสต็อกและเหลือ 0', () {
+      expect(const ProductModel(name: 'ชา', stock: 0).isOutOfStock, true);
+      expect(product.isOutOfStock, false);
+    });
+
+    test('isOutOfStock เป็น false เมื่อไม่นับสต็อก ถึงจะเหลือ 0', () {
+      expect(const ProductModel(name: 'ค่าบริการ', stock: 0, trackStock: false).isOutOfStock, false);
+    });
+
     test('isNew เป็น true เมื่อยังไม่มี id', () {
       expect(const ProductModel(name: 'ใหม่').isNew, true);
       expect(product.isNew, false);

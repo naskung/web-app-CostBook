@@ -197,6 +197,7 @@
   "invoice.unit_price": "ราคา/หน่วย",
   "invoice.line_amount": "จำนวนเงิน",
   "invoice.in_stock": "คงเหลือ {stock}",
+  "invoice.out_of_stock": "สินค้าหมด เพิ่มลงบิลไม่ได้",
   "invoice.subtotal": "มูลค่าก่อน VAT",
   "invoice.vat": "ภาษีมูลค่าเพิ่ม 7%",
   "invoice.grand_total": "จำนวนเงินรวมทั้งสิ้น",

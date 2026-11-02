@@ -111,34 +111,38 @@ class _InvoiceFormPageState extends State<InvoiceFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<InvoiceFormBloc, InvoiceFormState>(
-      listenWhen:
-          (previous, current) =>
-              previous.submitStatus == AppStatus.loading && current.submitStatus != AppStatus.loading,
-      listener: _onSubmitResult,
-      builder: (context, state) {
-        if (state.status == AppStatus.initial || state.status == AppStatus.loading) return const AppLoading();
-        if (state.status == AppStatus.failure) {
-          return ErrorView(
-            message: 'error.${state.errorCode}'.tr,
-            retryLabel: 'common.retry'.tr,
-            onRetry: () => context.read<InvoiceFormBloc>().add(InvoiceFormOpened()),
+    return BlocListener<InvoiceFormBloc, InvoiceFormState>(
+      listenWhen: (previous, current) => previous.outOfStockCount != current.outOfStockCount,
+      listener: (context, state) => SnackbarHelper.showError(context, 'invoice.out_of_stock'.tr),
+      child: BlocConsumer<InvoiceFormBloc, InvoiceFormState>(
+        listenWhen:
+            (previous, current) =>
+                previous.submitStatus == AppStatus.loading && current.submitStatus != AppStatus.loading,
+        listener: _onSubmitResult,
+        builder: (context, state) {
+          if (state.status == AppStatus.initial || state.status == AppStatus.loading) return const AppLoading();
+          if (state.status == AppStatus.failure) {
+            return ErrorView(
+              message: 'error.${state.errorCode}'.tr,
+              retryLabel: 'common.retry'.tr,
+              onRetry: () => context.read<InvoiceFormBloc>().add(InvoiceFormOpened()),
+            );
+          }
+          return Form(
+            key: _formKey,
+            child: PageContent(
+              maxWidth: AppSizes.contentMaxWidth * 3 / 4,
+              header: _backButton(context),
+              children: [
+                if (state.company.needsTaxId) _taxIdBanner(context),
+                _customerSection(context, state),
+                _itemsSection(context, state),
+                _totalsSection(context, state),
+              ],
+            ),
           );
-        }
-        return Form(
-          key: _formKey,
-          child: PageContent(
-            maxWidth: AppSizes.contentMaxWidth * 3 / 4,
-            header: _backButton(context),
-            children: [
-              if (state.company.needsTaxId) _taxIdBanner(context),
-              _customerSection(context, state),
-              _itemsSection(context, state),
-              _totalsSection(context, state),
-            ],
-          ),
-        );
-      },
+        },
+      ),
     );
   }
 }

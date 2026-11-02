@@ -8,6 +8,7 @@ class InvoiceFormState extends Equatable {
     this.items = const [],
     this.discount = 0,
     this.scanMissCount = 0,
+    this.outOfStockCount = 0,
     this.errorCode = '',
     this.submitStatus = AppStatus.initial,
     this.submitErrorCode = '',
@@ -21,6 +22,7 @@ class InvoiceFormState extends Equatable {
   final List<InvoiceDraftItemModel> items;
   final double discount;
   final int scanMissCount;
+  final int outOfStockCount;
   final String errorCode;
   final AppStatus submitStatus;
   final String submitErrorCode;
@@ -70,6 +72,7 @@ class InvoiceFormState extends Equatable {
     List<InvoiceDraftItemModel>? items,
     double? discount,
     int? scanMissCount,
+    int? outOfStockCount,
     String? errorCode,
     AppStatus? submitStatus,
     String? submitErrorCode,
@@ -83,6 +86,7 @@ class InvoiceFormState extends Equatable {
       items: items ?? this.items,
       discount: discount ?? this.discount,
       scanMissCount: scanMissCount ?? this.scanMissCount,
+      outOfStockCount: outOfStockCount ?? this.outOfStockCount,
       errorCode: errorCode ?? this.errorCode,
       submitStatus: submitStatus ?? this.submitStatus,
       submitErrorCode: submitErrorCode ?? this.submitErrorCode,
@@ -99,6 +103,7 @@ class InvoiceFormState extends Equatable {
     items,
     discount,
     scanMissCount,
+    outOfStockCount,
     errorCode,
     submitStatus,
     submitErrorCode,
