@@ -1,4 +1,5 @@
 import 'package:costbook/core/constants/api_constants.dart';
+import 'package:costbook/core/constants/delivery_status.dart';
 import 'package:costbook/core/network/api_client.dart';
 import 'package:costbook/core/utils/date_util.dart';
 import 'package:costbook/features/invoice/models/invoice_draft_model.dart';
@@ -46,6 +47,11 @@ class InvoiceRepository {
 
   Future<InvoiceModel> cancelInvoice(String id) async {
     final data = await api.post('/invoices/$id/cancel', {}) as Map<String, dynamic>;
+    return InvoiceModel.fromJson(data);
+  }
+
+  Future<InvoiceModel> updateDelivery(String id, DeliveryStatus status) async {
+    final data = await api.put('/invoices/$id/delivery', {'delivery_status': status.name}) as Map<String, dynamic>;
     return InvoiceModel.fromJson(data);
   }
 }

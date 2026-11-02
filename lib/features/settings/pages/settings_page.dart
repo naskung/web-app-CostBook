@@ -43,6 +43,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _vatRegistered = true;
   bool _pricesIncludeVat = false;
   bool _useCostPage = true;
+  bool _trackDelivery = false;
 
   @override
   void initState() {
@@ -69,6 +70,7 @@ class _SettingsPageState extends State<SettingsPage> {
     _vatRegistered = company.vatRegistered;
     _pricesIncludeVat = company.pricesIncludeVat;
     _useCostPage = company.useCostPage;
+    _trackDelivery = company.trackDelivery;
   }
 
   void _setVatRegistered(bool value) => setState(() => _vatRegistered = value);
@@ -76,6 +78,8 @@ class _SettingsPageState extends State<SettingsPage> {
   void _setPricesIncludeVat(bool value) => setState(() => _pricesIncludeVat = value);
 
   void _setUseCostPage(bool value) => setState(() => _useCostPage = value);
+
+  void _setTrackDelivery(bool value) => setState(() => _trackDelivery = value);
 
   void _onSave() {
     final isValid = _formKey.currentState?.validate() ?? false;
@@ -93,6 +97,7 @@ class _SettingsPageState extends State<SettingsPage> {
           vatRegistered: _vatRegistered,
           pricesIncludeVat: _vatRegistered && _pricesIncludeVat,
           useCostPage: _useCostPage,
+          trackDelivery: _trackDelivery,
         ),
       ),
     );

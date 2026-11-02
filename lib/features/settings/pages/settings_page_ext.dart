@@ -88,6 +88,13 @@ extension _SettingsPageExt on _SettingsPageState {
           value: _useCostPage,
           onChanged: _setUseCostPage,
         ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text('settings.track_delivery'.tr),
+          subtitle: Text('settings.track_delivery_hint'.tr),
+          value: _trackDelivery,
+          onChanged: _setTrackDelivery,
+        ),
       ],
     );
   }

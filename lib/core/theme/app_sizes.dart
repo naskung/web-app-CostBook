@@ -61,6 +61,7 @@ class AppSizes {
   static const double iconSmall = 20;
   static const double badgePaddingX = 10;
   static const double badgePaddingY = 2;
+  static const double badgeIcon = 16;
   static const double tableRowMinHeight = 52;
   static const double tableColumnMinWidth = 96;
   static const double tableActionsWidth = 104;

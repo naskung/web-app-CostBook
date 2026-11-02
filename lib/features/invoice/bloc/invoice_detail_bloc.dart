@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:costbook/core/constants/app_status.dart';
+import 'package:costbook/core/constants/delivery_status.dart';
 import 'package:costbook/core/utils/error_util.dart';
 import 'package:costbook/features/invoice/models/invoice_model.dart';
 import 'package:costbook/features/invoice/repository/invoice_repository.dart';
@@ -13,6 +14,7 @@ class InvoiceDetailBloc extends Bloc<InvoiceDetailEvent, InvoiceDetailState> {
   InvoiceDetailBloc(this.repository, {required this.invoiceId}) : super(const InvoiceDetailState()) {
     on<InvoiceDetailRequested>(_onRequested);
     on<InvoiceCancelRequested>(_onCancelRequested);
+    on<InvoiceDetailDeliveryChanged>(_onDeliveryChanged);
   }
 
   final InvoiceRepository repository;
@@ -35,6 +37,16 @@ class InvoiceDetailBloc extends Bloc<InvoiceDetailEvent, InvoiceDetailState> {
       emit(state.copyWith(cancelStatus: AppStatus.success, invoice: invoice));
     } catch (error) {
       emit(state.copyWith(cancelStatus: AppStatus.failure, cancelErrorCode: ErrorUtil.codeOf(error)));
+    }
+  }
+
+  Future<void> _onDeliveryChanged(InvoiceDetailDeliveryChanged event, Emitter<InvoiceDetailState> emit) async {
+    emit(state.copyWith(deliveryUpdateStatus: AppStatus.loading));
+    try {
+      final invoice = await repository.updateDelivery(invoiceId, event.deliveryStatus);
+      emit(state.copyWith(deliveryUpdateStatus: AppStatus.success, invoice: invoice));
+    } catch (error) {
+      emit(state.copyWith(deliveryUpdateStatus: AppStatus.failure, deliveryErrorCode: ErrorUtil.codeOf(error)));
     }
   }
 }

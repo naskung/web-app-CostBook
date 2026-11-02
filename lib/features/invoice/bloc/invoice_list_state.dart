@@ -8,6 +8,8 @@ class InvoiceListState extends Equatable {
     this.errorCode = '',
     this.hasMore = false,
     this.moreStatus = AppStatus.initial,
+    this.deliveryUpdateStatus = AppStatus.initial,
+    this.deliveryErrorCode = '',
   });
 
   final DateTime month;
@@ -17,6 +19,9 @@ class InvoiceListState extends Equatable {
   // ยังมีใบที่ยังไม่ได้โหลดไหม / สถานะของการโหลดหน้าต่อไป
   final bool hasMore;
   final AppStatus moreStatus;
+  // ผลของการเปลี่ยนสถานะการส่ง (พังแล้วหน้าจอแจ้ง error)
+  final AppStatus deliveryUpdateStatus;
+  final String deliveryErrorCode;
 
   // เลื่อนลงแล้วโหลดหน้าต่อไปเองได้ไหม (โหลดเพิ่มพัง → รอผู้ใช้กดลองใหม่ ไม่ยิงซ้ำเอง)
   bool get canLoadMore =>
@@ -29,6 +34,8 @@ class InvoiceListState extends Equatable {
     String? errorCode,
     bool? hasMore,
     AppStatus? moreStatus,
+    AppStatus? deliveryUpdateStatus,
+    String? deliveryErrorCode,
   }) {
     return InvoiceListState(
       month: month ?? this.month,
@@ -37,9 +44,20 @@ class InvoiceListState extends Equatable {
       errorCode: errorCode ?? this.errorCode,
       hasMore: hasMore ?? this.hasMore,
       moreStatus: moreStatus ?? this.moreStatus,
+      deliveryUpdateStatus: deliveryUpdateStatus ?? this.deliveryUpdateStatus,
+      deliveryErrorCode: deliveryErrorCode ?? this.deliveryErrorCode,
     );
   }
 
   @override
-  List<Object?> get props => [month, status, invoices, errorCode, hasMore, moreStatus];
+  List<Object?> get props => [
+    month,
+    status,
+    invoices,
+    errorCode,
+    hasMore,
+    moreStatus,
+    deliveryUpdateStatus,
+    deliveryErrorCode,
+  ];
 }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:costbook/core/constants/api_constants.dart';
 import 'package:costbook/core/constants/app_status.dart';
+import 'package:costbook/core/constants/delivery_status.dart';
 import 'package:costbook/core/utils/date_util.dart';
 import 'package:costbook/core/utils/error_util.dart';
 import 'package:costbook/core/utils/page_util.dart';
@@ -17,6 +18,7 @@ class InvoiceListBloc extends Bloc<InvoiceListEvent, InvoiceListState> {
     on<InvoicesRequested>(_onRequested);
     on<InvoiceMonthChanged>(_onMonthChanged);
     on<InvoicesMoreRequested>(_onMoreRequested);
+    on<InvoiceDeliveryChanged>(_onDeliveryChanged);
   }
 
   final InvoiceRepository repository;
@@ -87,6 +89,21 @@ class InvoiceListBloc extends Bloc<InvoiceListEvent, InvoiceListState> {
     } catch (_) {
       if (state.month != month) return;
       emit(state.copyWith(moreStatus: AppStatus.failure));
+    }
+  }
+
+  // เปลี่ยนสถานะการส่งของใบเดียว: บันทึกแล้วแก้แค่แถวนั้นในรายการ (ไม่โหลดทั้งเดือนใหม่)
+  Future<void> _onDeliveryChanged(InvoiceDeliveryChanged event, Emitter<InvoiceListState> emit) async {
+    emit(state.copyWith(deliveryUpdateStatus: AppStatus.loading));
+    try {
+      final invoice = await repository.updateDelivery(event.invoiceId, event.deliveryStatus);
+      final invoices = [
+        for (final summary in state.invoices)
+          if (summary.id == invoice.id) summary.copyWith(deliveryStatus: invoice.deliveryStatus) else summary,
+      ];
+      emit(state.copyWith(deliveryUpdateStatus: AppStatus.success, invoices: invoices));
+    } catch (error) {
+      emit(state.copyWith(deliveryUpdateStatus: AppStatus.failure, deliveryErrorCode: ErrorUtil.codeOf(error)));
     }
   }
 }

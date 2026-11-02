@@ -3,8 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:costbook/core/constants/app_status.dart';
+import 'package:costbook/core/constants/delivery_status.dart';
 import 'package:costbook/core/network/api_exception.dart';
 import 'package:costbook/features/invoice/bloc/invoice_list_bloc.dart';
+import 'package:costbook/features/invoice/models/invoice_model.dart';
 import 'package:costbook/features/invoice/models/invoice_summary_model.dart';
 import 'package:costbook/features/invoice/repository/invoice_repository.dart';
 
@@ -156,4 +158,62 @@ void main() {
         ],
     verify: (bloc) => expect(bloc.state.canLoadMore, false),
   );
+
+  group('InvoiceDeliveryChanged', () {
+    const other = InvoiceSummaryModel(
+      id: 'i2',
+      invoiceNo: 'INV-2026-0002',
+      issueDate: '2026-10-31',
+      status: 'issued',
+      customerName: 'ลูกค้า 2',
+      total: 50,
+    );
+    const shippedInvoice = InvoiceModel(
+      id: 'i1',
+      invoiceNo: 'INV-2026-0001',
+      issueDate: '2026-10-31',
+      status: 'issued',
+      deliveryStatus: DeliveryStatus.shipped,
+      customerName: 'ลูกค้า',
+      subtotal: 100,
+      vat: 7,
+      total: 107,
+    );
+    final loaded = InvoiceListState(month: october, status: AppStatus.success, invoices: const [summary, other]);
+
+    blocTest<InvoiceListBloc, InvoiceListState>(
+      'เปลี่ยนเป็นส่งแล้ว บันทึกแล้วแก้แค่แถวนั้น แถวอื่นเหมือนเดิม',
+      build: () {
+        when(() => repository.updateDelivery('i1', DeliveryStatus.shipped)).thenAnswer((_) async => shippedInvoice);
+        return InvoiceListBloc(repository, month: october);
+      },
+      seed: () => loaded,
+      act: (bloc) => bloc.add(InvoiceDeliveryChanged(invoiceId: 'i1', deliveryStatus: DeliveryStatus.shipped)),
+      expect:
+          () => [
+            loaded.copyWith(deliveryUpdateStatus: AppStatus.loading),
+            loaded.copyWith(
+              deliveryUpdateStatus: AppStatus.success,
+              invoices: [summary.copyWith(deliveryStatus: DeliveryStatus.shipped), other],
+            ),
+          ],
+    );
+
+    blocTest<InvoiceListBloc, InvoiceListState>(
+      'บันทึกไม่ได้ (ใบถูกยกเลิกไปแล้ว) ได้ failure + error code รายการไม่เปลี่ยน',
+      build: () {
+        when(
+          () => repository.updateDelivery('i1', DeliveryStatus.received),
+        ).thenThrow(ApiException('invoice_already_cancelled'));
+        return InvoiceListBloc(repository, month: october);
+      },
+      seed: () => loaded,
+      act: (bloc) => bloc.add(InvoiceDeliveryChanged(invoiceId: 'i1', deliveryStatus: DeliveryStatus.received)),
+      expect:
+          () => [
+            loaded.copyWith(deliveryUpdateStatus: AppStatus.loading),
+            loaded.copyWith(deliveryUpdateStatus: AppStatus.failure, deliveryErrorCode: 'invoice_already_cancelled'),
+          ],
+    );
+  });
 }

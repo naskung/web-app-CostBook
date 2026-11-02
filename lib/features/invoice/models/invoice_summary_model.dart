@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'package:costbook/core/constants/delivery_status.dart';
+
 class InvoiceSummaryModel extends Equatable {
   const InvoiceSummaryModel({
     required this.id,
@@ -7,6 +9,7 @@ class InvoiceSummaryModel extends Equatable {
     required this.invoiceNo,
     required this.issueDate,
     required this.status,
+    this.deliveryStatus = DeliveryStatus.received,
     required this.customerName,
     required this.total,
   });
@@ -16,6 +19,7 @@ class InvoiceSummaryModel extends Equatable {
   final String invoiceNo;
   final String issueDate;
   final String status;
+  final DeliveryStatus deliveryStatus;
   final String customerName;
   final double total;
 
@@ -30,8 +34,22 @@ class InvoiceSummaryModel extends Equatable {
       invoiceNo: json['invoice_no'] as String? ?? '',
       issueDate: json['issue_date'] as String? ?? '',
       status: json['status'] as String? ?? 'issued',
+      deliveryStatus: DeliveryStatus.fromName(json['delivery_status'] as String?),
       customerName: json['customer_name'] as String? ?? '',
       total: (json['total'] as num? ?? 0).toDouble(),
+    );
+  }
+
+  InvoiceSummaryModel copyWith({DeliveryStatus? deliveryStatus}) {
+    return InvoiceSummaryModel(
+      id: id,
+      docType: docType,
+      invoiceNo: invoiceNo,
+      issueDate: issueDate,
+      status: status,
+      deliveryStatus: deliveryStatus ?? this.deliveryStatus,
+      customerName: customerName,
+      total: total,
     );
   }
 
@@ -42,11 +60,12 @@ class InvoiceSummaryModel extends Equatable {
       'invoice_no': invoiceNo,
       'issue_date': issueDate,
       'status': status,
+      'delivery_status': deliveryStatus.name,
       'customer_name': customerName,
       'total': total,
     };
   }
 
   @override
-  List<Object?> get props => [id, docType, invoiceNo, issueDate, status, customerName, total];
+  List<Object?> get props => [id, docType, invoiceNo, issueDate, status, deliveryStatus, customerName, total];
 }

@@ -7,6 +7,8 @@ class InvoiceDetailState extends Equatable {
     this.errorCode = '',
     this.cancelStatus = AppStatus.initial,
     this.cancelErrorCode = '',
+    this.deliveryUpdateStatus = AppStatus.initial,
+    this.deliveryErrorCode = '',
   });
 
   final AppStatus status;
@@ -14,6 +16,8 @@ class InvoiceDetailState extends Equatable {
   final String errorCode;
   final AppStatus cancelStatus;
   final String cancelErrorCode;
+  final AppStatus deliveryUpdateStatus;
+  final String deliveryErrorCode;
 
   InvoiceDetailState copyWith({
     AppStatus? status,
@@ -21,6 +25,8 @@ class InvoiceDetailState extends Equatable {
     String? errorCode,
     AppStatus? cancelStatus,
     String? cancelErrorCode,
+    AppStatus? deliveryUpdateStatus,
+    String? deliveryErrorCode,
   }) {
     return InvoiceDetailState(
       status: status ?? this.status,
@@ -28,9 +34,19 @@ class InvoiceDetailState extends Equatable {
       errorCode: errorCode ?? this.errorCode,
       cancelStatus: cancelStatus ?? this.cancelStatus,
       cancelErrorCode: cancelErrorCode ?? this.cancelErrorCode,
+      deliveryUpdateStatus: deliveryUpdateStatus ?? this.deliveryUpdateStatus,
+      deliveryErrorCode: deliveryErrorCode ?? this.deliveryErrorCode,
     );
   }
 
   @override
-  List<Object?> get props => [status, invoice, errorCode, cancelStatus, cancelErrorCode];
+  List<Object?> get props => [
+    status,
+    invoice,
+    errorCode,
+    cancelStatus,
+    cancelErrorCode,
+    deliveryUpdateStatus,
+    deliveryErrorCode,
+  ];
 }

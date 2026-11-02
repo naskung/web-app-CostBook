@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import 'package:costbook/core/constants/delivery_status.dart';
 import 'package:costbook/features/invoice/models/invoice_item_model.dart';
 
 class InvoiceModel extends Equatable {
@@ -9,6 +10,7 @@ class InvoiceModel extends Equatable {
     required this.invoiceNo,
     required this.issueDate,
     required this.status,
+    this.deliveryStatus = DeliveryStatus.received,
     this.sellerName = '',
     this.sellerAddress = '',
     this.sellerTaxId = '',
@@ -38,6 +40,7 @@ class InvoiceModel extends Equatable {
   final String invoiceNo;
   final String issueDate;
   final String status;
+  final DeliveryStatus deliveryStatus;
   final String sellerName;
   final String sellerAddress;
   final String sellerTaxId;
@@ -68,6 +71,7 @@ class InvoiceModel extends Equatable {
       invoiceNo: json['invoice_no'] as String? ?? '',
       issueDate: json['issue_date'] as String? ?? '',
       status: json['status'] as String? ?? issued,
+      deliveryStatus: DeliveryStatus.fromName(json['delivery_status'] as String?),
       sellerName: json['seller_name'] as String? ?? '',
       sellerAddress: json['seller_address'] as String? ?? '',
       sellerTaxId: json['seller_tax_id'] as String? ?? '',
@@ -95,6 +99,7 @@ class InvoiceModel extends Equatable {
       'invoice_no': invoiceNo,
       'issue_date': issueDate,
       'status': status,
+      'delivery_status': deliveryStatus.name,
       'seller_name': sellerName,
       'seller_address': sellerAddress,
       'seller_tax_id': sellerTaxId,
@@ -122,6 +127,7 @@ class InvoiceModel extends Equatable {
     invoiceNo,
     issueDate,
     status,
+    deliveryStatus,
     sellerName,
     sellerAddress,
     sellerTaxId,

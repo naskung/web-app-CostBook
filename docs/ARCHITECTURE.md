@@ -494,7 +494,7 @@ token หมดอายุ (7 วัน) / ถูกปฏิเสธ: API ต
 **กำไร** (API คิด ดู `../api-Costbook/docs/ARCHITECTURE.md` หัวข้อ 10): รายได้ = ยอดขายก่อน VAT + รายรับที่บันทึกเอง / กำไรขั้นต้น = ยอดขาย − ต้นทุนสินค้าที่ขาย / กำไรสุทธิ (`profit`) = รายได้ − ต้นทุนสินค้าที่ขาย − รายจ่ายที่ไม่ใช่ซื้อวัตถุดิบ — `income` / `expense` คือเงินเข้า-ออกตามที่บันทึก **ห้ามเอามาลบกันเป็นกำไร** / กราฟ 6 เดือน: รายได้ (`revenue`), ต้นทุน + รายจ่าย (`MonthTotalsModel.totalCost`), กำไรสุทธิ
 
 **หน้า login กับระบบจำรหัสของ browser**: `AutofillGroup(onDisposeAction: cancel)` + เรียก `TextInput.finishAutofillContext()` ตอน login สำเร็จก่อน `context.go` → Chrome ถามบันทึกรหัสครั้งเดียวตอน login (ถ้ารอส่งตอนปิดหน้า Chrome จะเดาจากการเปลี่ยนหน้า แล้วถามตอนเปลี่ยนหน้า)
-| เอกสารขาย | `/invoices`, `/invoices/create`, `/invoices/:id` | `InvoiceListBloc`, `InvoiceFormBloc`, `InvoiceDetailBloc` | ออกใบสำเร็จ → ไปหน้าดูใบ (`AppRoutes.invoiceDetailPath(id)`), ร้านจด VAT ได้ใบกำกับภาษี ไม่จด ได้ใบเสร็จรับเงิน |
+| เอกสารขาย | `/invoices`, `/invoices/create`, `/invoices/:id` | `InvoiceListBloc`, `InvoiceFormBloc`, `InvoiceDetailBloc` | ออกใบสำเร็จ → ไปหน้าดูใบ (`AppRoutes.invoiceDetailPath(id)`), ร้านจด VAT ได้ใบกำกับภาษี ไม่จด ได้ใบเสร็จรับเงิน / ร้านเปิด `trackDelivery` → รายการ + หน้าดูใบมีสถานะการส่งสินค้า (`DeliveryStatusMenu` กดเลือก รอส่ง / ส่งสินค้าแล้ว / รับสินค้าแล้ว) ใบที่ยกเลิกแล้วไม่มี |
 | ตั้งค่า | `/settings` | `SettingsBloc` (จาก shell) + `LanguageBloc` + `AssistantBloc` (key AI) | ข้อมูลร้าน, รูปแบบร้าน, ช่องข้อมูลเพิ่มเติมของสินค้า, key ของ Claude, โลโก้, ภาษา — ร้านจด VAT ต้องกรอกเลขผู้เสียภาษีก่อนออกใบกำกับ / **โลโก้** (`LogoSection`): เลือก / เปลี่ยนรูป (`ImagePickHelper` ย่อให้, เกิน 1 MB เตือนไม่ส่ง) → `LogoUploaded` → `PUT /company/logo` / ลบ (ถามยืนยัน) → `LogoRemoved` → `DELETE` แล้วโหลดข้อมูลร้านใหม่ (`logoStatus` / `logoErrorCode`) — สำเร็จแล้วเรียก `ShopLogo.refresh()`: URL โลโก้มี `?v=<เลข>` เปลี่ยนเลข → โลโก้ทุกที่ (เมนู / หน้า login / ใบกำกับ) โหลดรูปใหม่ทันที ไม่ใช้รูปเก่าที่ Flutter จำไว้ (favicon บนแท็บ browser เปลี่ยนเมื่อ refresh) |
 
 | โปรไฟล์ | `/profile` | `ProfileBloc` (จาก shell) | เปิดจากแถวผู้ใช้ด้านล่างเมนู (เหนือออกจากระบบ) / รูปโปรไฟล์ (เพิ่ม / เปลี่ยน / ลบ แบบเดียวกับโลโก้), ชื่อ-นามสกุล (อีเมลแก้ไม่ได้), เปลี่ยนรหัสผ่าน (ต้องใส่รหัสเดิม, ใหม่ ≥ 6 ตัว + ยืนยันให้ตรง) / เจ้าของร้านมีการ์ด "จัดการผู้ใช้" |
@@ -536,6 +536,7 @@ token หมดอายุ (7 วัน) / ถูกปฏิเสธ: API ต
 | `pricesIncludeVat` | `true` → ราคาขายรวม VAT แล้ว: ยอดในบิลถอด VAT ออก, หน้าต้นทุนคิดกำไร / markup จากราคาก่อน VAT, ปุ่ม "คำนวณราคาขาย" บวก VAT ให้ |
 | `priceHasVat` (getter) | `vatRegistered && pricesIncludeVat` — ใช้ตัวนี้เวลาถามว่า "ราคาที่ตั้งไว้มี VAT อยู่ข้างในไหม" |
 | `useCostPage` | `false` → ซ่อนเมนูคำนวณต้นทุน (`AppMenu.itemsFor(useCostPage:)`) |
+| `trackDelivery` | `true` → เอกสารขายมีสถานะการส่งสินค้า (`DeliveryStatus` ใน `core/constants`) บิลใหม่เริ่มที่รอส่ง / `false` → ซ่อน (บิลใหม่ API ใส่รับแล้วให้) |
 
 **ช่องข้อมูลเพิ่มเติม** (`ProductFieldModel`): ร้านเพิ่มช่องเอง (ข้อความ / ตัวเลข / วันที่ / ตัวเลือก) ในหน้าตั้งค่า → ฟอร์มสินค้าแสดงช่องให้กรอก (`CustomFieldInput`) → เก็บใน `ProductModel.customFields` (`{id ช่อง: ค่า}`)
 

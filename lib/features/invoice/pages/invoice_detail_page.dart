@@ -12,7 +12,9 @@ import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
 import 'package:costbook/features/invoice/bloc/invoice_detail_bloc.dart';
 import 'package:costbook/features/invoice/models/invoice_model.dart';
+import 'package:costbook/features/invoice/widgets/delivery_status_menu.dart';
 import 'package:costbook/features/invoice/widgets/invoice_paper.dart';
+import 'package:costbook/features/settings/bloc/settings_bloc.dart';
 import 'package:costbook/shared/widgets/atoms/app_loading.dart';
 import 'package:costbook/shared/widgets/molecules/error_view.dart';
 import 'package:costbook/shared/widgets/organisms/page_content.dart';
@@ -50,36 +52,42 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<InvoiceDetailBloc, InvoiceDetailState>(
+    return BlocListener<InvoiceDetailBloc, InvoiceDetailState>(
       listenWhen:
           (previous, current) =>
-              previous.cancelStatus == AppStatus.loading && current.cancelStatus != AppStatus.loading,
-      listener: _onCancelResult,
-      builder: (context, state) {
-        final invoice = state.invoice;
-        if (state.status == AppStatus.failure) {
-          return ErrorView(
-            message: 'error.${state.errorCode}'.tr,
-            retryLabel: 'common.retry'.tr,
-            onRetry: () => context.read<InvoiceDetailBloc>().add(InvoiceDetailRequested()),
-          );
-        }
-        if (invoice == null) return const AppLoading();
-        return PageContent(
-          maxWidth: AppSizes.paperWidth,
-          header: _toolbar(context, state, invoice),
-          children: [
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.topCenter,
-              child: DecoratedBox(
-                decoration: BoxDecoration(border: Border.all(color: AppColors.border)),
-                child: RepaintBoundary(key: _paperKey, child: InvoicePaper(invoice: invoice)),
+              previous.deliveryUpdateStatus == AppStatus.loading && current.deliveryUpdateStatus == AppStatus.failure,
+      listener: (context, state) => SnackbarHelper.showError(context, 'error.${state.deliveryErrorCode}'.tr),
+      child: BlocConsumer<InvoiceDetailBloc, InvoiceDetailState>(
+        listenWhen:
+            (previous, current) =>
+                previous.cancelStatus == AppStatus.loading && current.cancelStatus != AppStatus.loading,
+        listener: _onCancelResult,
+        builder: (context, state) {
+          final invoice = state.invoice;
+          if (state.status == AppStatus.failure) {
+            return ErrorView(
+              message: 'error.${state.errorCode}'.tr,
+              retryLabel: 'common.retry'.tr,
+              onRetry: () => context.read<InvoiceDetailBloc>().add(InvoiceDetailRequested()),
+            );
+          }
+          if (invoice == null) return const AppLoading();
+          return PageContent(
+            maxWidth: AppSizes.paperWidth,
+            header: _toolbar(context, state, invoice),
+            children: [
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.topCenter,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(border: Border.all(color: AppColors.border)),
+                  child: RepaintBoundary(key: _paperKey, child: InvoicePaper(invoice: invoice)),
+                ),
               ),
-            ),
-          ],
-        );
-      },
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -109,6 +117,26 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
           onPressed: () => context.go(AppRoutes.invoices),
           icon: const Icon(Icons.arrow_back),
           label: Text('common.back'.tr),
+        ),
+        if (_showsDelivery(context, invoice)) _deliveryStatus(context, invoice),
+      ],
+    );
+  }
+
+  // ร้านเปิดติดตามการส่งสินค้า + ใบยังไม่ถูกยกเลิก → โชว์สถานะการส่ง กดเปลี่ยนได้
+  bool _showsDelivery(BuildContext context, InvoiceModel invoice) {
+    return context.watch<SettingsBloc>().state.company.trackDelivery && !invoice.isCancelled;
+  }
+
+  Widget _deliveryStatus(BuildContext context, InvoiceModel invoice) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('invoice.delivery'.tr, style: Theme.of(context).textTheme.bodyMedium),
+        const SizedBox(width: AppSizes.spaceSmall),
+        DeliveryStatusMenu(
+          status: invoice.deliveryStatus,
+          onChanged: (status) => context.read<InvoiceDetailBloc>().add(InvoiceDetailDeliveryChanged(status)),
         ),
       ],
     );

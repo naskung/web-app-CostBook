@@ -12,3 +12,10 @@ class InvoiceMonthChanged extends InvoiceListEvent {
 
   final int monthCount;
 }
+
+class InvoiceDeliveryChanged extends InvoiceListEvent {
+  InvoiceDeliveryChanged({required this.invoiceId, required this.deliveryStatus});
+
+  final String invoiceId;
+  final DeliveryStatus deliveryStatus;
+}

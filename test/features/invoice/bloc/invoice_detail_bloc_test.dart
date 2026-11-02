@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:costbook/core/constants/app_status.dart';
+import 'package:costbook/core/constants/delivery_status.dart';
 import 'package:costbook/core/network/api_exception.dart';
 import 'package:costbook/features/invoice/bloc/invoice_detail_bloc.dart';
 import 'package:costbook/features/invoice/models/invoice_model.dart';
@@ -100,4 +101,49 @@ void main() {
           ),
         ],
   );
+
+  group('InvoiceDetailDeliveryChanged', () {
+    const received = InvoiceModel(
+      id: 'i1',
+      invoiceNo: 'INV-2026-0001',
+      issueDate: '2026-10-31',
+      status: 'issued',
+      deliveryStatus: DeliveryStatus.received,
+      customerName: 'ลูกค้า',
+      subtotal: 100,
+      vat: 7,
+      total: 107,
+    );
+    const loaded = InvoiceDetailState(status: AppStatus.success, invoice: invoice);
+
+    blocTest<InvoiceDetailBloc, InvoiceDetailState>(
+      'เปลี่ยนเป็นรับสินค้าแล้ว ได้ใบที่บันทึกแล้วกลับมาแสดง',
+      build: () {
+        when(() => repository.updateDelivery('i1', DeliveryStatus.received)).thenAnswer((_) async => received);
+        return InvoiceDetailBloc(repository, invoiceId: 'i1');
+      },
+      seed: () => loaded,
+      act: (bloc) => bloc.add(InvoiceDetailDeliveryChanged(DeliveryStatus.received)),
+      expect:
+          () => [
+            loaded.copyWith(deliveryUpdateStatus: AppStatus.loading),
+            loaded.copyWith(deliveryUpdateStatus: AppStatus.success, invoice: received),
+          ],
+    );
+
+    blocTest<InvoiceDetailBloc, InvoiceDetailState>(
+      'บันทึกไม่ได้ ได้ failure + error code ใบเดิมยังอยู่',
+      build: () {
+        when(() => repository.updateDelivery('i1', DeliveryStatus.shipped)).thenThrow(ApiException('network_error'));
+        return InvoiceDetailBloc(repository, invoiceId: 'i1');
+      },
+      seed: () => loaded,
+      act: (bloc) => bloc.add(InvoiceDetailDeliveryChanged(DeliveryStatus.shipped)),
+      expect:
+          () => [
+            loaded.copyWith(deliveryUpdateStatus: AppStatus.loading),
+            loaded.copyWith(deliveryUpdateStatus: AppStatus.failure, deliveryErrorCode: 'network_error'),
+          ],
+    );
+  });
 }

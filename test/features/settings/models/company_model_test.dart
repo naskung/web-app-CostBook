@@ -48,6 +48,13 @@ void main() {
       expect([shop.vatRegistered, shop.pricesIncludeVat, shop.useCostPage], [false, true, false]);
     });
 
+    test('ติดตามการส่งสินค้า: ไม่มีมา (API เก่า) = ปิด / เปิดแล้ว toJson กลับมาได้ค่าเดิม', () {
+      expect(CompanyModel.fromJson({}).trackDelivery, false);
+      final shop = CompanyModel.fromJson({'name': 'ร้าน', 'track_delivery': true});
+      expect(shop.trackDelivery, true);
+      expect(CompanyModel.fromJson(shop.toJson()), shop);
+    });
+
     test('needsTaxId เป็น true เฉพาะร้านที่จด VAT แต่ยังไม่กรอกเลขผู้เสียภาษี', () {
       expect(const CompanyModel(name: 'ร้าน').needsTaxId, true);
       expect(const CompanyModel(name: 'ร้าน', vatRegistered: false).needsTaxId, false);

@@ -11,6 +11,7 @@ class CompanyModel extends Equatable {
     this.vatRegistered = true,
     this.pricesIncludeVat = false,
     this.useCostPage = true,
+    this.trackDelivery = false,
   });
 
   final String name;
@@ -22,6 +23,7 @@ class CompanyModel extends Equatable {
   final bool vatRegistered;
   final bool pricesIncludeVat;
   final bool useCostPage;
+  final bool trackDelivery;
 
   bool get hasTaxId => taxId.isNotEmpty;
 
@@ -40,6 +42,7 @@ class CompanyModel extends Equatable {
       vatRegistered: json['vat_registered'] as bool? ?? true,
       pricesIncludeVat: json['prices_include_vat'] as bool? ?? false,
       useCostPage: json['use_cost_page'] as bool? ?? true,
+      trackDelivery: json['track_delivery'] as bool? ?? false,
     );
   }
 
@@ -54,6 +57,7 @@ class CompanyModel extends Equatable {
       'vat_registered': vatRegistered,
       'prices_include_vat': pricesIncludeVat,
       'use_cost_page': useCostPage,
+      'track_delivery': trackDelivery,
     };
   }
 
@@ -68,5 +72,6 @@ class CompanyModel extends Equatable {
     vatRegistered,
     pricesIncludeVat,
     useCostPage,
+    trackDelivery,
   ];
 }

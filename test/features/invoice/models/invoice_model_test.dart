@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:costbook/core/constants/delivery_status.dart';
+
 import 'package:costbook/features/invoice/models/invoice_item_model.dart';
 import 'package:costbook/features/invoice/models/invoice_model.dart';
 
@@ -38,6 +40,12 @@ void main() {
       final parsed = InvoiceModel.fromJson(invoice.toJson());
       expect(parsed.items.single.name, 'กาแฟเย็น');
       expect(parsed.items.single.amount, 135);
+    });
+
+    test('อ่านสถานะการส่งสินค้า และ toJson ส่งชื่อเดียวกับ API', () {
+      final invoice = InvoiceModel.fromJson({'delivery_status': 'shipped'});
+      expect(invoice.deliveryStatus, DeliveryStatus.shipped);
+      expect(invoice.toJson()['delivery_status'], 'shipped');
     });
 
     test('isCancelled เป็น true เมื่อ status = cancelled', () {
