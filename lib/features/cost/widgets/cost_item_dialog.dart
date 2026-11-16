@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:costbook/core/lang/app_lang.dart';
+import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
 import 'package:costbook/core/utils/cost_util.dart';
 import 'package:costbook/core/utils/money_util.dart';
@@ -19,7 +20,8 @@ class CostItemDialogResult {
   final bool remember;
 }
 
-// forPreset = true → ใช้เพิ่ม / แก้รายการที่ใช้บ่อย (ไม่มีช่องจำนวน ไม่มีปุ่มเลือกจากรายการที่ใช้บ่อย)
+// forPreset = true → ใช้เพิ่ม / แก้ค่าใช้จ่ายเพิ่มเติม (ไม่มีช่องจำนวน ไม่มีช่องเลือกจากค่าใช้จ่ายเพิ่มเติม / สต็อก)
+// วัตถุดิบ → เลือกจากสต็อกวัสดุเป็นหลัก (ราคา / คงเหลือมาจากสต็อก) / ค่าแรง + ค่าใช้จ่ายอื่น → เลือกจากค่าใช้จ่ายเพิ่มเติม
 class CostItemDialog extends StatefulWidget {
   const CostItemDialog({
     super.key,
@@ -68,9 +70,23 @@ class _CostItemDialogState extends State<CostItemDialog> {
 
   bool get _isPercent => _kind == CostItemModel.percentKind;
 
-  bool get _usesMaterial => _materialId.isNotEmpty && !_isPercent;
+  bool get _usesMaterial => _materialId.isNotEmpty && !_isPercent && _type == CostItemModel.material;
 
-  bool get _canPickMaterial => !widget.forPreset && widget.materials.isNotEmpty && !_isPercent;
+  bool get _isMaterialType => _type == CostItemModel.material;
+
+  bool get _canPickMaterial => !widget.forPreset && _isMaterialType && !_isPercent;
+
+  List<CostPresetModel> get _presetsOfType => widget.presets.where((preset) => preset.type == _type).toList();
+
+  bool get _canPickPreset => _isNew && !widget.forPreset && !_isMaterialType && _presetsOfType.isNotEmpty;
+
+  bool get _canRemember => _isNew && !widget.forPreset && !_isMaterialType;
+
+  // ค่าใช้จ่ายเพิ่มเติมไม่ใช่ที่เก็บวัสดุ (วัสดุอยู่ในสต็อก) — แก้ของเดิมที่เป็นวัตถุดิบยังเลือกได้
+  List<String> get _types {
+    if (!widget.forPreset || widget.item.type == CostItemModel.material) return CostItemModel.types;
+    return CostItemModel.types.where((type) => type != CostItemModel.material).toList();
+  }
 
   // เลือกวัสดุ → ชื่อ / หน่วย / ราคาต่อหน่วยมาจากวัสดุ (ราคาอัปเดตเองเมื่อราคาวัสดุเปลี่ยน)
   void _applyMaterial(String? materialId) {
@@ -144,7 +160,7 @@ class _CostItemDialogState extends State<CostItemDialog> {
   Widget build(BuildContext context) {
     return FormDialog(
       title: _title,
-      icon: widget.forPreset ? Icons.bookmark_border : Icons.calculate_outlined,
+      icon: widget.forPreset ? Icons.playlist_add_check : Icons.calculate_outlined,
       saveLabel: _isNew ? 'common.add'.tr : 'common.save'.tr,
       cancelLabel: 'common.cancel'.tr,
       onSave: _onSave,
@@ -153,39 +169,24 @@ class _CostItemDialogState extends State<CostItemDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (_isNew && !widget.forPreset && widget.presets.isNotEmpty) ...[
+            AppDropdown<String>(
+              label: 'cost.item_type'.tr,
+              value: _type,
+              items: {for (final type in _types) type: 'cost.type.$type'.tr},
+              onChanged: (value) => setState(() => _type = value ?? _type),
+            ),
+            const SizedBox(height: AppSizes.spaceMedium),
+            if (_canPickMaterial) ...[_materialPicker(context), const SizedBox(height: AppSizes.spaceMedium)],
+            if (_canPickPreset) ...[
               AppDropdown<String>(
                 label: 'cost.from_preset'.tr,
                 hint: 'cost.choose_preset'.tr,
                 value: null,
-                items: {for (final preset in widget.presets) preset.id: preset.name},
+                items: {for (final preset in _presetsOfType) preset.id: preset.name},
                 onChanged: _applyPreset,
               ),
               const SizedBox(height: AppSizes.spaceMedium),
             ],
-            if (_canPickMaterial) ...[
-              AppDropdown<String>(
-                label: 'cost.material'.tr,
-                value: _materialId,
-                items: {
-                  '': 'cost.no_material'.tr,
-                  for (final material in widget.materials) material.id: _materialLabel(material),
-                },
-                onChanged: _applyMaterial,
-              ),
-              if (_usesMaterial) ...[
-                const SizedBox(height: AppSizes.spaceXSmall),
-                Text('cost.material_hint'.tr, style: Theme.of(context).textTheme.bodySmall),
-              ],
-              const SizedBox(height: AppSizes.spaceMedium),
-            ],
-            AppDropdown<String>(
-              label: 'cost.item_type'.tr,
-              value: _type,
-              items: {for (final type in CostItemModel.types) type: 'cost.type.$type'.tr},
-              onChanged: (value) => setState(() => _type = value ?? _type),
-            ),
-            const SizedBox(height: AppSizes.spaceMedium),
             SegmentedButton<String>(
               showSelectedIcon: false,
               segments: [
@@ -204,7 +205,7 @@ class _CostItemDialogState extends State<CostItemDialog> {
             ),
             const SizedBox(height: AppSizes.spaceMedium),
             if (_isPercent) _percentField() else _fixedFields(context),
-            if (_isNew && !widget.forPreset)
+            if (_canRemember)
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
                 controlAffinity: ListTileControlAffinity.leading,
@@ -215,6 +216,33 @@ class _CostItemDialogState extends State<CostItemDialog> {
           ],
         ),
       ),
+    );
+  }
+
+  // วัตถุดิบ: เลือกจากสต็อกก่อน (ยังไม่มีวัสดุ → บอกให้ไปเพิ่มที่หน้าสินค้า แท็บวัสดุ / หรือกรอกเองด้านล่าง)
+  Widget _materialPicker(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    if (widget.materials.isEmpty) {
+      return Text('cost.no_materials_hint'.tr, style: textTheme.bodySmall?.copyWith(color: AppColors.textSecondary));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppDropdown<String>(
+          label: 'cost.material'.tr,
+          value: _materialId,
+          items: {
+            '': 'cost.no_material'.tr,
+            for (final material in widget.materials) material.id: _materialLabel(material),
+          },
+          onChanged: _applyMaterial,
+        ),
+        const SizedBox(height: AppSizes.spaceXSmall),
+        Text(
+          _usesMaterial ? 'cost.material_hint'.tr : 'cost.material_pick_hint'.tr,
+          style: textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+        ),
+      ],
     );
   }
 

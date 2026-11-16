@@ -61,3 +61,9 @@ class CostPresetDeleted extends CostEvent {
 
   final String id;
 }
+
+class CostPresetMovedToStock extends CostEvent {
+  CostPresetMovedToStock(this.preset);
+
+  final CostPresetModel preset;
+}

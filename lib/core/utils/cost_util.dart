@@ -19,6 +19,13 @@ class CostUtil {
     return MoneyUtil.round2((material + labor + overhead) / quantity);
   }
 
+  // ราคาที่ซื้อมา ÷ จำนวนที่ได้ = ต้นทุนต่อหน่วย (ไม่ปัดเศษ — ปัดตอนแสดง / ตอนใส่ช่อง)
+  // เช่น ซื้อเส้น PLA 1,000 กรัม ราคา 450 บาท → 0.45 บาท/กรัม
+  static double perUnit({required double total, required double quantity}) {
+    if (total <= 0 || quantity <= 0) return 0;
+    return total / quantity;
+  }
+
   static double sellPrice({required double cost, required double markupPercent}) {
     return MoneyUtil.round2(cost * (1 + markupPercent / 100));
   }

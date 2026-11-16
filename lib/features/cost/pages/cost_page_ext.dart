@@ -1,7 +1,7 @@
 part of 'cost_page.dart';
 
 extension _CostPageExt on _CostPageState {
-  // ยังไม่มีสินค้า ก็ตั้งรายการต้นทุนที่ใช้บ่อยไว้ก่อนได้
+  // ยังไม่มีสินค้า ก็ตั้งค่าใช้จ่ายเพิ่มเติมไว้ก่อนได้
   Widget _noProducts(BuildContext context, CostState state) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -23,7 +23,7 @@ extension _CostPageExt on _CostPageState {
   Widget _presetsButton(BuildContext context, CostState state) {
     return OutlinedButton.icon(
       onPressed: () => CostPresetsDialog.show(context),
-      icon: const Icon(Icons.bookmark_border),
+      icon: const Icon(Icons.playlist_add_check),
       label: Text('cost.presets_button'.trParams({'count': '${state.presets.length}'})),
     );
   }
@@ -103,8 +103,8 @@ extension _CostPageExt on _CostPageState {
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
               onPressed: () => _addItem(type),
-              icon: const Icon(Icons.add),
-              label: Text('cost.add_item'.tr),
+              icon: Icon(type == CostItemModel.material ? Icons.inventory_2_outlined : Icons.add),
+              label: Text('cost.add.$type'.tr),
             ),
           ),
         ],

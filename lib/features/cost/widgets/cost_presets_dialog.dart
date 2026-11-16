@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:costbook/core/helpers/dialog_helper.dart';
+import 'package:costbook/core/helpers/snackbar_helper.dart';
 import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
@@ -16,7 +17,8 @@ import 'package:costbook/shared/widgets/molecules/empty_view.dart';
 import 'package:costbook/shared/widgets/molecules/notice_banner.dart';
 import 'package:costbook/shared/widgets/organisms/app_dialog.dart';
 
-// จัดการรายการต้นทุนที่ใช้บ่อย: เพิ่ม / แก้ / ลบ (แยกกล่องตามประเภท)
+// จัดการค่าใช้จ่ายเพิ่มเติม (ค่าแรง ค่าไฟ ค่าเครื่อง % เผื่อเสีย ...): เพิ่ม / แก้ / ลบ (แยกกล่องตามประเภท)
+// วัตถุดิบควรอยู่ในสต็อก → ของเดิมที่เป็นวัตถุดิบมีปุ่มย้ายไปเป็นวัสดุในสต็อก
 class CostPresetsDialog extends StatelessWidget {
   const CostPresetsDialog({super.key});
 
@@ -32,7 +34,7 @@ class CostPresetsDialog extends StatelessWidget {
     final bloc = context.read<CostBloc>();
     final result = await CostItemDialog.show(
       context,
-      item: const CostItemModel(type: CostItemModel.material, name: ''),
+      item: const CostItemModel(type: CostItemModel.labor, name: ''),
       presets: const [],
       forPreset: true,
     );
@@ -56,12 +58,24 @@ class CostPresetsDialog extends StatelessWidget {
     if (isConfirmed) bloc.add(CostPresetDeleted(preset.id));
   }
 
+  Future<void> _moveToStock(BuildContext context, CostPresetModel preset) async {
+    final bloc = context.read<CostBloc>();
+    final isConfirmed = await DialogHelper.confirm(
+      context,
+      title: 'cost.preset_move_title'.tr,
+      message: 'cost.preset_move_message'.trParams({'name': preset.name, 'price': _detail(preset)}),
+      confirmText: 'cost.preset_move'.tr,
+      icon: Icons.inventory_2_outlined,
+    );
+    if (isConfirmed) bloc.add(CostPresetMovedToStock(preset));
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppDialog(
       title: 'cost.presets_title'.tr,
       subtitle: 'cost.presets_hint'.tr,
-      icon: Icons.bookmarks_outlined,
+      icon: Icons.playlist_add_check,
       closeLabel: 'common.close'.tr,
       actions: [
         AppButton(
@@ -71,7 +85,13 @@ class CostPresetsDialog extends StatelessWidget {
         ),
         AppButton(text: 'cost.preset_add'.tr, icon: Icons.add, onPressed: () => _add(context)),
       ],
-      child: BlocBuilder<CostBloc, CostState>(
+      child: BlocConsumer<CostBloc, CostState>(
+        listenWhen:
+            (previous, current) =>
+                current.movedMaterialName.isNotEmpty && previous.presets.length != current.presets.length,
+        listener:
+            (context, state) =>
+                SnackbarHelper.showSuccess(context, 'cost.preset_moved'.trParams({'name': state.movedMaterialName})),
         builder: (context, state) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -80,7 +100,7 @@ class CostPresetsDialog extends StatelessWidget {
                 NoticeBanner(message: 'error.${state.presetErrorCode}'.tr),
                 const SizedBox(height: AppSizes.spaceMedium),
               ],
-              if (state.presets.isEmpty) EmptyView(message: 'cost.presets_empty'.tr, icon: Icons.bookmark_border),
+              if (state.presets.isEmpty) EmptyView(message: 'cost.presets_empty'.tr, icon: Icons.playlist_add_check),
               for (final type in CostItemModel.types) ..._typeGroup(context, state.presets, type),
             ],
           );
@@ -101,6 +121,10 @@ class CostPresetsDialog extends StatelessWidget {
         ],
       ),
       const SizedBox(height: AppSizes.spaceSmall),
+      if (type == CostItemModel.material) ...[
+        NoticeBanner(message: 'cost.presets_material_notice'.tr),
+        const SizedBox(height: AppSizes.spaceSmall),
+      ],
       DecoratedBox(
         decoration: BoxDecoration(
           border: Border.all(color: AppColors.border),
@@ -140,6 +164,12 @@ class CostPresetsDialog extends StatelessWidget {
               ],
             ),
           ),
+          if (preset.type == CostItemModel.material)
+            IconButton(
+              tooltip: 'cost.preset_move'.tr,
+              onPressed: () => _moveToStock(context, preset),
+              icon: const Icon(Icons.inventory_2_outlined, color: AppColors.primaryDark, size: AppSizes.iconSmall),
+            ),
           IconButton(
             tooltip: 'common.edit'.tr,
             onPressed: () => _edit(context, preset),

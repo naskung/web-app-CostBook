@@ -9,6 +9,7 @@ import 'package:costbook/core/helpers/image_pick_helper.dart';
 import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
+import 'package:costbook/core/utils/cost_util.dart';
 import 'package:costbook/core/utils/form_layout_util.dart';
 import 'package:costbook/core/utils/money_util.dart';
 import 'package:costbook/core/utils/validator_util.dart';
@@ -76,6 +77,11 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   late final Map<String, String> _customValues = {...widget.product.customFields};
   bool _isSubmitted = false;
 
+  // คิดต้นทุนจากราคาที่ซื้อ: ซื้อมาราคาเท่าไหร่ ได้กี่หน่วย → ใส่ต้นทุน/หน่วยให้ (ไม่ได้ส่งไปหลังบ้าน)
+  bool _showsPurchase = false;
+  final _purchasePriceController = TextEditingController();
+  final _purchaseQuantityController = TextEditingController();
+
   // รูปใหม่ที่เลือก (ยังไม่ได้ส่ง) / กดลบรูปเดิม / error ของรูปก่อนส่ง เช่น ใหญ่เกิน
   Uint8List? _newImage;
   bool _removeImage = false;
@@ -92,12 +98,33 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     _sellController.dispose();
     _minStockController.dispose();
     _descriptionController.dispose();
+    _purchasePriceController.dispose();
+    _purchaseQuantityController.dispose();
     super.dispose();
   }
 
   String _numberText(double value) {
     if (value == 0) return '';
     return value.toString();
+  }
+
+  String get _unitText {
+    final unit = _unitController.text.trim();
+    return unit.isEmpty ? 'common.unit'.tr : unit;
+  }
+
+  double get _purchasePerUnit {
+    return CostUtil.perUnit(
+      total: MoneyUtil.parse(_purchasePriceController.text),
+      quantity: MoneyUtil.parse(_purchaseQuantityController.text),
+    );
+  }
+
+  // กรอกราคาที่ซื้อ / จำนวน ครบ → ใส่ต้นทุน/หน่วยให้ (ปัด 2 ตำแหน่งเท่าที่ระบบเก็บ)
+  void _onPurchaseChanged(String _) {
+    final perUnit = _purchasePerUnit;
+    if (perUnit > 0) _costController.text = _numberText(MoneyUtil.round2(perUnit));
+    setState(() {});
   }
 
   void _setCustomValue(String fieldId, String value) {
@@ -138,7 +165,8 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
       description: _descriptionController.text.trim(),
       unit: _unitController.text.trim(),
       costPrice: MoneyUtil.parse(_costController.text),
-      sellPrice: MoneyUtil.parse(_sellController.text),
+      // วัสดุไม่ได้ขาย → ไม่มีราคาขาย (ไม่เก็บค่าที่ซ่อนอยู่)
+      sellPrice: _forSale ? MoneyUtil.parse(_sellController.text) : 0,
       minStock: int.tryParse(_minStockController.text.trim()) ?? 0,
       trackStock: _trackStock,
       forSale: _forSale,
@@ -200,6 +228,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
         label: 'common.unit'.tr,
         hint: 'product.unit_hint'.tr,
         controller: _unitController,
+        onChanged: (_) => setState(() {}),
       ),
       ProductFormBlock.prices => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -207,6 +236,11 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
           _priceRow(),
           const SizedBox(height: AppSizes.spaceSmall),
           Text('product.cost_note'.tr, style: Theme.of(context).textTheme.bodySmall),
+          if (!_forSale) ...[
+            const SizedBox(height: AppSizes.spaceXSmall),
+            Text('product.sell_price_material_note'.tr, style: Theme.of(context).textTheme.bodySmall),
+          ],
+          _purchaseSection(context),
         ],
       ),
       ProductFormBlock.saleStock => _stockFields(context),
@@ -303,21 +337,97 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     );
   }
 
+  // ราคาขายมีเฉพาะสินค้าที่ขาย — วัสดุ (ปิด "ขายสินค้านี้") มีแค่ต้นทุน
   Widget _priceRow() {
+    final cost = AppTextField(
+      label: 'product.cost_price'.tr,
+      controller: _costController,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      validator: ValidatorUtil.zeroOrMore,
+      suffixText: 'common.baht'.tr,
+    );
+    if (!_forSale) return cost;
     return _twoFields(
-      AppTextField(
-        label: 'product.cost_price'.tr,
-        controller: _costController,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        validator: ValidatorUtil.zeroOrMore,
-        suffixText: 'common.baht'.tr,
-      ),
+      cost,
       AppTextField(
         label: 'product.sell_price'.tr,
         controller: _sellController,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         validator: ValidatorUtil.zeroOrMore,
         suffixText: 'common.baht'.tr,
+      ),
+    );
+  }
+
+  Widget _purchaseSection(BuildContext context) {
+    if (!_showsPurchase) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton.icon(
+          onPressed: () => setState(() => _showsPurchase = true),
+          icon: const Icon(Icons.calculate_outlined),
+          label: Text('product.purchase_open'.tr),
+        ),
+      );
+    }
+    final textTheme = Theme.of(context).textTheme;
+    final perUnit = _purchasePerUnit;
+    return Container(
+      margin: const EdgeInsets.only(top: AppSizes.spaceSmall),
+      padding: const EdgeInsets.all(AppSizes.spaceMedium),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(AppSizes.radius),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.calculate_outlined, size: AppSizes.iconSmall),
+              const SizedBox(width: AppSizes.spaceSmall),
+              Expanded(child: Text('product.purchase_title'.tr, style: textTheme.titleSmall)),
+              IconButton(
+                tooltip: 'common.close'.tr,
+                onPressed: () => setState(() => _showsPurchase = false),
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSizes.spaceSmall),
+          _twoFields(
+            AppTextField(
+              label: 'product.purchase_price'.tr,
+              controller: _purchasePriceController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              validator: ValidatorUtil.zeroOrMore,
+              suffixText: 'common.baht'.tr,
+              onChanged: _onPurchaseChanged,
+            ),
+            AppTextField(
+              label: 'product.purchase_quantity'.tr,
+              controller: _purchaseQuantityController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              validator: ValidatorUtil.zeroOrMore,
+              suffixText: _unitText,
+              onChanged: _onPurchaseChanged,
+            ),
+          ),
+          const SizedBox(height: AppSizes.spaceSmall),
+          if (perUnit > 0)
+            Text(
+              'product.purchase_result'.trParams({
+                'price': MoneyUtil.formatShort(MoneyUtil.parse(_purchasePriceController.text)),
+                'quantity': MoneyUtil.formatShort(MoneyUtil.parse(_purchaseQuantityController.text)),
+                'cost': MoneyUtil.format(perUnit),
+                'unit': _unitText,
+              }),
+              style: textTheme.bodyMedium?.copyWith(color: AppColors.success, fontWeight: FontWeight.w600),
+            )
+          else
+            Text('product.purchase_hint'.tr, style: textTheme.bodySmall),
+        ],
       ),
     );
   }

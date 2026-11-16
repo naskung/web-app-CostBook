@@ -28,6 +28,7 @@ class CostBloc extends Bloc<CostEvent, CostState> {
     on<CostSheetSaved>(_onSheetSaved);
     on<CostPresetSaved>(_onPresetSaved);
     on<CostPresetDeleted>(_onPresetDeleted);
+    on<CostPresetMovedToStock>(_onPresetMovedToStock);
   }
 
   final CostRepository repository;
@@ -164,6 +165,23 @@ class CostBloc extends Bloc<CostEvent, CostState> {
       await repository.deletePreset(event.id);
       final presets = state.presets.where((preset) => preset.id != event.id).toList();
       emit(state.copyWith(presets: presets, presetErrorCode: ''));
+    } catch (error) {
+      emit(state.copyWith(presetErrorCode: ErrorUtil.codeOf(error)));
+    }
+  }
+
+  // วัตถุดิบที่เคยเก็บเป็นค่าใช้จ่ายเพิ่มเติม → สร้างเป็นวัสดุในสต็อก (ชื่อ / หน่วย / ราคาต่อหน่วยเดิม คงเหลือ 0) แล้วลบออก
+  // จากนี้เลือกได้จาก "วัสดุจากสต็อก" ราคา + คงเหลือมาจากสต็อก
+  Future<void> _onPresetMovedToStock(CostPresetMovedToStock event, Emitter<CostState> emit) async {
+    final preset = event.preset;
+    try {
+      await productRepository.saveProduct(
+        ProductModel(name: preset.name, unit: preset.unit, costPrice: preset.unitPrice, forSale: false),
+      );
+      await repository.deletePreset(preset.id);
+      final products = await productRepository.getProducts();
+      final presets = state.presets.where((item) => item.id != preset.id).toList();
+      emit(state.copyWith(products: products, presets: presets, presetErrorCode: '', movedMaterialName: preset.name));
     } catch (error) {
       emit(state.copyWith(presetErrorCode: ErrorUtil.codeOf(error)));
     }

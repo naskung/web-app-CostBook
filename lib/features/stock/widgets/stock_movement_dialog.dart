@@ -5,6 +5,7 @@ import 'package:costbook/core/constants/app_status.dart';
 import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
+import 'package:costbook/core/utils/cost_util.dart';
 import 'package:costbook/core/utils/money_util.dart';
 import 'package:costbook/core/utils/validator_util.dart';
 import 'package:costbook/features/stock/bloc/stock_bloc.dart';
@@ -38,15 +39,26 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
   final _formKey = GlobalKey<FormState>();
   final _quantityController = TextEditingController();
   final _noteController = TextEditingController();
-  final _unitCostController = TextEditingController();
+  final _costController = TextEditingController();
   final _supplierController = TextEditingController();
   late String _productId = widget.productId;
   late String _type = widget.type;
   bool _isSubmitted = false;
   // รับเข้า = ผลิตเสร็จ → ตัดวัสดุตามใบต้นทุน (ปิดได้ถ้าเป็นของที่ทำไว้ก่อน)
   bool _useMaterials = true;
+  // ราคาทุนตอนรับเข้า: true = ใส่ราคารวมที่จ่าย (ระบบหารจำนวนให้) / false = ใส่ราคาต่อหน่วยเอง
+  bool _isTotalCost = true;
 
   bool get _isIn => _type == MovementModel.stockIn;
+
+  int get _quantity => int.tryParse(_quantityController.text.trim()) ?? 0;
+
+  // ราคาทุนต่อหน่วยที่ส่งไป — ใส่ราคารวม → หารด้วยจำนวนที่รับเข้า
+  double get _unitCost {
+    final cost = MoneyUtil.parse(_costController.text);
+    if (!_isTotalCost) return cost;
+    return CostUtil.perUnit(total: cost, quantity: _quantity.toDouble());
+  }
 
   // เปลี่ยนแท็บ: สินค้า / จำนวน / หมายเหตุที่กรอกไว้ยังอยู่ / ซ่อน error ของแท็บเดิม
   void _setType(String type) {
@@ -60,7 +72,7 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
   void dispose() {
     _quantityController.dispose();
     _noteController.dispose();
-    _unitCostController.dispose();
+    _costController.dispose();
     _supplierController.dispose();
     super.dispose();
   }
@@ -73,9 +85,9 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
       StockMovementSaved(
         type: _type,
         productId: _productId,
-        quantity: int.tryParse(_quantityController.text.trim()) ?? 0,
+        quantity: _quantity,
         note: _noteController.text.trim(),
-        unitCost: _isIn ? MoneyUtil.parse(_unitCostController.text) : 0,
+        unitCost: _isIn ? _unitCost : 0,
         supplier: _isIn ? _supplierController.text.trim() : '',
         skipMaterials: _isIn && !_useMaterials,
       ),
@@ -138,8 +150,9 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
             controller: _quantityController,
             keyboardType: TextInputType.number,
             validator: ValidatorUtil.positiveInteger,
+            onChanged: (_) => setState(() {}),
           ),
-          if (_isIn) ..._costFields(context),
+          if (_isIn) ..._costFields(context, items),
           if (_isIn)
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
@@ -161,20 +174,33 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
     );
   }
 
-  List<Widget> _costFields(BuildContext context) {
+  List<Widget> _costFields(BuildContext context, List<StockItemModel> items) {
     return [
+      const SizedBox(height: AppSizes.spaceMedium),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: SegmentedButton<bool>(
+          segments: [
+            ButtonSegment(value: true, label: Text('stock.cost_mode_total'.tr)),
+            ButtonSegment(value: false, label: Text('stock.cost_mode_unit'.tr)),
+          ],
+          selected: {_isTotalCost},
+          onSelectionChanged: (selected) => setState(() => _isTotalCost = selected.first),
+        ),
+      ),
       const SizedBox(height: AppSizes.spaceMedium),
       Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: AppTextField(
-              label: 'stock.unit_cost'.tr,
+              label: _isTotalCost ? 'stock.total_cost'.tr : 'stock.unit_cost'.tr,
               hint: 'common.optional'.tr,
-              controller: _unitCostController,
+              controller: _costController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               validator: ValidatorUtil.zeroOrMore,
               suffixText: 'common.baht'.tr,
+              onChanged: (_) => setState(() {}),
             ),
           ),
           const SizedBox(width: AppSizes.spaceMedium),
@@ -187,9 +213,25 @@ class _StockMovementDialogState extends State<StockMovementDialog> {
           ),
         ],
       ),
+      if (_isTotalCost && _unitCost > 0) ...[
+        const SizedBox(height: AppSizes.spaceSmall),
+        Text(
+          'stock.total_cost_result'.trParams({'cost': MoneyUtil.format(_unitCost), 'unit': _unitOf(items)}),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppColors.success, fontWeight: FontWeight.w600),
+        ),
+      ],
       const SizedBox(height: AppSizes.spaceSmall),
       Text('stock.unit_cost_hint'.tr, style: Theme.of(context).textTheme.bodySmall),
     ];
+  }
+
+  String _unitOf(List<StockItemModel> items) {
+    for (final item in items) {
+      if (item.productId == _productId && item.unit.isNotEmpty) return item.unit;
+    }
+    return 'common.unit'.tr;
   }
 
   Widget _currentStock(BuildContext context, List<StockItemModel> items) {

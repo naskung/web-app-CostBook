@@ -12,6 +12,7 @@ class CostState extends Equatable {
     this.saveStatus = AppStatus.initial,
     this.saveErrorCode = '',
     this.presetErrorCode = '',
+    this.movedMaterialName = '',
   });
 
   final AppStatus status;
@@ -23,6 +24,8 @@ class CostState extends Equatable {
   final String errorCode;
   final AppStatus saveStatus;
   final String saveErrorCode;
+  // ชื่อวัสดุที่เพิ่งย้ายจากค่าใช้จ่ายเพิ่มเติมไปสต็อก (ไว้แจ้งผู้ใช้)
+  final String movedMaterialName;
   final String presetErrorCode;
 
   // วัสดุที่ใส่ในใบต้นทุนของ productId ได้ = สินค้าที่ไม่ขาย (ยกเว้นตัวเอง)
@@ -41,6 +44,7 @@ class CostState extends Equatable {
     AppStatus? saveStatus,
     String? saveErrorCode,
     String? presetErrorCode,
+    String? movedMaterialName,
   }) {
     return CostState(
       status: status ?? this.status,
@@ -53,6 +57,7 @@ class CostState extends Equatable {
       saveStatus: saveStatus ?? this.saveStatus,
       saveErrorCode: saveErrorCode ?? this.saveErrorCode,
       presetErrorCode: presetErrorCode ?? this.presetErrorCode,
+      movedMaterialName: movedMaterialName ?? this.movedMaterialName,
     );
   }
 
@@ -68,5 +73,6 @@ class CostState extends Equatable {
     saveStatus,
     saveErrorCode,
     presetErrorCode,
+    movedMaterialName,
   ];
 }

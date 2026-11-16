@@ -55,4 +55,20 @@ void main() {
       expect(CostUtil.percentOf(base: 33, percent: 10), 3.3);
     });
   });
+
+  group('CostUtil.perUnit (ราคาที่ซื้อ ÷ จำนวนที่ได้)', () {
+    test('ซื้อ 1,000 กรัม 450 บาท = 0.45 บาท/กรัม', () {
+      expect(CostUtil.perUnit(total: 450, quantity: 1000), 0.45);
+    });
+
+    test('ไม่ปัดเศษ (ปัดตอนแสดง)', () {
+      expect(CostUtil.perUnit(total: 100, quantity: 3), closeTo(33.3333, 0.0001));
+    });
+
+    test('ยังไม่ใส่ราคา / จำนวน หรือเป็น 0 = 0', () {
+      expect(CostUtil.perUnit(total: 450, quantity: 0), 0);
+      expect(CostUtil.perUnit(total: 0, quantity: 1000), 0);
+      expect(CostUtil.perUnit(total: -5, quantity: 10), 0);
+    });
+  });
 }

@@ -29,6 +29,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(sheet);
     registerFallbackValue(preset);
+    registerFallbackValue(const ProductModel(name: ''));
   });
 
   setUp(() {
@@ -332,4 +333,47 @@ void main() {
           ),
         ],
   );
+
+  group('CostPresetMovedToStock', () {
+    const pla = CostPresetModel(id: 'pr2', type: 'material', name: 'เส้น PLA', unit: 'กรัม', unitPrice: 0.45);
+    const labor = CostPresetModel(id: 'pr3', type: 'labor', name: 'ค่าแรง', unit: 'นาที', unitPrice: 1);
+    const plaMaterial = ProductModel(id: 'm1', name: 'เส้น PLA', unit: 'กรัม', costPrice: 0.45, forSale: false);
+    const ready = CostState(status: AppStatus.success, products: [coffee], presets: [pla, labor]);
+
+    blocTest<CostBloc, CostState>(
+      'สร้างเป็นวัสดุในสต็อก (ชื่อ / หน่วย / ราคาเดิม ไม่ขาย) แล้วลบออกจากค่าใช้จ่ายเพิ่มเติม',
+      build: () {
+        when(() => productRepository.saveProduct(any())).thenAnswer((_) async => plaMaterial);
+        when(() => repository.deletePreset('pr2')).thenAnswer((_) async {});
+        when(() => productRepository.getProducts()).thenAnswer((_) async => [coffee, plaMaterial]);
+        return buildBloc();
+      },
+      seed: () => ready,
+      act: (bloc) => bloc.add(CostPresetMovedToStock(pla)),
+      expect:
+          () => [
+            ready.copyWith(products: [coffee, plaMaterial], presets: [labor], movedMaterialName: 'เส้น PLA'),
+          ],
+      verify: (bloc) {
+        final saved = verify(() => productRepository.saveProduct(captureAny())).captured.single as ProductModel;
+        expect(
+          [saved.name, saved.unit, saved.costPrice, saved.forSale, saved.trackStock],
+          ['เส้น PLA', 'กรัม', 0.45, false, true],
+        );
+        expect(bloc.state.materialsFor('p1'), [plaMaterial]);
+      },
+    );
+
+    blocTest<CostBloc, CostState>(
+      'สร้างวัสดุไม่สำเร็จ → ไม่ลบค่าใช้จ่ายเพิ่มเติม + error code',
+      build: () {
+        when(() => productRepository.saveProduct(any())).thenThrow(ApiException('server_error'));
+        return buildBloc();
+      },
+      seed: () => ready,
+      act: (bloc) => bloc.add(CostPresetMovedToStock(pla)),
+      expect: () => [ready.copyWith(presetErrorCode: 'server_error')],
+      verify: (_) => verifyNever(() => repository.deletePreset(any())),
+    );
+  });
 }

@@ -77,7 +77,7 @@ void main() {
     await openDialog(tester);
     expect(find.text('stock.stock_in_title'.tr), findsOneWidget);
     expect(find.text('stock.current'.trParams({'stock': '8', 'unit': 'ชิ้น'})), findsOneWidget);
-    expect(field('stock.unit_cost'), findsOneWidget);
+    expect(field('stock.total_cost'), findsOneWidget);
     expect(find.text('stock.use_materials'.tr), findsOneWidget);
   });
 
@@ -88,6 +88,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('stock.stock_out_title'.tr), findsOneWidget);
+    expect(field('stock.total_cost'), findsNothing);
     expect(field('stock.unit_cost'), findsNothing);
     expect(find.text('stock.use_materials'.tr), findsNothing);
     expect(tester.widget<TextFormField>(field('common.quantity')).controller?.text, '3');
@@ -106,5 +107,71 @@ void main() {
       ),
     ).called(1);
     expect(find.byType(Dialog), findsNothing);
+  });
+
+  Future<void> stockIn(WidgetTester tester) async {
+    await tester.tap(find.widgetWithText(ElevatedButton, 'stock.stock_in'.tr));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('ใส่ราคารวมที่จ่าย ระบบหารจำนวนให้ → ส่งเป็นราคาทุนต่อหน่วย', (tester) async {
+    await openDialog(tester);
+    await tester.enterText(field('common.quantity'), '8');
+    await tester.enterText(field('stock.total_cost'), '100');
+    await tester.pump();
+    expect(find.text('stock.total_cost_result'.trParams({'cost': '12.50', 'unit': 'ชิ้น'})), findsOneWidget);
+
+    await stockIn(tester);
+    verify(
+      () => repository.addMovement(
+        type: MovementModel.stockIn,
+        productId: 'p1',
+        quantity: 8,
+        note: '',
+        unitCost: 12.5,
+        supplier: '',
+        skipMaterials: false,
+      ),
+    ).called(1);
+  });
+
+  testWidgets('สลับเป็นใส่ราคาต่อหน่วย → ส่งราคาที่กรอกตรงๆ ไม่หาร', (tester) async {
+    await openDialog(tester);
+    await tester.enterText(field('common.quantity'), '8');
+    await tester.tap(find.text('stock.cost_mode_unit'.tr));
+    await tester.pumpAndSettle();
+    await tester.enterText(field('stock.unit_cost'), '6');
+    await tester.pump();
+    expect(find.text('stock.total_cost_result'.trParams({'cost': '0.75', 'unit': 'ชิ้น'})), findsNothing);
+
+    await stockIn(tester);
+    verify(
+      () => repository.addMovement(
+        type: MovementModel.stockIn,
+        productId: 'p1',
+        quantity: 8,
+        note: '',
+        unitCost: 6,
+        supplier: '',
+        skipMaterials: false,
+      ),
+    ).called(1);
+  });
+
+  testWidgets('ไม่ใส่ราคา ส่งราคาทุน 0 (ไม่คิดต้นทุนเฉลี่ยใหม่)', (tester) async {
+    await openDialog(tester);
+    await tester.enterText(field('common.quantity'), '5');
+    await stockIn(tester);
+    verify(
+      () => repository.addMovement(
+        type: MovementModel.stockIn,
+        productId: 'p1',
+        quantity: 5,
+        note: '',
+        unitCost: 0,
+        supplier: '',
+        skipMaterials: false,
+      ),
+    ).called(1);
   });
 }
