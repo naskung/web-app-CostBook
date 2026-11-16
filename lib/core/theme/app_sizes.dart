@@ -76,6 +76,10 @@ class AppSizes {
   static const double calendarBandInset = 2;
   static const double monthGridCellHeight = 44;
   static const double autocompleteMaxHeight = 240;
+  static const double mockInputHeight = 44;
+  static const double mockTextAreaHeight = 64;
+  static const double mockImageSize = 56;
+  static const double dragHandleWidth = 40;
   static const double dateRangeMenuGap = 4;
   static const double paperWidth = 794;
   static const double paperPadding = 48;

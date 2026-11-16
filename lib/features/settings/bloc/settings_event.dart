@@ -24,6 +24,12 @@ class ProductFieldSaved extends SettingsEvent {
   final ProductFieldModel field;
 }
 
+class ProductFormLayoutSaved extends SettingsEvent {
+  ProductFormLayoutSaved(this.keys);
+
+  final List<String> keys;
+}
+
 class ProductFieldDeleted extends SettingsEvent {
   ProductFieldDeleted(this.id);
 

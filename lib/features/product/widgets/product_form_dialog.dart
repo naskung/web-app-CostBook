@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:costbook/core/constants/app_status.dart';
+import 'package:costbook/core/constants/product_form_block.dart';
 import 'package:costbook/core/helpers/image_pick_helper.dart';
 import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
+import 'package:costbook/core/utils/form_layout_util.dart';
 import 'package:costbook/core/utils/money_util.dart';
 import 'package:costbook/core/utils/validator_util.dart';
 import 'package:costbook/features/category/models/product_category_model.dart';
@@ -22,25 +24,33 @@ import 'package:costbook/shared/widgets/atoms/app_text_field.dart';
 import 'package:costbook/shared/widgets/organisms/form_dialog.dart';
 
 class ProductFormDialog extends StatefulWidget {
-  const ProductFormDialog({super.key, required this.product, required this.fields, required this.categories});
+  const ProductFormDialog({
+    super.key,
+    required this.product,
+    required this.fields,
+    required this.categories,
+    this.order = const [],
+  });
 
   final ProductModel product;
   final List<ProductFieldModel> fields;
   final List<ProductCategoryModel> categories;
+  final List<String> order;
 
   static Future<void> show(
     BuildContext context,
     ProductModel product,
     List<ProductFieldModel> fields,
-    List<ProductCategoryModel> categories,
-  ) {
+    List<ProductCategoryModel> categories, {
+    List<String> order = const [],
+  }) {
     final bloc = context.read<ProductBloc>();
     return showDialog<void>(
       context: context,
       builder:
           (_) => BlocProvider.value(
             value: bloc,
-            child: ProductFormDialog(product: product, fields: fields, categories: categories),
+            child: ProductFormDialog(product: product, fields: fields, categories: categories, order: order),
           ),
     );
   }
@@ -159,59 +169,79 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     );
   }
 
+  // เรียงช่องตามที่ร้านจัดไว้ในหน้าตั้งค่า (ช่องหลัก + ช่องที่ร้านเพิ่ม) — ไม่มีลำดับ = แบบเดิม
   Widget _form(BuildContext context) {
+    final order = FormLayoutUtil.order(widget.order, [for (final field in widget.fields) field.id]);
     return Form(
       key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _imageSection(context),
-          const SizedBox(height: AppSizes.spaceLarge),
-          AppTextField(
-            label: 'product.name'.tr,
-            hint: 'product.name_hint'.tr,
-            controller: _nameController,
-            validator: ValidatorUtil.required,
-          ),
-          const SizedBox(height: AppSizes.spaceMedium),
-          _twoFields(
-            AppTextField(label: 'product.code'.tr, hint: 'product.code_hint'.tr, controller: _codeController),
-            AppDropdown<String>(
-              label: 'product.category'.tr,
-              value: _categoryId,
-              items: {
-                '': 'product.no_category'.tr,
-                for (final category in widget.categories) category.id: category.name,
-              },
-              onChanged: (value) => setState(() => _categoryId = value ?? ''),
-            ),
-          ),
-          const SizedBox(height: AppSizes.spaceMedium),
-          AppTextField(label: 'common.unit'.tr, hint: 'product.unit_hint'.tr, controller: _unitController),
-          const SizedBox(height: AppSizes.spaceMedium),
-          _priceRow(),
-          const SizedBox(height: AppSizes.spaceSmall),
-          Text('product.cost_note'.tr, style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(height: AppSizes.spaceSmall),
-          _stockFields(context),
-          const SizedBox(height: AppSizes.spaceMedium),
-          AppTextField(
-            label: 'product.description'.tr,
-            hint: 'product.description_hint'.tr,
-            controller: _descriptionController,
-            maxLines: 2,
-          ),
-          for (final field in widget.fields) ...[
-            const SizedBox(height: AppSizes.spaceMedium),
-            CustomFieldInput(
-              field: field,
-              value: _customValues[field.id] ?? '',
-              onChanged: (value) => _setCustomValue(field.id, value),
-            ),
+          for (var index = 0; index < order.length; index++) ...[
+            if (index > 0) const SizedBox(height: AppSizes.spaceMedium),
+            _block(context, order[index]),
           ],
         ],
       ),
     );
+  }
+
+  Widget _block(BuildContext context, String key) {
+    return switch (key) {
+      ProductFormBlock.image => _imageSection(context),
+      ProductFormBlock.name => AppTextField(
+        label: 'product.name'.tr,
+        hint: 'product.name_hint'.tr,
+        controller: _nameController,
+        validator: ValidatorUtil.required,
+      ),
+      ProductFormBlock.codeCategory => _codeCategoryRow(),
+      ProductFormBlock.unit => AppTextField(
+        label: 'common.unit'.tr,
+        hint: 'product.unit_hint'.tr,
+        controller: _unitController,
+      ),
+      ProductFormBlock.prices => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _priceRow(),
+          const SizedBox(height: AppSizes.spaceSmall),
+          Text('product.cost_note'.tr, style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ),
+      ProductFormBlock.saleStock => _stockFields(context),
+      ProductFormBlock.description => AppTextField(
+        label: 'product.description'.tr,
+        hint: 'product.description_hint'.tr,
+        controller: _descriptionController,
+        maxLines: 2,
+      ),
+      _ => _customField(key),
+    };
+  }
+
+  Widget _codeCategoryRow() {
+    return _twoFields(
+      AppTextField(label: 'product.code'.tr, hint: 'product.code_hint'.tr, controller: _codeController),
+      AppDropdown<String>(
+        label: 'product.category'.tr,
+        value: _categoryId,
+        items: {'': 'product.no_category'.tr, for (final category in widget.categories) category.id: category.name},
+        onChanged: (value) => setState(() => _categoryId = value ?? ''),
+      ),
+    );
+  }
+
+  Widget _customField(String id) {
+    for (final field in widget.fields) {
+      if (field.id != id) continue;
+      return CustomFieldInput(
+        field: field,
+        value: _customValues[field.id] ?? '',
+        onChanged: (value) => _setCustomValue(field.id, value),
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   // รูปสินค้า: ตัวอย่างรูป + ปุ่มเลือก / ลบ (ส่งรูปตอนกดบันทึก)

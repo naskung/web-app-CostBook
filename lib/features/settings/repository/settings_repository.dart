@@ -51,4 +51,19 @@ class SettingsRepository {
   Future<void> deleteField(String id) async {
     await api.delete('/product-fields/$id');
   }
+
+  Future<List<String>> getFormLayout() async {
+    return _layoutKeys(await api.get('/product-form-layout'));
+  }
+
+  Future<List<String>> saveFormLayout(List<String> keys) async {
+    final items = [
+      for (var index = 0; index < keys.length; index++) {'key': keys[index], 'sort_order': index + 1},
+    ];
+    return _layoutKeys(await api.put('/product-form-layout', {'items': items}));
+  }
+
+  List<String> _layoutKeys(dynamic data) {
+    return (data as List).map((item) => (item as Map<String, dynamic>)['key'] as String? ?? '').toList();
+  }
 }

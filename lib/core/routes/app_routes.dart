@@ -13,6 +13,7 @@ class AppRoutes {
   static const String invoiceCreate = '/invoices/create';
   static const String invoiceDetail = '/invoices/:id';
   static const String settings = '/settings';
+  static const String productFormLayout = '/settings/product-form';
   static const String market = '/products/:id/market';
   static const String profile = '/profile';
   // จัดการผู้ใช้ (เจ้าของร้าน) อยู่ใต้หน้าโปรไฟล์ — เมนูข้างไฮไลต์แถวผู้ใช้ให้

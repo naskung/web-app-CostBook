@@ -9,7 +9,14 @@ extension _ProductListPageExt on ProductListPage {
     return PageToolbar(
       actions: [
         FilledButton.icon(
-          onPressed: () => ProductFormDialog.show(context, const ProductModel(name: ''), fields, state.categories),
+          onPressed:
+              () => ProductFormDialog.show(
+                context,
+                const ProductModel(name: ''),
+                fields,
+                state.categories,
+                order: context.read<SettingsBloc>().state.formOrder,
+              ),
           icon: const Icon(Icons.add),
           label: Text('product.add'.tr),
         ),
@@ -111,7 +118,14 @@ extension _ProductListPageExt on ProductListPage {
         AppDataColumn(label: 'product.stock'.tr, flex: 2, alignEnd: true, minWidth: AppSizes.productStockMinWidth),
         const AppDataColumn(label: '', alignEnd: true, width: AppSizes.tableActionsWidth),
       ],
-      onRowTap: (index) => ProductFormDialog.show(context, products[index], settings.fields, state.categories),
+      onRowTap:
+          (index) => ProductFormDialog.show(
+            context,
+            products[index],
+            settings.fields,
+            state.categories,
+            order: settings.formOrder,
+          ),
       rows: [for (final product in products) _row(context, product, listFields, settings.fields, state.categories)],
     );
   }
@@ -299,7 +313,7 @@ extension _ProductListPageExt on ProductListPage {
       return;
     }
     if (action == _RowAction.edit) {
-      ProductFormDialog.show(context, product, fields, categories);
+      ProductFormDialog.show(context, product, fields, categories, order: context.read<SettingsBloc>().state.formOrder);
       return;
     }
     _confirmDelete(context, product);

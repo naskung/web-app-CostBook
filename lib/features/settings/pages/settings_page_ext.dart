@@ -103,11 +103,21 @@ extension _SettingsPageExt on _SettingsPageState {
     return SectionCard(
       title: 'settings.fields_title'.tr,
       subtitle: 'settings.fields_subtitle'.tr,
-      trailing: TextButton.icon(
-        onPressed:
-            () => ProductFieldDialog.show(context, const ProductFieldModel(name: '', type: ProductFieldModel.text)),
-        icon: const Icon(Icons.add),
-        label: Text('settings.field_add'.tr),
+      trailing: Wrap(
+        spacing: AppSizes.spaceXSmall,
+        children: [
+          TextButton.icon(
+            onPressed: () => context.go(AppRoutes.productFormLayout),
+            icon: const Icon(Icons.view_agenda_outlined),
+            label: Text('settings.form_layout_open'.tr),
+          ),
+          TextButton.icon(
+            onPressed:
+                () => ProductFieldDialog.show(context, const ProductFieldModel(name: '', type: ProductFieldModel.text)),
+            icon: const Icon(Icons.add),
+            label: Text('settings.field_add'.tr),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -142,29 +152,18 @@ extension _SettingsPageExt on _SettingsPageState {
               backgroundColor: AppColors.neutralSoft,
             ),
           IconButton(
-            tooltip: 'common.edit'.tr,
-            onPressed: () => ProductFieldDialog.show(context, field),
+            tooltip: 'settings.form_layout_open'.tr,
+            onPressed: () => context.go(AppRoutes.productFormLayout),
             icon: const Icon(Icons.edit_outlined),
           ),
           IconButton(
             tooltip: 'common.delete'.tr,
-            onPressed: () => _confirmDeleteField(context, field),
+            onPressed: () => ProductFieldDialog.confirmDelete(context, field),
             icon: const Icon(Icons.delete_outline, color: AppColors.danger),
           ),
         ],
       ),
     );
-  }
-
-  Future<void> _confirmDeleteField(BuildContext context, ProductFieldModel field) async {
-    final bloc = context.read<SettingsBloc>();
-    final isConfirmed = await DialogHelper.confirm(
-      context,
-      title: 'settings.field_delete_title'.tr,
-      message: 'settings.field_delete_message'.trParams({'name': field.name}),
-      confirmText: 'common.delete'.tr,
-    );
-    if (isConfirmed) bloc.add(ProductFieldDeleted(field.id));
   }
 
   Widget _languageSection(BuildContext context) {

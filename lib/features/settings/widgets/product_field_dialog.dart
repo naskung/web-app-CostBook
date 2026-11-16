@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:costbook/core/constants/app_status.dart';
+import 'package:costbook/core/helpers/dialog_helper.dart';
 import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
 import 'package:costbook/core/utils/validator_util.dart';
@@ -22,6 +23,17 @@ class ProductFieldDialog extends StatefulWidget {
       context: context,
       builder: (_) => BlocProvider.value(value: bloc, child: ProductFieldDialog(field: field)),
     );
+  }
+
+  static Future<void> confirmDelete(BuildContext context, ProductFieldModel field) async {
+    final bloc = context.read<SettingsBloc>();
+    final isConfirmed = await DialogHelper.confirm(
+      context,
+      title: 'settings.field_delete_title'.tr,
+      message: 'settings.field_delete_message'.trParams({'name': field.name}),
+      confirmText: 'common.delete'.tr,
+    );
+    if (isConfirmed) bloc.add(ProductFieldDeleted(field.id));
   }
 
   @override

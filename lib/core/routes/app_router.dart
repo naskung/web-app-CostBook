@@ -35,6 +35,7 @@ import 'package:costbook/features/product/bloc/product_bloc.dart';
 import 'package:costbook/features/product/pages/product_list_page.dart';
 import 'package:costbook/features/product/repository/product_repository.dart';
 import 'package:costbook/features/settings/bloc/settings_bloc.dart';
+import 'package:costbook/features/settings/pages/product_form_layout_page.dart';
 import 'package:costbook/features/settings/pages/settings_page.dart';
 import 'package:costbook/features/sell/pages/sell_page.dart';
 import 'package:costbook/features/settings/repository/settings_repository.dart';
@@ -89,6 +90,7 @@ final appRouter = GoRouter(
         _menuRoute(AppRoutes.invoiceCreate, _invoiceFormPage),
         _menuRoute(AppRoutes.invoiceDetail, _invoiceDetailPage),
         _menuRoute(AppRoutes.settings, _settingsPage),
+        _menuRoute(AppRoutes.productFormLayout, _productFormLayoutPage),
         _menuRoute(AppRoutes.profile, _profilePage),
         _menuRoute(AppRoutes.users, _userListPage),
       ],
@@ -217,6 +219,11 @@ Widget _invoiceDetailPage(GoRouterState state) {
 
 Widget _settingsPage(GoRouterState state) {
   return const SettingsPage();
+}
+
+// ใช้ SettingsBloc ของ shell ตัวเดียวกับหน้าตั้งค่า → ย้ายแล้วฟอร์มสินค้าเรียงตามทันที
+Widget _productFormLayoutPage(GoRouterState state) {
+  return const ProductFormLayoutPage();
 }
 
 // ใช้ ProfileBloc ของ shell (ตัวเดียวกับที่เมนูข้างใช้) → แก้ชื่อ / รูปแล้วเมนูเปลี่ยนตามทันที

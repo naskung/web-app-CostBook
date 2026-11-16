@@ -113,7 +113,7 @@ web-app-CostBook/
 │       │                    pages: profile_page, user_list_page (+ _ext)
 │       │                    widgets: user_avatar (รูป / ตัวอักษรย่อ), role_badge, profile_photo_card, profile_info_section, password_section,
 │       │                    user_form_dialog (เพิ่ม / แก้ผู้ใช้), reset_password_dialog
-│       └── settings/        ข้อมูลร้าน + รูปแบบร้าน + ช่องข้อมูลเพิ่มเติม (widgets/product_field_dialog.dart) + AI ที่ร้านเลือก (widgets/ai_settings_section.dart + openai_fields.dart) + โลโก้ + เปลี่ยนภาษา
+│       └── settings/        ข้อมูลร้าน + รูปแบบร้าน + ช่องข้อมูลเพิ่มเติม (widgets/product_field_dialog.dart) + จัดหน้าฟอร์มสินค้า (pages/product_form_layout_page.dart, widgets/form_layout_card.dart + form_block_preview.dart) + AI ที่ร้านเลือก (widgets/ai_settings_section.dart + openai_fields.dart) + โลโก้ + เปลี่ยนภาษา
 └── test/                  โครงเหมือน lib/ ทุกอย่าง เช่น test/core/utils/tax_util_test.dart
 ```
 
@@ -540,6 +540,12 @@ token หมดอายุ (7 วัน) / ถูกปฏิเสธ: API ต
 | `trackDelivery` | `true` → เอกสารขายมีสถานะการส่งสินค้า (`DeliveryStatus` ใน `core/constants`) บิลใหม่เริ่มที่รอส่ง / `false` → ซ่อน (บิลใหม่ API ใส่รับแล้วให้) |
 
 **ช่องข้อมูลเพิ่มเติม** (`ProductFieldModel`): ร้านเพิ่มช่องเอง (ข้อความ / ตัวเลข / วันที่ / ตัวเลือก) ในหน้าตั้งค่า → ฟอร์มสินค้าแสดงช่องให้กรอก (`CustomFieldInput`) → เก็บใน `ProductModel.customFields` (`{id ช่อง: ค่า}`)
+
+**จัดหน้าฟอร์มสินค้า** (`/settings/product-form`, `ProductFormLayoutPage` — ผู้ใช้ขอ 2026-11-16):
+- เปิดจากปุ่ม "จัดหน้าฟอร์ม" หรือปุ่มดินสอของช่องในหน้าตั้งค่า → เห็นทุกช่องเรียงเหมือนฟอร์มจริง (`FormBlockPreview` วาดหน้าตาช่อง กรอกไม่ได้)
+- ช่องหลัก (`ProductFormBlock`: image, name, code_category, unit, prices, sale_stock, description) ย้ายได้ ลบไม่ได้ / ช่องที่ร้านเพิ่ม ย้าย / แก้ / ลบ ได้
+- ลากที่จับ (`ReorderableDragStartListener` ใน `FormLayoutCard`) → `FormLayoutUtil.moved` → `ProductFormLayoutSaved` → `PUT /product-form-layout` (เลข sort = ตำแหน่ง 1, 2, 3...) — โชว์ลำดับใหม่ทันที บันทึกไม่ได้ → กลับลำดับเดิม + snackbar
+- `SettingsState.formOrder` = `FormLayoutUtil.order(formLayout, ids ของช่อง)` (ตัดช่องที่ถูกลบ, ช่องใหม่ต่อท้าย, ไม่มีลำดับจาก API = แบบเดิม) → `ProductFormDialog(order: ...)` เรียงช่องตามนี้
 
 ผลของการบันทึก / ลบ แยกเป็น field ของ state: `saveStatus` / `saveErrorCode` (กล่องฟอร์มใช้ — สำเร็จแล้วปิดเอง ไม่สำเร็จแสดง error ในกล่อง) และ `deleteStatus` / `deleteErrorCode` (หน้าใช้ — แสดง snackbar)
 กล่องฟอร์มเปิดด้วย `XxxDialog.show(context, ...)` ซึ่งส่ง bloc ของหน้าเข้าไปด้วย `BlocProvider.value`

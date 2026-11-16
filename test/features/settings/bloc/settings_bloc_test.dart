@@ -22,6 +22,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(const CompanyModel());
     registerFallbackValue(material);
+    registerFallbackValue(<String>[]);
   });
 
   setUp(() {
@@ -42,6 +43,84 @@ void main() {
           const SettingsState(status: AppStatus.success, company: company, fields: [material, color]),
         ],
   );
+
+  const layout = ['image', 'name', 'f1', 'code_category', 'unit', 'prices', 'sale_stock', 'description', 'f2'];
+  const moved = ['image', 'f1', 'name', 'code_category', 'unit', 'prices', 'sale_stock', 'description', 'f2'];
+  const loaded = SettingsState(status: AppStatus.success, fields: [material, color], formLayout: layout);
+
+  blocTest<SettingsBloc, SettingsState>(
+    'SettingsRequested โหลดลำดับฟอร์มด้วย',
+    build: () {
+      when(() => repository.getCompany()).thenAnswer((_) async => company);
+      when(() => repository.getFields()).thenAnswer((_) async => [material, color]);
+      when(() => repository.getFormLayout()).thenAnswer((_) async => layout);
+      return SettingsBloc(repository);
+    },
+    act: (bloc) => bloc.add(SettingsRequested()),
+    expect:
+        () => [
+          const SettingsState(status: AppStatus.loading),
+          const SettingsState(
+            status: AppStatus.success,
+            company: company,
+            fields: [material, color],
+            formLayout: layout,
+          ),
+        ],
+  );
+
+  blocTest<SettingsBloc, SettingsState>(
+    'โหลดลำดับฟอร์มไม่ได้ (API เก่า) หน้าตั้งค่ายังใช้ได้ ใช้ลำดับเริ่มต้น',
+    build: () {
+      when(() => repository.getCompany()).thenAnswer((_) async => company);
+      when(() => repository.getFields()).thenAnswer((_) async => [material]);
+      when(() => repository.getFormLayout()).thenThrow(ApiException('not_found'));
+      return SettingsBloc(repository);
+    },
+    act: (bloc) => bloc.add(SettingsRequested()),
+    expect:
+        () => [
+          const SettingsState(status: AppStatus.loading),
+          const SettingsState(status: AppStatus.success, company: company, fields: [material]),
+        ],
+    verify: (bloc) => expect(bloc.state.formOrder.last, 'f1'),
+  );
+
+  blocTest<SettingsBloc, SettingsState>(
+    'ย้ายตำแหน่ง: โชว์ลำดับใหม่ทันที แล้วบันทึกสำเร็จ',
+    build: () {
+      when(() => repository.saveFormLayout(moved)).thenAnswer((_) async => moved);
+      return SettingsBloc(repository);
+    },
+    seed: () => loaded,
+    act: (bloc) => bloc.add(ProductFormLayoutSaved(moved)),
+    expect:
+        () => [
+          loaded.copyWith(formLayout: moved, layoutStatus: AppStatus.loading),
+          loaded.copyWith(formLayout: moved, layoutStatus: AppStatus.success),
+        ],
+  );
+
+  blocTest<SettingsBloc, SettingsState>(
+    'ย้ายตำแหน่ง บันทึกไม่ได้ → กลับไปลำดับเดิม + error code',
+    build: () {
+      when(() => repository.saveFormLayout(any())).thenThrow(ApiException('form_layout_invalid'));
+      return SettingsBloc(repository);
+    },
+    seed: () => loaded,
+    act: (bloc) => bloc.add(ProductFormLayoutSaved(moved)),
+    expect:
+        () => [
+          loaded.copyWith(formLayout: moved, layoutStatus: AppStatus.loading),
+          loaded.copyWith(layoutStatus: AppStatus.failure, layoutErrorCode: 'form_layout_invalid'),
+        ],
+  );
+
+  test('formOrder: ลำดับที่บันทึก + ช่องที่เพิ่งเพิ่มต่อท้าย', () {
+    const third = ProductFieldModel(id: 'f3', name: 'ยี่ห้อ', type: 'text');
+    final state = loaded.copyWith(fields: [material, color, third]);
+    expect(state.formOrder, [...layout, 'f3']);
+  });
 
   blocTest<SettingsBloc, SettingsState>(
     'SettingsRequested ต่อ server ไม่ได้ ได้ failure พร้อม code network_error',

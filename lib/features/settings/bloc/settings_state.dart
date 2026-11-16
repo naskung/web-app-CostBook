@@ -12,6 +12,9 @@ class SettingsState extends Equatable {
     this.logoErrorCode = '',
     this.fieldStatus = AppStatus.initial,
     this.fieldErrorCode = '',
+    this.formLayout = const [],
+    this.layoutStatus = AppStatus.initial,
+    this.layoutErrorCode = '',
   });
 
   final AppStatus status;
@@ -24,8 +27,13 @@ class SettingsState extends Equatable {
   final String logoErrorCode;
   final AppStatus fieldStatus;
   final String fieldErrorCode;
+  final List<String> formLayout;
+  final AppStatus layoutStatus;
+  final String layoutErrorCode;
 
   List<ProductFieldModel> get listFields => fields.where((field) => field.showInList).toList();
+
+  List<String> get formOrder => FormLayoutUtil.order(formLayout, [for (final field in fields) field.id]);
 
   SettingsState copyWith({
     AppStatus? status,
@@ -38,6 +46,9 @@ class SettingsState extends Equatable {
     String? logoErrorCode,
     AppStatus? fieldStatus,
     String? fieldErrorCode,
+    List<String>? formLayout,
+    AppStatus? layoutStatus,
+    String? layoutErrorCode,
   }) {
     return SettingsState(
       status: status ?? this.status,
@@ -50,6 +61,9 @@ class SettingsState extends Equatable {
       logoErrorCode: logoErrorCode ?? this.logoErrorCode,
       fieldStatus: fieldStatus ?? this.fieldStatus,
       fieldErrorCode: fieldErrorCode ?? this.fieldErrorCode,
+      formLayout: formLayout ?? this.formLayout,
+      layoutStatus: layoutStatus ?? this.layoutStatus,
+      layoutErrorCode: layoutErrorCode ?? this.layoutErrorCode,
     );
   }
 
@@ -65,5 +79,8 @@ class SettingsState extends Equatable {
     logoErrorCode,
     fieldStatus,
     fieldErrorCode,
+    formLayout,
+    layoutStatus,
+    layoutErrorCode,
   ];
 }

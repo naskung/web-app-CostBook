@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:costbook/core/constants/app_status.dart';
 import 'package:costbook/core/utils/error_util.dart';
+import 'package:costbook/core/utils/form_layout_util.dart';
 import 'package:costbook/features/settings/models/company_model.dart';
 import 'package:costbook/features/settings/models/product_field_model.dart';
 import 'package:costbook/features/settings/repository/settings_repository.dart';
@@ -20,6 +21,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<LogoRemoved>(_onLogoRemoved);
     on<ProductFieldSaved>(_onFieldSaved);
     on<ProductFieldDeleted>(_onFieldDeleted);
+    on<ProductFormLayoutSaved>(_onLayoutSaved);
   }
 
   final SettingsRepository repository;
@@ -29,9 +31,36 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     try {
       final company = await repository.getCompany();
       final fields = await repository.getFields();
-      emit(state.copyWith(status: AppStatus.success, company: company, fields: fields));
+      final formLayout = await _formLayoutOrDefault();
+      emit(state.copyWith(status: AppStatus.success, company: company, fields: fields, formLayout: formLayout));
     } catch (error) {
       emit(state.copyWith(status: AppStatus.failure, errorCode: ErrorUtil.codeOf(error)));
+    }
+  }
+
+  // โหลดลำดับฟอร์มไม่ได้ (เช่น API ยังไม่ได้อัปเดต) → ใช้ลำดับเริ่มต้น หน้าตั้งค่ายังใช้ได้
+  Future<List<String>> _formLayoutOrDefault() async {
+    try {
+      return await repository.getFormLayout();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  // ย้ายแล้วโชว์ลำดับใหม่ทันที แล้วค่อยบันทึก / บันทึกไม่ได้ → กลับไปลำดับเดิม
+  // ลากหลายครั้งติดกัน: ผลของครั้งเก่าที่กลับมาทีหลังไม่ทับลำดับล่าสุด
+  Future<void> _onLayoutSaved(ProductFormLayoutSaved event, Emitter<SettingsState> emit) async {
+    final before = state.formLayout;
+    emit(state.copyWith(formLayout: event.keys, layoutStatus: AppStatus.loading, layoutErrorCode: ''));
+    try {
+      final saved = await repository.saveFormLayout(event.keys);
+      if (!identical(state.formLayout, event.keys)) return;
+      emit(state.copyWith(formLayout: saved, layoutStatus: AppStatus.success));
+    } catch (error) {
+      if (!identical(state.formLayout, event.keys)) return;
+      emit(
+        state.copyWith(formLayout: before, layoutStatus: AppStatus.failure, layoutErrorCode: ErrorUtil.codeOf(error)),
+      );
     }
   }
 

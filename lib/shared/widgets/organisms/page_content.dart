@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:costbook/core/constants/screen_type.dart';
 import 'package:costbook/core/helpers/responsive_helper.dart';
 import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/theme/app_colors.dart';
@@ -148,8 +147,5 @@ class _PageContentState extends State<PageContent> {
     return Center(child: ConstrainedBox(constraints: BoxConstraints(maxWidth: widget.maxWidth), child: child));
   }
 
-  double _padding(BuildContext context) {
-    if (ResponsiveHelper.screenType(context) == ScreenType.mobile) return AppSizes.spaceMedium;
-    return AppSizes.spaceLarge;
-  }
+  double _padding(BuildContext context) => ResponsiveHelper.pagePadding(context);
 }
