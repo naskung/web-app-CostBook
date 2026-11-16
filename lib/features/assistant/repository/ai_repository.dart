@@ -1,4 +1,5 @@
 import 'package:costbook/core/network/api_client.dart';
+import 'package:costbook/features/assistant/models/ai_settings_model.dart';
 import 'package:costbook/features/assistant/models/ai_status_model.dart';
 import 'package:costbook/features/assistant/models/chat_message_model.dart';
 
@@ -12,9 +13,15 @@ class AiRepository {
     return AiStatusModel.fromJson(data);
   }
 
-  Future<AiStatusModel> saveKey(String apiKey) async {
-    final data = await api.put('/ai/key', {'api_key': apiKey}) as Map<String, dynamic>;
+  Future<AiStatusModel> saveSettings(AiSettingsModel settings) async {
+    final data = await api.put('/ai/key', settings.toJson()) as Map<String, dynamic>;
     return AiStatusModel.fromJson(data);
+  }
+
+  Future<List<String>> listModels({required String baseUrl, required String apiKey}) async {
+    final data =
+        await api.post('/ai/models', {'base_url': baseUrl.trim(), 'api_key': apiKey.trim()}) as Map<String, dynamic>;
+    return (data['models'] as List? ?? []).map((model) => model as String).toList();
   }
 
   Future<AiStatusModel> removeKey() async {

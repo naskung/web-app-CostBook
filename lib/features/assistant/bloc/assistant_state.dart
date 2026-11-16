@@ -11,6 +11,9 @@ class AssistantState extends Equatable {
     this.hasUnread = false,
     this.keyStatus = AppStatus.initial,
     this.keyErrorCode = '',
+    this.models = const [],
+    this.modelsStatus = AppStatus.initial,
+    this.modelsErrorCode = '',
   });
 
   final AppStatus status;
@@ -22,6 +25,9 @@ class AssistantState extends Equatable {
   final bool hasUnread;
   final AppStatus keyStatus;
   final String keyErrorCode;
+  final List<String> models;
+  final AppStatus modelsStatus;
+  final String modelsErrorCode;
 
   bool get isSending => sendStatus == AppStatus.loading;
 
@@ -48,6 +54,9 @@ class AssistantState extends Equatable {
     bool? hasUnread,
     AppStatus? keyStatus,
     String? keyErrorCode,
+    List<String>? models,
+    AppStatus? modelsStatus,
+    String? modelsErrorCode,
   }) {
     return AssistantState(
       status: status ?? this.status,
@@ -59,9 +68,25 @@ class AssistantState extends Equatable {
       hasUnread: hasUnread ?? this.hasUnread,
       keyStatus: keyStatus ?? this.keyStatus,
       keyErrorCode: keyErrorCode ?? this.keyErrorCode,
+      models: models ?? this.models,
+      modelsStatus: modelsStatus ?? this.modelsStatus,
+      modelsErrorCode: modelsErrorCode ?? this.modelsErrorCode,
     );
   }
 
   @override
-  List<Object?> get props => [status, ai, messages, sendStatus, errorCode, isOpen, hasUnread, keyStatus, keyErrorCode];
+  List<Object?> get props => [
+    status,
+    ai,
+    messages,
+    sendStatus,
+    errorCode,
+    isOpen,
+    hasUnread,
+    keyStatus,
+    keyErrorCode,
+    models,
+    modelsStatus,
+    modelsErrorCode,
+  ];
 }

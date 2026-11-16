@@ -6,6 +6,7 @@ import 'package:costbook/core/constants/app_status.dart';
 import 'package:costbook/core/network/api_exception.dart';
 import 'package:costbook/features/assistant/bloc/assistant_bloc.dart';
 import 'package:costbook/features/assistant/models/ai_action_model.dart';
+import 'package:costbook/features/assistant/models/ai_settings_model.dart';
 import 'package:costbook/features/assistant/models/ai_status_model.dart';
 import 'package:costbook/features/assistant/models/chat_message_model.dart';
 import 'package:costbook/features/assistant/repository/ai_repository.dart';
@@ -56,6 +57,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(<ChatMessageModel>[]);
+    registerFallbackValue(const AiSettingsModel(provider: AiStatusModel.claude));
     registerFallbackValue(const ProductModel(name: ''));
     registerFallbackValue(const TransactionModel(type: 'expense', category: 'rent', amount: 1, date: '2026-10-31'));
   });
@@ -377,14 +379,16 @@ void main() {
         ],
   );
 
+  const claudeSettings = AiSettingsModel(provider: AiStatusModel.claude, apiKey: 'sk-ant-api03-key');
+
   blocTest<AssistantBloc, AssistantState>(
-    'ใส่ key ของ Claude สำเร็จ เปลี่ยนเป็น Claude (ตัดช่องว่างก่อนส่ง)',
+    'ใส่ key ของ Claude สำเร็จ เปลี่ยนเป็น Claude',
     build: () {
-      when(() => aiRepository.saveKey('sk-ant-api03-key')).thenAnswer((_) async => claude);
+      when(() => aiRepository.saveSettings(claudeSettings)).thenAnswer((_) async => claude);
       return buildBloc();
     },
     seed: () => ready,
-    act: (bloc) => bloc.add(AssistantKeySaved('  sk-ant-api03-key  ')),
+    act: (bloc) => bloc.add(AssistantAiSaved(claudeSettings)),
     expect:
         () => [ready.copyWith(keyStatus: AppStatus.loading), ready.copyWith(keyStatus: AppStatus.success, ai: claude)],
   );
@@ -392,15 +396,81 @@ void main() {
   blocTest<AssistantBloc, AssistantState>(
     'key ใช้ไม่ได้ ได้ keyStatus failure พร้อม code AI เดิมไม่เปลี่ยน',
     build: () {
-      when(() => aiRepository.saveKey(any())).thenThrow(ApiException('ai_key_invalid'));
+      when(() => aiRepository.saveSettings(any())).thenThrow(ApiException('ai_key_invalid'));
       return buildBloc();
     },
     seed: () => ready,
-    act: (bloc) => bloc.add(AssistantKeySaved('sk-ant-wrong')),
+    act:
+        (bloc) =>
+            bloc.add(AssistantAiSaved(const AiSettingsModel(provider: AiStatusModel.claude, apiKey: 'sk-ant-wrong'))),
     expect:
         () => [
           ready.copyWith(keyStatus: AppStatus.loading),
           ready.copyWith(keyStatus: AppStatus.failure, keyErrorCode: 'ai_key_invalid'),
+        ],
+  );
+
+  const deepSeek = AiSettingsModel(
+    provider: AiStatusModel.openai,
+    apiKey: 'sk-ds',
+    baseUrl: 'https://api.deepseek.com/v1',
+    model: 'deepseek-chat',
+  );
+  const usingDeepSeek = AiStatusModel(
+    enabled: true,
+    provider: AiStatusModel.openai,
+    model: 'deepseek-chat',
+    baseUrl: 'https://api.deepseek.com/v1',
+    source: 'settings',
+    hasOwnKey: true,
+  );
+
+  blocTest<AssistantBloc, AssistantState>(
+    'ตั้ง AI เจ้าอื่น (แบบ OpenAI) สำเร็จ เปลี่ยนเป็นตัวนั้น',
+    build: () {
+      when(() => aiRepository.saveSettings(deepSeek)).thenAnswer((_) async => usingDeepSeek);
+      return buildBloc();
+    },
+    seed: () => ready,
+    act: (bloc) => bloc.add(AssistantAiSaved(deepSeek)),
+    expect:
+        () => [
+          ready.copyWith(keyStatus: AppStatus.loading),
+          ready.copyWith(keyStatus: AppStatus.success, ai: usingDeepSeek),
+        ],
+  );
+
+  blocTest<AssistantBloc, AssistantState>(
+    'ดึงรายชื่อรุ่น สำเร็จ เก็บไว้ให้เลือก',
+    build: () {
+      when(
+        () => aiRepository.listModels(baseUrl: 'https://api.deepseek.com/v1', apiKey: 'sk-ds'),
+      ).thenAnswer((_) async => ['deepseek-chat', 'deepseek-reasoner']);
+      return buildBloc();
+    },
+    seed: () => ready,
+    act: (bloc) => bloc.add(AssistantModelsRequested(baseUrl: 'https://api.deepseek.com/v1', apiKey: 'sk-ds')),
+    expect:
+        () => [
+          ready.copyWith(modelsStatus: AppStatus.loading),
+          ready.copyWith(modelsStatus: AppStatus.success, models: ['deepseek-chat', 'deepseek-reasoner']),
+        ],
+  );
+
+  blocTest<AssistantBloc, AssistantState>(
+    'ดึงรายชื่อรุ่นไม่ได้ ได้ code + ล้างรายชื่อเดิม',
+    build: () {
+      when(
+        () => aiRepository.listModels(baseUrl: any(named: 'baseUrl'), apiKey: any(named: 'apiKey')),
+      ).thenThrow(ApiException('ai_connect_failed'));
+      return buildBloc();
+    },
+    seed: () => ready.copyWith(models: ['old-model']),
+    act: (bloc) => bloc.add(AssistantModelsRequested(baseUrl: 'http://localhost:1/v1', apiKey: '')),
+    expect:
+        () => [
+          ready.copyWith(models: ['old-model'], modelsStatus: AppStatus.loading),
+          ready.copyWith(models: [], modelsStatus: AppStatus.failure, modelsErrorCode: 'ai_connect_failed'),
         ],
   );
 

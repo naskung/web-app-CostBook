@@ -30,9 +30,16 @@ class AssistantActionCancelled extends AssistantEvent {
 
 class AssistantCleared extends AssistantEvent {}
 
-class AssistantKeySaved extends AssistantEvent {
-  AssistantKeySaved(this.apiKey);
+class AssistantAiSaved extends AssistantEvent {
+  AssistantAiSaved(this.settings);
 
+  final AiSettingsModel settings;
+}
+
+class AssistantModelsRequested extends AssistantEvent {
+  AssistantModelsRequested({required this.baseUrl, required this.apiKey});
+
+  final String baseUrl;
   final String apiKey;
 }
 

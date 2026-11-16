@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'package:costbook/core/constants/screen_type.dart';
@@ -54,10 +56,12 @@ class AppDataTable extends StatelessWidget {
   }
 
   Widget _table(BuildContext context) {
-    final table = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: _tableRows(context));
     final minWidth = _minWidth();
     return LayoutBuilder(
       builder: (context, constraints) {
+        final tableWidth = constraints.maxWidth >= minWidth ? constraints.maxWidth : minWidth;
+        final widths = _columnWidths(tableWidth);
+        final table = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: _tableRows(context, widths));
         if (constraints.maxWidth >= minWidth) return table;
         return _HorizontalScroll(child: SizedBox(width: minWidth, child: table));
       },
@@ -73,18 +77,43 @@ class AppDataTable extends StatelessWidget {
     return total;
   }
 
-  List<Widget> _tableRows(BuildContext context) {
+  // ทุกคอลัมน์ได้ความกว้างแคบสุดของตัวเองก่อน แล้วแบ่งที่เหลือตาม flex (คอลัมน์ที่ใส่ width กว้างเท่านั้นพอดี)
+  // → คอลัมน์ไม่มีวันแคบกว่า minWidth หัวตารางกับข้อมูลใช้ความกว้างชุดเดียวกัน ตรงกันทุกแถว
+  List<double> _columnWidths(double tableWidth) {
+    final extra = math.max(0.0, tableWidth - _minWidth());
+    var totalFlex = 0;
+    for (final column in columns) {
+      if (column.width == null) totalFlex += column.flex;
+    }
+    return [
+      for (final column in columns)
+        column.width ?? column.minWidth + (totalFlex == 0 ? 0 : (extra * column.flex / totalFlex).floorToDouble()),
+    ];
+  }
+
+  List<Widget> _tableRows(BuildContext context, List<double> widths) {
     final headerStyle = Theme.of(context).textTheme.titleSmall?.copyWith(color: AppColors.textSecondary);
     return [
-      _line(context, [for (final column in columns) Text(column.label, style: headerStyle)], isHeader: true),
+      _line(context, [for (final column in columns) _headerText(column, headerStyle)], widths, isHeader: true),
       for (var index = 0; index < rows.length; index++) ...[
         const Divider(height: 1),
-        _tappable(index, _line(context, rows[index])),
+        _tappable(index, _line(context, rows[index], widths)),
       ],
     ];
   }
 
-  Widget _line(BuildContext context, List<Widget> cells, {bool isHeader = false}) {
+  // หัวคอลัมน์ชิดซ้าย / ขวาเหมือนข้อมูลข้างล่าง (ตกบรรทัดก็ยังชิดฝั่งเดียวกัน)
+  Widget _headerText(AppDataColumn column, TextStyle? style) {
+    return Text(
+      column.label,
+      style: style,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      textAlign: column.alignEnd ? TextAlign.end : TextAlign.start,
+    );
+  }
+
+  Widget _line(BuildContext context, List<Widget> cells, List<double> widths, {bool isHeader = false}) {
     return Container(
       color: isHeader ? AppColors.inputFill : null,
       constraints: const BoxConstraints(minHeight: AppSizes.tableRowMinHeight),
@@ -94,18 +123,16 @@ class AppDataTable extends StatelessWidget {
           for (var i = 0; i < columns.length; i++) ...[
             // เว้นช่องระหว่างคอลัมน์ ไม่ให้คอลัมน์ชิดขวา (เช่น จำนวน) ติดกับคอลัมน์ถัดไป
             if (i > 0) const SizedBox(width: AppSizes.spaceMedium),
-            _cell(columns[i], i < cells.length ? cells[i] : const SizedBox()),
+            _cell(columns[i], widths[i], i < cells.length ? cells[i] : const SizedBox()),
           ],
         ],
       ),
     );
   }
 
-  Widget _cell(AppDataColumn column, Widget child) {
-    final aligned = Align(alignment: column.alignEnd ? Alignment.centerRight : Alignment.centerLeft, child: child);
-    final width = column.width;
-    if (width != null) return SizedBox(width: width, child: aligned);
-    return Expanded(flex: column.flex, child: aligned);
+  Widget _cell(AppDataColumn column, double width, Widget child) {
+    final alignment = column.alignEnd ? Alignment.centerRight : Alignment.centerLeft;
+    return SizedBox(width: width, child: Align(alignment: alignment, child: child));
   }
 
   List<Widget> _cardRows(BuildContext context) {

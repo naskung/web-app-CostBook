@@ -97,10 +97,17 @@ extension _ProductListPageExt on ProductListPage {
     return AppDataTable(
       header: _kindTabs(context, state),
       columns: [
+        AppDataColumn(label: 'product.table_image'.tr, width: AppSizes.productThumb),
         AppDataColumn(label: 'product.name'.tr, flex: 5, minWidth: AppSizes.productNameMinWidth),
-        for (final field in listFields) AppDataColumn(label: field.name, flex: 2),
-        AppDataColumn(label: 'product.cost_price'.tr, flex: 2, alignEnd: true),
-        AppDataColumn(label: 'product.sell_price'.tr, flex: 2, alignEnd: true),
+        for (final field in listFields)
+          AppDataColumn(label: field.name, flex: 2, minWidth: AppSizes.productFieldMinWidth),
+        AppDataColumn(label: 'product.table_cost'.tr, flex: 2, alignEnd: true, minWidth: AppSizes.productPriceMinWidth),
+        AppDataColumn(
+          label: 'product.table_price'.tr,
+          flex: 2,
+          alignEnd: true,
+          minWidth: AppSizes.productPriceMinWidth,
+        ),
         AppDataColumn(label: 'product.stock'.tr, flex: 2, alignEnd: true, minWidth: AppSizes.productStockMinWidth),
         const AppDataColumn(label: '', alignEnd: true, width: AppSizes.tableActionsWidth),
       ],
@@ -141,13 +148,22 @@ extension _ProductListPageExt on ProductListPage {
   ) {
     final textTheme = Theme.of(context).textTheme;
     return [
+      ProductImage(product: product, width: AppSizes.productThumb, height: AppSizes.productThumb),
       _nameCell(context, product),
-      for (final field in listFields) Text(_fieldText(field, product.fieldValue(field.id))),
+      for (final field in listFields) _textCell(context, _fieldText(field, product.fieldValue(field.id))),
       MoneyText(product.costPrice),
-      product.forSale ? MoneyText(product.sellPrice, style: textTheme.titleSmall) : const Text('—'),
+      product.forSale ? MoneyText(product.sellPrice, style: textTheme.titleSmall) : _textCell(context, ''),
       _stockCell(context, product),
       _actions(context, product, fields, categories),
     ];
+  }
+
+  // ช่องข้อความในตาราง: ยาวได้ 2 บรรทัด / ว่าง = ขีดสีจาง ทุกแถวดูเต็มเท่ากัน
+  Widget _textCell(BuildContext context, String text) {
+    if (text.trim().isEmpty) {
+      return Text('—', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textDisabled));
+    }
+    return Text(text, maxLines: 2, overflow: TextOverflow.ellipsis);
   }
 
   String _fieldText(ProductFieldModel field, String value) {
@@ -158,23 +174,14 @@ extension _ProductListPageExt on ProductListPage {
   Widget _nameCell(BuildContext context, ProductModel product) {
     final textTheme = Theme.of(context).textTheme;
     final details = [product.code, product.category, product.unit].where((text) => text.isNotEmpty).join(' · ');
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ProductImage(product: product, width: AppSizes.productThumb, height: AppSizes.productThumb),
-        const SizedBox(width: AppSizes.spaceSmall + AppSizes.spaceXSmall),
-        Flexible(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(product.name, style: textTheme.titleSmall),
-              if (!product.forSale || details.isNotEmpty) ...[
-                const SizedBox(height: AppSizes.spaceXSmall),
-                _nameDetails(context, product, details),
-              ],
-            ],
-          ),
-        ),
+        Text(product.name, style: textTheme.titleSmall),
+        if (!product.forSale || details.isNotEmpty) ...[
+          const SizedBox(height: AppSizes.spaceXSmall),
+          _nameDetails(context, product, details),
+        ],
       ],
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:costbook/core/constants/app_status.dart';
 import 'package:costbook/core/utils/error_util.dart';
 import 'package:costbook/features/assistant/models/ai_action_model.dart';
+import 'package:costbook/features/assistant/models/ai_settings_model.dart';
 import 'package:costbook/features/assistant/models/ai_status_model.dart';
 import 'package:costbook/features/assistant/models/chat_message_model.dart';
 import 'package:costbook/features/assistant/repository/ai_repository.dart';
@@ -33,7 +34,8 @@ class AssistantBloc extends Bloc<AssistantEvent, AssistantState> {
     on<AssistantActionConfirmed>(_onActionConfirmed);
     on<AssistantActionCancelled>(_onActionCancelled);
     on<AssistantCleared>(_onCleared);
-    on<AssistantKeySaved>(_onKeySaved);
+    on<AssistantAiSaved>(_onAiSaved);
+    on<AssistantModelsRequested>(_onModelsRequested);
     on<AssistantKeyRemoved>(_onKeyRemoved);
   }
 
@@ -108,8 +110,18 @@ class AssistantBloc extends Bloc<AssistantEvent, AssistantState> {
     emit(state.copyWith(messages: [], sendStatus: AppStatus.initial, errorCode: ''));
   }
 
-  Future<void> _onKeySaved(AssistantKeySaved event, Emitter<AssistantState> emit) async {
-    await _changeKey(emit, () => aiRepository.saveKey(event.apiKey.trim()));
+  Future<void> _onAiSaved(AssistantAiSaved event, Emitter<AssistantState> emit) async {
+    await _changeKey(emit, () => aiRepository.saveSettings(event.settings));
+  }
+
+  Future<void> _onModelsRequested(AssistantModelsRequested event, Emitter<AssistantState> emit) async {
+    emit(state.copyWith(modelsStatus: AppStatus.loading, modelsErrorCode: ''));
+    try {
+      final models = await aiRepository.listModels(baseUrl: event.baseUrl, apiKey: event.apiKey);
+      emit(state.copyWith(modelsStatus: AppStatus.success, models: models));
+    } catch (error) {
+      emit(state.copyWith(modelsStatus: AppStatus.failure, models: const [], modelsErrorCode: ErrorUtil.codeOf(error)));
+    }
   }
 
   Future<void> _onKeyRemoved(AssistantKeyRemoved event, Emitter<AssistantState> emit) async {

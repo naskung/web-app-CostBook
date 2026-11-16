@@ -30,6 +30,19 @@ void main() {
       );
     });
 
+    test('fromJson AI เจ้าอื่น อ่าน base_url + ชื่อโดเมนไว้แสดง', () {
+      final status = AiStatusModel.fromJson({
+        'enabled': true,
+        'provider': 'openai',
+        'model': 'deepseek-chat',
+        'base_url': 'https://api.deepseek.com/v1',
+      });
+      expect(status.provider, AiStatusModel.openai);
+      expect(status.baseUrl, 'https://api.deepseek.com/v1');
+      expect(status.baseUrlHost, 'api.deepseek.com');
+      expect(status.isFree, false);
+    });
+
     test('ไม่มีข้อมูล = ไม่มี AI', () {
       final status = AiStatusModel.fromJson({});
       expect([status.enabled, status.provider, status.webSearch], [false, AiStatusModel.none, false]);

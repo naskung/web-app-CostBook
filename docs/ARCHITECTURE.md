@@ -113,7 +113,7 @@ web-app-CostBook/
 │       │                    pages: profile_page, user_list_page (+ _ext)
 │       │                    widgets: user_avatar (รูป / ตัวอักษรย่อ), role_badge, profile_photo_card, profile_info_section, password_section,
 │       │                    user_form_dialog (เพิ่ม / แก้ผู้ใช้), reset_password_dialog
-│       └── settings/        ข้อมูลร้าน + รูปแบบร้าน + ช่องข้อมูลเพิ่มเติม (widgets/product_field_dialog.dart) + key AI (widgets/ai_key_section.dart) + โลโก้ + เปลี่ยนภาษา
+│       └── settings/        ข้อมูลร้าน + รูปแบบร้าน + ช่องข้อมูลเพิ่มเติม (widgets/product_field_dialog.dart) + AI ที่ร้านเลือก (widgets/ai_settings_section.dart + openai_fields.dart) + โลโก้ + เปลี่ยนภาษา
 └── test/                  โครงเหมือน lib/ ทุกอย่าง เช่น test/core/utils/tax_util_test.dart
 ```
 
@@ -526,7 +526,7 @@ token หมดอายุ (7 วัน) / ถูกปฏิเสธ: API ต
 | `gemini` | `GEMINI_API_KEY` ของ API = **AI ฟรี ค่าเริ่มต้น** (`isFree`) | ได้ | ไม่ได้ → `MarketBloc.canCheck` = false ปิดปุ่มเช็คใหม่ (ผลเก่ายังดูได้) |
 | `none` | ไม่มี key เลย | ไม่ได้ (ปิดช่องพิมพ์ + ขึ้นคำแนะนำ) | ไม่ได้ |
 
-- ตั้งค่า → `AiKeySection`: บันทึก (`AssistantKeySaved` → `PUT /ai/key`) / ลบ (`AssistantKeyRemoved` → `DELETE /ai/key`, ถามยืนยันก่อน) → API ตอบสถานะใหม่กลับมา bloc ใช้ค่านั้นเลย ไม่ต้องโหลดใหม่ (`keyStatus` / `keyErrorCode`)
+- ตั้งค่า → `AiSettingsSection`: ช่องเดียว "ผู้ให้บริการ AI" (ไม่มีแท็บ — ผู้ใช้ขอ 2026-11-16) ตัวแรก = Claude (`AiPresetModel.claudeId` → ช่อง key อย่างเดียว) ที่เหลือ = AI แบบ OpenAI (`OpenAiFields`: ที่อยู่ API จาก `AiPresetModel` + key + รุ่น, ปุ่มดึงรายชื่อรุ่น `AssistantModelsRequested` → `POST /ai/models` แล้วพิมพ์ค้นใน `ModelField`) บันทึก (`AssistantAiSaved` → `PUT /ai/key`) / ลบ (`AssistantKeyRemoved` → `DELETE /ai/key`, ถามยืนยันก่อน) → API ตอบสถานะใหม่กลับมา bloc ใช้ค่านั้นเลย ไม่ต้องโหลดใหม่ (`keyStatus` / `keyErrorCode`)
 - key ไม่เคยเก็บในเครื่อง ไม่แสดงกลับ (API ส่งมาแค่ 4 ตัวท้าย)
 
 **รูปแบบร้าน** (ตั้งในหน้าตั้งค่า เก็บใน `CompanyModel`) — ทุกหน้าที่เกี่ยวกับเงินต้องดูค่านี้:

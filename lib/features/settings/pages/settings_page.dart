@@ -12,7 +12,7 @@ import 'package:costbook/core/utils/validator_util.dart';
 import 'package:costbook/features/settings/bloc/settings_bloc.dart';
 import 'package:costbook/features/settings/models/company_model.dart';
 import 'package:costbook/features/settings/models/product_field_model.dart';
-import 'package:costbook/features/settings/widgets/ai_key_section.dart';
+import 'package:costbook/features/settings/widgets/ai_settings_section.dart';
 import 'package:costbook/features/settings/widgets/logo_section.dart';
 import 'package:costbook/features/settings/widgets/product_field_dialog.dart';
 import 'package:costbook/shared/widgets/atoms/app_badge.dart';
@@ -141,7 +141,7 @@ class _SettingsPageState extends State<SettingsPage> {
               if (state.status == AppStatus.success) ...[
                 _companySection(context, state),
                 _fieldsSection(context, state),
-                const AiKeySection(),
+                const AiSettingsSection(),
                 const LogoSection(),
                 _languageSection(context),
               ],
