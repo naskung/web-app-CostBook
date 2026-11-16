@@ -1,4 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter/material.dart' show DateTimeRange;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -14,14 +15,14 @@ class MockTransactionRepository extends Mock implements TransactionRepository {}
 void main() {
   late MockTransactionRepository repository;
 
-  final october = DateTime(2026, 10);
-  final november = DateTime(2026, 11);
+  final october = DateTimeRange(start: DateTime(2026, 10), end: DateTime(2026, 10, 31));
+  final november = DateTimeRange(start: DateTime(2026, 11, 1), end: DateTime(2026, 11, 15));
   const rent = TransactionModel(id: 't1', type: 'expense', category: 'rent', amount: 5000, date: '2026-10-01');
   const summary = TransactionSummaryModel(income: 8000, expense: 5000, profit: 3000);
 
   setUpAll(() {
     registerFallbackValue(rent);
-    registerFallbackValue(DateTime(2026));
+    registerFallbackValue(DateTimeRange(start: DateTime(2026), end: DateTime(2026)));
   });
 
   setUp(() {
@@ -30,7 +31,7 @@ void main() {
     when(() => repository.getSummary(any())).thenAnswer((_) async => summary);
   });
 
-  TransactionBloc buildBloc() => TransactionBloc(repository, month: october);
+  TransactionBloc buildBloc() => TransactionBloc(repository, range: october);
 
   blocTest<TransactionBloc, TransactionState>(
     'TransactionsRequested โหลดรายการและยอดสรุปของเดือน',
@@ -38,8 +39,8 @@ void main() {
     act: (bloc) => bloc.add(TransactionsRequested()),
     expect:
         () => [
-          TransactionState(month: october, status: AppStatus.loading),
-          TransactionState(month: october, status: AppStatus.success, transactions: const [rent], summary: summary),
+          TransactionState(range: october, status: AppStatus.loading),
+          TransactionState(range: october, status: AppStatus.success, transactions: const [rent], summary: summary),
         ],
   );
 
@@ -52,19 +53,19 @@ void main() {
     act: (bloc) => bloc.add(TransactionsRequested()),
     expect:
         () => [
-          TransactionState(month: october, status: AppStatus.loading),
-          TransactionState(month: october, status: AppStatus.failure, errorCode: 'network_error'),
+          TransactionState(range: october, status: AppStatus.loading),
+          TransactionState(range: october, status: AppStatus.failure, errorCode: 'network_error'),
         ],
   );
 
   blocTest<TransactionBloc, TransactionState>(
-    'TransactionMonthChanged +1 เปลี่ยนเป็นเดือนถัดไป แล้วโหลดของเดือนนั้น',
+    'TransactionRangeChanged เปลี่ยนช่วงวันที่ แล้วโหลดของช่วงนั้น',
     build: buildBloc,
-    act: (bloc) => bloc.add(TransactionMonthChanged(1)),
+    act: (bloc) => bloc.add(TransactionRangeChanged(november)),
     expect:
         () => [
-          TransactionState(month: november, status: AppStatus.loading),
-          TransactionState(month: november, status: AppStatus.success, transactions: const [rent], summary: summary),
+          TransactionState(range: november, status: AppStatus.loading),
+          TransactionState(range: november, status: AppStatus.success, transactions: const [rent], summary: summary),
         ],
     verify: (_) => verify(() => repository.getTransactions(november)).called(1),
   );
@@ -78,10 +79,10 @@ void main() {
     act: (bloc) => bloc.add(TransactionSaved(rent)),
     expect:
         () => [
-          TransactionState(month: october, saveStatus: AppStatus.loading),
-          TransactionState(month: october, saveStatus: AppStatus.success),
+          TransactionState(range: october, saveStatus: AppStatus.loading),
+          TransactionState(range: october, saveStatus: AppStatus.success),
           TransactionState(
-            month: october,
+            range: october,
             status: AppStatus.success,
             transactions: const [rent],
             summary: summary,
@@ -99,8 +100,8 @@ void main() {
     act: (bloc) => bloc.add(TransactionSaved(rent)),
     expect:
         () => [
-          TransactionState(month: october, saveStatus: AppStatus.loading),
-          TransactionState(month: october, saveStatus: AppStatus.failure, saveErrorCode: 'transaction_amount_invalid'),
+          TransactionState(range: october, saveStatus: AppStatus.loading),
+          TransactionState(range: october, saveStatus: AppStatus.failure, saveErrorCode: 'transaction_amount_invalid'),
         ],
   );
 
@@ -113,9 +114,9 @@ void main() {
     act: (bloc) => bloc.add(TransactionDeleted('t1')),
     expect:
         () => [
-          TransactionState(month: october, deleteStatus: AppStatus.loading),
+          TransactionState(range: october, deleteStatus: AppStatus.loading),
           TransactionState(
-            month: october,
+            range: october,
             deleteStatus: AppStatus.failure,
             deleteErrorCode: 'transaction_from_invoice',
           ),
@@ -132,10 +133,10 @@ void main() {
     act: (bloc) => bloc.add(TransactionDeleted('t1')),
     expect:
         () => [
-          TransactionState(month: october, deleteStatus: AppStatus.loading),
-          TransactionState(month: october, deleteStatus: AppStatus.success),
+          TransactionState(range: october, deleteStatus: AppStatus.loading),
+          TransactionState(range: october, deleteStatus: AppStatus.success),
           TransactionState(
-            month: october,
+            range: october,
             status: AppStatus.success,
             summary: summary,
             deleteStatus: AppStatus.success,
@@ -156,9 +157,9 @@ void main() {
       when(() => repository.saveTransaction(any())).thenAnswer((_) async {});
       when(() => repository.getTransactions(any(), limit: any(named: 'limit'))).thenAnswer((_) async => loaded45);
       when(() => repository.getSummary(any())).thenAnswer((_) async => summary);
-      return TransactionBloc(repository, month: october);
+      return TransactionBloc(repository, range: october);
     },
-    seed: () => TransactionState(month: october, status: AppStatus.success, transactions: loaded45, hasMore: true),
+    seed: () => TransactionState(range: october, status: AppStatus.success, transactions: loaded45, hasMore: true),
     act: (bloc) => bloc.add(TransactionSaved(rent)),
     verify: (bloc) {
       verify(() => repository.getTransactions(october, limit: 45)).called(1);
@@ -172,11 +173,11 @@ void main() {
       when(
         () => repository.getTransactions(any(), offset: 20),
       ).thenAnswer((_) async => [transactionAt(20), transactionAt(21)]);
-      return TransactionBloc(repository, month: october);
+      return TransactionBloc(repository, range: october);
     },
     seed:
         () => TransactionState(
-          month: october,
+          range: october,
           status: AppStatus.success,
           transactions: loaded45.take(20).toList(),
           hasMore: true,
@@ -186,7 +187,7 @@ void main() {
     expect:
         () => [
           TransactionState(
-            month: october,
+            range: october,
             status: AppStatus.success,
             transactions: loaded45.take(21).toList(),
             moreStatus: AppStatus.success,

@@ -2,7 +2,7 @@ part of 'invoice_list_bloc.dart';
 
 class InvoiceListState extends Equatable {
   const InvoiceListState({
-    required this.month,
+    required this.range,
     this.status = AppStatus.initial,
     this.invoices = const [],
     this.errorCode = '',
@@ -12,7 +12,7 @@ class InvoiceListState extends Equatable {
     this.deliveryErrorCode = '',
   });
 
-  final DateTime month;
+  final DateTimeRange range;
   final AppStatus status;
   final List<InvoiceSummaryModel> invoices;
   final String errorCode;
@@ -28,7 +28,7 @@ class InvoiceListState extends Equatable {
       status == AppStatus.success && hasMore && moreStatus != AppStatus.loading && moreStatus != AppStatus.failure;
 
   InvoiceListState copyWith({
-    DateTime? month,
+    DateTimeRange? range,
     AppStatus? status,
     List<InvoiceSummaryModel>? invoices,
     String? errorCode,
@@ -38,7 +38,7 @@ class InvoiceListState extends Equatable {
     String? deliveryErrorCode,
   }) {
     return InvoiceListState(
-      month: month ?? this.month,
+      range: range ?? this.range,
       status: status ?? this.status,
       invoices: invoices ?? this.invoices,
       errorCode: errorCode ?? this.errorCode,
@@ -51,7 +51,7 @@ class InvoiceListState extends Equatable {
 
   @override
   List<Object?> get props => [
-    month,
+    range,
     status,
     invoices,
     errorCode,

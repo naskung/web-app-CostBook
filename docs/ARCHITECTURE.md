@@ -85,11 +85,12 @@ web-app-CostBook/
 │   ├── shared/
 │   │   └── widgets/
 │   │       ├── atoms/       app_button, app_text_field, app_dropdown, app_loading, app_badge, money_text, shop_logo, app_image_box (รูปมุมมน / ไม่มีรูป = กล่องไอคอน)
-│   │       ├── molecules/   empty_view, error_view, stat_card (การ์ดตัวเลขสรุป ใช้ทั้งภาพรวม / รายรับ-รายจ่าย / ราคาตลาด), month_switcher, search_field, section_card, notice_banner,
+│   │       ├── molecules/   empty_view, error_view, stat_card (การ์ดตัวเลขสรุป ใช้ทั้งภาพรวม / รายรับ-รายจ่าย / ราคาตลาด), range_calendar (ปฏิทิน 1 เดือน เลือกช่วงวันที่), month_year_grid (ตารางเลือกเดือน 12 ช่อง / ปีทีละ 12 ปี), calendar_header (‹ ชื่อ ›), search_field, section_card, notice_banner,
 │   │       │                chart_legend, ranked_bar_list (แท่งแนวนอนเรียงมากไปน้อย), market_range_bar (ราคาเรา vs ช่วงราคาตลาด)
 │   │       └── organisms/   page_layout, app_side_menu, page_content (ขอบ + ความกว้างหน้า + เว้นที่ล่างให้ปุ่มแชท), page_toolbar,
 │   │                        app_data_table (จอคอม = ตาราง / มือถือ = การ์ด / แคบกว่า minWidth รวม = เลื่อนซ้าย-ขวา), app_dialog (โครง dialog กลาง + แท็บใต้หัวได้), form_dialog (กล่องฟอร์ม),
-│   │                        app_alert_dialog (กล่องยืนยัน / แจ้งผล ไอคอนวงกลม), stat_grid
+│   │                        app_alert_dialog (กล่องยืนยัน / แจ้งผล ไอคอนวงกลม), stat_grid,
+│   │                        date_range_picker (ปุ่มเลือกช่วงวันที่ → dropdown `MenuAnchor`) + date_range_panel (ปุ่มลัด + ปฏิทิน + ตกลง / ยกเลิก)
 │   └── features/          ทุก feature: models → repository → bloc → pages (+ _ext ถ้ายาว) → widgets
 │       ├── auth/            login + จดจำ token / อีเมล
 │       ├── dashboard/       หน้าภาพรวม (pages: dashboard_page + _ext + _charts)
@@ -153,7 +154,7 @@ Page ──(add Event)──▶ Bloc ──▶ Repository ──▶ ApiClient �
 - `PageContent(onLoadMore:)`: เลื่อนจนเหลือที่ให้เลื่อนน้อยกว่า `AppSizes.loadMoreDistance` (600) หรือรายการสั้นกว่าจอ → เรียก (เรียกซ้ำได้ bloc กันเอง) / ท้ายรายการใส่ `LoadMoreFooter` (กำลังโหลด = วงกลมหมุน / พัง = ปุ่ม "โหลดเพิ่มไม่สำเร็จ แตะเพื่อลองใหม่")
 - bloc: state มี `hasMore` (ได้ครบ 20 = อาจยังมี — `PageUtil.hasMore`) + `moreStatus` + `canLoadMore` (success + hasMore + ไม่ได้กำลังโหลด + โหลดเพิ่มไม่ได้พัง → พังแล้วรอกดลองใหม่ ไม่ยิงซ้ำเอง) / event `XxxMoreRequested` → `getXxx(offset: จำนวนที่มีแล้ว)` ต่อท้ายด้วย `PageUtil.append` (id ซ้ำไม่เพิ่มซ้ำ)
 - บันทึก / ลบแล้วโหลดใหม่ **เท่าที่เลื่อนไว้แล้ว** (`PageUtil.reloadLimit`: ไม่น้อยกว่า 20 ไม่เกิน 200) → รายการไม่หดกลับเหลือหน้าแรก
-- เปลี่ยนเดือน / ตัวกรองระหว่างรอ → ทิ้งผลเก่า (เทียบ `month` / `ProductState.filterKey` ก่อน emit)
+- เปลี่ยนช่วงวันที่ / ตัวกรองระหว่างรอ → ทิ้งผลเก่า (เทียบ `range` / `ProductState.filterKey` ก่อน emit)
 - **รายการสินค้า**: ค้นหา / หมวด / แท็บ / เฉพาะใกล้หมด ให้ API ทำ (`getProductPage(query:, categoryId:, kind:, onlyLow:, offset:, limit:)`) เปลี่ยนตัวกรอง = โหลดหน้าแรกใหม่ (`_reloadFirstPage`, รายการเดิมยังโชว์ + แถบโหลดบาง ๆ `isFiltering`) / พิมพ์ค้นหารอ `ProductBloc.searchDelay` (300 ms) ถามครั้งเดียวด้วยคำล่าสุด / ตัวเลขบนแท็บ + ใกล้หมด จาก `GET /products/counts` (`ProductCountsModel`) / "ร้านยังไม่มีสินค้า" ดูจาก `counts.all`
 - ลองใน Chrome กับสำเนา DB (สินค้า 63 / ประวัติ 75 แถว): เลื่อนลงยิง offset 0 → 20 → 40 → 60 แล้วหยุด, ค้นหายิงครั้งเดียว
 
@@ -161,7 +162,7 @@ Page ──(add Event)──▶ Bloc ──▶ Repository ──▶ ApiClient �
 
 ทำ 2 ชั้น (ผู้ใช้ขอ 2026-11-01 "เปลี่ยนหน้าแล้วยิง API ทุกครั้ง เปลืองไหม / มีของใหม่ค่อยขึ้นมาเนียน ๆ"):
 
-1. **`ApiClient` เก็บผล GET** ไว้ในหน่วยความจำ (key = path เช่น `/dashboard?month=2026-11`, refresh หน้าเว็บ = หาย)
+1. **`ApiClient` เก็บผล GET** ไว้ในหน่วยความจำ (key = path เช่น `/dashboard?from=2026-11-01&to=2026-11-30`, refresh หน้าเว็บ = หาย)
    - เพิ่งโหลดไม่เกิน `ApiClient.cacheFreshFor` (30 วินาที) และหลังจากนั้นยังไม่มีการแก้ข้อมูล → `get` คืนของเดิมเลย **ไม่ยิง API**
    - แก้ข้อมูลสำเร็จ (POST / PUT / DELETE / อัปโหลดไฟล์) → ของที่เก็บไว้ถือว่า**เก่าทั้งหมด** (ขาย 1 บิล → สต็อก / ภาพรวม / รายรับเปลี่ยนตาม) ครั้งหน้ายิงใหม่
    - `api.cached(path)` = ของที่เคยโหลด (เก่าแค่ไหนก็ได้) ไว้โชว์ก่อน / `ApiClient.clearCache()` ตอน login / logout / ได้ 401 → คนต่อไปไม่เห็นข้อมูลของคนก่อน
@@ -639,7 +640,7 @@ class AppButton extends StatelessWidget {
 
 - ปุ่ม / SegmentedButton สูง `AppSizes.buttonHeight` (48) **เท่าช่องกรอก** วางข้างช่องค้นหาแล้วเสมอกัน, มุมโค้ง `AppSizes.radius` เท่าช่องกรอก, ตัวหนังสือ `AppSizes.fontButton` ตัวหนา, ชี้เมาส์แล้วปุ่มลอยขึ้นนิดหน่อย (`_hoverLift`)
 - Flutter บนเว็บจอคอมย่อปุ่มเอง (`VisualDensity.compact` → ปุ่มเหลือ 32) → ธีมใส่ `VisualDensity.standard` ให้ปุ่มทุกแบบ / `SegmentedButton` ไม่ส่ง `minimumSize` ต่อให้ปุ่มย่อย → ใช้ `VisualDensity(vertical: 2)` แทน (40 + 2 × 4 = 48) — `test/core/theme/app_theme_test.dart` เช็คความสูงแบบจำลองจอคอม
-- `MonthSwitcher` สูง / ขอบเท่าปุ่มรอง
+- `DateRangePicker` (เลือกช่วงวันที่ หน้าภาพรวม / รายรับ-รายจ่าย / เอกสารขาย) สูง / ขอบเท่าปุ่มรอง — กดแล้วเปิดกล่อง dropdown: ปุ่มลัด (วันนี้ / เมื่อวาน / 7 วันล่าสุด / เดือนนี้ / เดือนที่แล้ว — กดแล้วใช้ทันที) + ปฏิทิน (กดวันแรก → วันสุดท้าย, กดวันเดียวแล้วตกลง = วันเดียว, กดย้อนหลังสลับให้ / **กดชื่อเดือน** → ตารางเดือน 12 ช่อง ‹ › ทีละปี → **กดปี** → ตารางปีทีละ 12 ปี ไว้ย้อนไปไกล ๆ ไม่ต้องกด ‹ › ทีละเดือน) / เลือกได้ไม่เกิน `DateUtil.maxRangeDays` (366 วัน ตรงกับ API) / bloc เก็บเป็น `DateTimeRange` ส่ง API ด้วย `DateUtil.toApiRange` (`?from=&to=`) — ผู้ใช้ขอ 2026-11-16 แทน `MonthSwitcher` (‹ เดือน ›)
 
 หน้าจอ (page) อ่าน state จาก bloc แล้วเลือก widget ที่จะแสดง:
 

@@ -18,8 +18,8 @@ import 'package:costbook/shared/widgets/atoms/money_text.dart';
 import 'package:costbook/shared/widgets/molecules/empty_view.dart';
 import 'package:costbook/shared/widgets/molecules/error_view.dart';
 import 'package:costbook/shared/widgets/molecules/load_more_footer.dart';
-import 'package:costbook/shared/widgets/molecules/month_switcher.dart';
 import 'package:costbook/shared/widgets/organisms/app_data_table.dart';
+import 'package:costbook/shared/widgets/organisms/date_range_picker.dart';
 import 'package:costbook/shared/widgets/organisms/page_content.dart';
 import 'package:costbook/shared/widgets/organisms/page_toolbar.dart';
 

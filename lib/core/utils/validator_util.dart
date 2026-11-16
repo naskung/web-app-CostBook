@@ -2,6 +2,7 @@ import 'package:costbook/core/lang/app_lang.dart';
 
 class ValidatorUtil {
   static final RegExp _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+  static final RegExp _usernamePattern = RegExp(r'^[a-z0-9._-]{3,50}$');
   static final RegExp _taxIdPattern = RegExp(r'^[0-9]{13}$');
 
   // ตรงกับ API: นับเป็นตัวอักษร (ภาษาไทย 1 ตัว = 1)
@@ -12,10 +13,11 @@ class ValidatorUtil {
     return null;
   }
 
-  static String? email(String? value) {
+  static String? loginName(String? value) {
     final requiredError = required(value);
     if (requiredError != null) return requiredError;
-    if (!_emailPattern.hasMatch(value?.trim() ?? '')) return 'validation.email_invalid'.tr;
+    final text = value!.trim().toLowerCase();
+    if (!_emailPattern.hasMatch(text) && !_usernamePattern.hasMatch(text)) return 'validation.login_invalid'.tr;
     return null;
   }
 

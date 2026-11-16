@@ -18,22 +18,12 @@ extension _TransactionListPageExt on TransactionListPage {
           label: Text('transaction.add_expense'.tr),
         ),
       ],
-      children: [
-        MonthSwitcher(
-          label: DateUtil.monthLabel(state.month),
-          previousTooltip: 'common.previous_month'.tr,
-          nextTooltip: 'common.next_month'.tr,
-          onPrevious: () => bloc.add(TransactionMonthChanged(-1)),
-          onNext: () => bloc.add(TransactionMonthChanged(1)),
-        ),
-      ],
+      children: [DateRangePicker(range: state.range, onChanged: (range) => bloc.add(TransactionRangeChanged(range)))],
     );
   }
 
   void _openNew(BuildContext context, TransactionState state, String type) {
-    final today = DateTime.now();
-    final isThisMonth = today.year == state.month.year && today.month == state.month.month;
-    final date = isThisMonth ? today : state.month;
+    final date = DateUtil.defaultDateIn(state.range, DateTime.now());
     TransactionFormDialog.show(
       context,
       TransactionModel(type: type, category: '', amount: 0, date: DateUtil.toApiDate(date)),

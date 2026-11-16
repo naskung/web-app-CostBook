@@ -17,6 +17,24 @@ void main() {
     });
   });
 
+  group('ChartUtil.dayLabelStep', () {
+    test('ไม่เกิน 10 วัน แสดงทุกวัน', () {
+      expect(ChartUtil.dayLabelStep(1), 1);
+      expect(ChartUtil.dayLabelStep(7), 1);
+      expect(ChartUtil.dayLabelStep(10), 1);
+    });
+
+    test('ประมาณ 1 เดือน แสดงทุก 7 วัน', () {
+      expect(ChartUtil.dayLabelStep(15), 7);
+      expect(ChartUtil.dayLabelStep(31), 7);
+    });
+
+    test('ช่วงยาว แบ่งให้เหลือประมาณ 5 ป้าย', () {
+      expect(ChartUtil.dayLabelStep(90), 18);
+      expect(ChartUtil.dayLabelStep(366), 74);
+    });
+  });
+
   group('ChartUtil.range', () {
     test('ค่าบวกทั้งหมด เริ่มที่ 0 ปัดขึ้นเป็นเลขกลม', () {
       final range = ChartUtil.range([1355.14, 831.78, 0]);

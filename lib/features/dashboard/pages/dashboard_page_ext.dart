@@ -11,13 +11,7 @@ extension _DashboardPageExt on DashboardPage {
         alignment: WrapAlignment.spaceBetween,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          MonthSwitcher(
-            label: DateUtil.monthLabel(state.month),
-            previousTooltip: 'common.previous_month'.tr,
-            nextTooltip: 'common.next_month'.tr,
-            onPrevious: () => bloc.add(DashboardMonthChanged(-1)),
-            onNext: () => bloc.add(DashboardMonthChanged(1)),
-          ),
+          DateRangePicker(range: state.range, onChanged: (range) => bloc.add(DashboardRangeChanged(range))),
           Wrap(
             spacing: AppSizes.spaceSmall,
             runSpacing: AppSizes.spaceSmall,

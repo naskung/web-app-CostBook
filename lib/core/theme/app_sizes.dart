@@ -68,6 +68,12 @@ class AppSizes {
   static const double productNameMinWidth = 220;
   static const double productStockMinWidth = 104;
   static const double monthLabelWidth = 160;
+  static const double dateRangePanelWidth = 336;
+  static const double calendarDayHeight = 40;
+  static const double calendarDayCircle = 36;
+  static const double calendarBandInset = 2;
+  static const double monthGridCellHeight = 44;
+  static const double dateRangeMenuGap = 4;
   static const double paperWidth = 794;
   static const double paperPadding = 48;
   static const double paperLogoSize = 72;

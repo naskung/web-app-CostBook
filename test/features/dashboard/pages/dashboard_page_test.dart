@@ -19,6 +19,8 @@ import 'package:costbook/features/settings/bloc/settings_bloc.dart';
 import 'package:costbook/features/settings/repository/settings_repository.dart';
 import 'package:costbook/features/stock/repository/stock_repository.dart';
 import 'package:costbook/features/transaction/repository/transaction_repository.dart';
+import 'package:costbook/shared/widgets/molecules/range_calendar.dart';
+import 'package:costbook/shared/widgets/organisms/date_range_picker.dart';
 
 class MockDashboardRepository extends Mock implements DashboardRepository {}
 
@@ -41,7 +43,7 @@ void main() {
 
   setUpAll(() async {
     await AppLang.load('th');
-    registerFallbackValue(DateTime(2026));
+    registerFallbackValue(DateTimeRange(start: DateTime(2026), end: DateTime(2026)));
   });
 
   setUp(() {
@@ -70,7 +72,11 @@ void main() {
                     ),
               ),
               BlocProvider(
-                create: (_) => DashboardBloc(repository, month: DateTime(2026, 10))..add(DashboardRequested()),
+                create:
+                    (_) => DashboardBloc(
+                      repository,
+                      range: DateTimeRange(start: DateTime(2026, 10), end: DateTime(2026, 10, 31)),
+                    )..add(DashboardRequested()),
               ),
             ],
             child: const DashboardPage(),
@@ -106,7 +112,7 @@ void main() {
       expect(find.text('8,199.50'), findsOneWidget);
       expect(find.text('4,300.50'), findsOneWidget);
       expect(find.text('กาแฟเย็น'), findsOneWidget);
-      expect(find.text('ตุลาคม 2569'), findsOneWidget);
+      expect(find.descendant(of: find.byType(DateRangePicker), matching: find.text('ตุลาคม 2569')), findsOneWidget);
     });
   });
 
@@ -166,12 +172,20 @@ void main() {
     expect(find.text('common.retry'.tr), findsOneWidget);
   });
 
-  testWidgets('กดเดือนถัดไป โหลดข้อมูลเดือนพฤศจิกายน', (tester) async {
+  testWidgets('เลือกช่วงวันที่ 5–12 ต.ค. ในปฏิทิน แล้วโหลดข้อมูลของช่วงนั้น', (tester) async {
     when(() => repository.getDashboard(any())).thenAnswer((_) async => dashboard);
     await pumpDashboard(tester, const Size(1280, 800));
-    await tester.tap(find.byTooltip('common.next_month'.tr));
+    await tester.tap(find.byType(DateRangePicker));
     await tester.pumpAndSettle();
-    expect(find.text('พฤศจิกายน 2569'), findsOneWidget);
-    verify(() => repository.getDashboard(DateTime(2026, 11))).called(1);
+    final calendar = find.byType(RangeCalendar);
+    await tester.tap(find.descendant(of: calendar, matching: find.text('5')));
+    await tester.tap(find.descendant(of: calendar, matching: find.text('12')));
+    await tester.pump();
+    await tester.tap(find.text('date_range.apply'.tr));
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: find.byType(DateRangePicker), matching: find.text('5 – 12 ต.ค. 2569')), findsOneWidget);
+    verify(
+      () => repository.getDashboard(DateTimeRange(start: DateTime(2026, 10, 5), end: DateTime(2026, 10, 12))),
+    ).called(1);
   });
 }

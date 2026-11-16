@@ -27,10 +27,10 @@ import 'package:costbook/shared/widgets/atoms/app_loading.dart';
 import 'package:costbook/shared/widgets/atoms/delta_pill.dart';
 import 'package:costbook/shared/widgets/molecules/error_view.dart';
 import 'package:costbook/shared/widgets/molecules/market_range_bar.dart';
-import 'package:costbook/shared/widgets/molecules/month_switcher.dart';
 import 'package:costbook/shared/widgets/molecules/ranked_bar_list.dart';
 import 'package:costbook/shared/widgets/molecules/stat_card.dart';
 import 'package:costbook/shared/widgets/organisms/app_data_table.dart';
+import 'package:costbook/shared/widgets/organisms/date_range_picker.dart';
 import 'package:costbook/shared/widgets/organisms/page_content.dart';
 import 'package:costbook/shared/widgets/organisms/stat_grid.dart';
 

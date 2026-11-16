@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart' show DateTimeRange;
 
+import 'package:costbook/core/utils/date_util.dart';
 import 'package:costbook/core/utils/money_util.dart';
 import 'package:costbook/features/dashboard/models/dashboard_sales_model.dart';
 
@@ -47,6 +49,8 @@ class DashboardModel extends Equatable {
     this.lowStock = const [],
     this.sales = const SalesSummaryModel(),
     this.previous = const MonthTotalsModel(),
+    this.previousFrom = '',
+    this.previousTo = '',
     this.monthlyTrend = const [],
     this.dailySales = const [],
     this.previousDailySales = const [],
@@ -71,6 +75,8 @@ class DashboardModel extends Equatable {
   final List<LowStockItemModel> lowStock;
   final SalesSummaryModel sales;
   final MonthTotalsModel previous;
+  final String previousFrom;
+  final String previousTo;
   final List<MonthTotalsModel> monthlyTrend;
   final List<DailySalesModel> dailySales;
   final List<DailySalesModel> previousDailySales;
@@ -81,6 +87,13 @@ class DashboardModel extends Equatable {
   final List<MarketPositionModel> market;
 
   bool get hasSales => invoiceCount > 0;
+
+  DateTimeRange get previousRange {
+    final start = DateUtil.fromApiDate(previousFrom);
+    final end = DateUtil.fromApiDate(previousTo);
+    if (end.isBefore(start)) return DateTimeRange(start: start, end: start);
+    return DateTimeRange(start: start, end: end);
+  }
 
   bool get hasTrend => monthlyTrend.any((month) => month.revenue != 0 || month.totalCost != 0);
 
@@ -109,6 +122,8 @@ class DashboardModel extends Equatable {
       lowStock: _list(json['low_stock'], LowStockItemModel.fromJson),
       sales: SalesSummaryModel.fromJson(json['sales'] as Map<String, dynamic>? ?? {}),
       previous: MonthTotalsModel.fromJson(json['previous'] as Map<String, dynamic>? ?? {}),
+      previousFrom: json['previous_from'] as String? ?? '',
+      previousTo: json['previous_to'] as String? ?? '',
       monthlyTrend: _list(json['monthly_trend'], MonthTotalsModel.fromJson),
       dailySales: _list(json['daily_sales'], DailySalesModel.fromJson),
       previousDailySales: _list(json['previous_daily_sales'], DailySalesModel.fromJson),
@@ -140,6 +155,8 @@ class DashboardModel extends Equatable {
     lowStock,
     sales,
     previous,
+    previousFrom,
+    previousTo,
     monthlyTrend,
     dailySales,
     previousDailySales,

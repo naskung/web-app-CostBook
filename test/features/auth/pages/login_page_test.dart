@@ -57,12 +57,7 @@ void main() {
       ],
     );
     addTearDown(router.dispose);
-    await tester.pumpWidget(
-      MaterialApp.router(
-        theme: AppTheme.light,
-        routerConfig: router,
-      ),
-    );
+    await tester.pumpWidget(MaterialApp.router(theme: AppTheme.light, routerConfig: router));
   }
 
   Future<void> fillForm(WidgetTester tester) async {
@@ -139,11 +134,21 @@ void main() {
     expect(find.text('validation.required'.tr), findsNWidgets(2));
   });
 
-  testWidgets('อีเมลผิดรูปแบบ แสดงข้อความอีเมลไม่ถูกต้อง', (tester) async {
+  testWidgets('อีเมล / ชื่อผู้ใช้ผิดรูปแบบ แสดงข้อความไม่ถูกต้อง', (tester) async {
     await pumpLoginPage(tester, const Size(375, 667));
-    await tester.enterText(find.byType(TextFormField).first, 'abc');
+    await tester.enterText(find.byType(TextFormField).first, 'ab');
     await tapLoginButton(tester);
-    expect(find.text('validation.email_invalid'.tr), findsOneWidget);
+    expect(find.text('validation.login_invalid'.tr), findsOneWidget);
+  });
+
+  testWidgets('login ด้วยชื่อผู้ใช้ได้ ไม่ต้องเป็นอีเมล', (tester) async {
+    whenLogin(() async {});
+    await pumpLoginPage(tester, const Size(375, 667));
+    await tester.enterText(find.byType(TextFormField).first, 'admin1234');
+    await tester.enterText(find.byType(TextFormField).last, 'admin1234');
+    await tapLoginButton(tester);
+    expect(find.text('validation.login_invalid'.tr), findsNothing);
+    verify(() => repository.login(email: 'admin1234', password: 'admin1234', rememberMe: false)).called(1);
   });
 
   testWidgets('กดรูปตา แสดงรหัสผ่านที่ซ่อนอยู่', (tester) async {

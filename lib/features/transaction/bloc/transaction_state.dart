@@ -2,7 +2,7 @@ part of 'transaction_bloc.dart';
 
 class TransactionState extends Equatable {
   const TransactionState({
-    required this.month,
+    required this.range,
     this.status = AppStatus.initial,
     this.transactions = const [],
     this.summary = const TransactionSummaryModel(),
@@ -15,7 +15,7 @@ class TransactionState extends Equatable {
     this.moreStatus = AppStatus.initial,
   });
 
-  final DateTime month;
+  final DateTimeRange range;
   final AppStatus status;
   final List<TransactionModel> transactions;
   final TransactionSummaryModel summary;
@@ -33,7 +33,7 @@ class TransactionState extends Equatable {
       status == AppStatus.success && hasMore && moreStatus != AppStatus.loading && moreStatus != AppStatus.failure;
 
   TransactionState copyWith({
-    DateTime? month,
+    DateTimeRange? range,
     AppStatus? status,
     List<TransactionModel>? transactions,
     TransactionSummaryModel? summary,
@@ -46,7 +46,7 @@ class TransactionState extends Equatable {
     AppStatus? moreStatus,
   }) {
     return TransactionState(
-      month: month ?? this.month,
+      range: range ?? this.range,
       status: status ?? this.status,
       transactions: transactions ?? this.transactions,
       summary: summary ?? this.summary,
@@ -62,7 +62,7 @@ class TransactionState extends Equatable {
 
   @override
   List<Object?> get props => [
-    month,
+    range,
     status,
     transactions,
     summary,

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart' show DateTimeRange;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:costbook/features/dashboard/models/dashboard_model.dart';
@@ -5,7 +6,10 @@ import 'package:costbook/features/dashboard/models/dashboard_sales_model.dart';
 
 void main() {
   final json = {
-    'month': '2026-10',
+    'from': '2026-10-01',
+    'to': '2026-10-31',
+    'previous_from': '2026-09-01',
+    'previous_to': '2026-09-30',
     'income': 2340,
     'expense': 5860.5,
     'profit': -4084.78,
@@ -89,10 +93,11 @@ void main() {
       ]);
     });
 
-    test('fromJson อ่านยอดขาย / เดือนก่อน / มูลค่าสต็อก ได้ถูกต้อง', () {
+    test('fromJson อ่านยอดขาย / ช่วงก่อน / มูลค่าสต็อก ได้ถูกต้อง', () {
       final dashboard = DashboardModel.fromJson(json);
       expect(dashboard.sales.grossMargin, 81.2);
       expect(dashboard.previous.month, '2026-09');
+      expect(dashboard.previousRange, DateTimeRange(start: DateTime(2026, 9, 1), end: DateTime(2026, 9, 30)));
       expect(dashboard.stock, const StockValueModel(costValue: 8922.4, retailValue: 14025));
     });
 

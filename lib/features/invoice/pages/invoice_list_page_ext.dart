@@ -15,15 +15,7 @@ extension _InvoiceListPageExt on InvoiceListPage {
           ),
         ),
       ],
-      children: [
-        MonthSwitcher(
-          label: DateUtil.monthLabel(state.month),
-          previousTooltip: 'common.previous_month'.tr,
-          nextTooltip: 'common.next_month'.tr,
-          onPrevious: () => bloc.add(InvoiceMonthChanged(-1)),
-          onNext: () => bloc.add(InvoiceMonthChanged(1)),
-        ),
-      ],
+      children: [DateRangePicker(range: state.range, onChanged: (range) => bloc.add(InvoiceRangeChanged(range)))],
     );
   }
 

@@ -103,8 +103,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
           label: 'profile.email'.tr,
           controller: _emailController,
           readOnly: !isNew,
-          keyboardType: TextInputType.emailAddress,
-          validator: isNew ? ValidatorUtil.email : null,
+          validator: isNew ? ValidatorUtil.loginName : null,
         ),
         const SizedBox(height: AppSizes.spaceMedium),
         AppTextField(

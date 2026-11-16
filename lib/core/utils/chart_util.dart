@@ -41,6 +41,12 @@ class ChartUtil {
     return totals;
   }
 
+  static int dayLabelStep(int dayCount) {
+    if (dayCount <= 10) return 1;
+    if (dayCount <= 35) return 7;
+    return (dayCount / 5).ceil();
+  }
+
   static ChartRange range(Iterable<double> values, {int ticks = 4}) {
     final low = values.fold(0.0, math.min);
     final high = values.fold(0.0, math.max);

@@ -21,29 +21,47 @@ void main() {
     });
   });
 
-  group('ValidatorUtil.email', () {
+  group('ValidatorUtil.loginName', () {
     test('อีเมลถูกรูปแบบ ผ่าน (ได้ null)', () {
-      expect(ValidatorUtil.email('user@costbook.com'), isNull);
+      expect(ValidatorUtil.loginName('user@costbook.com'), isNull);
     });
 
     test('อีเมลมีช่องว่างหน้า-หลัง ยังผ่าน', () {
-      expect(ValidatorUtil.email('  user@costbook.com  '), isNull);
+      expect(ValidatorUtil.loginName('  user@costbook.com  '), isNull);
+    });
+
+    test('ชื่อผู้ใช้ ผ่าน', () {
+      expect(ValidatorUtil.loginName('admin1234'), isNull);
+      expect(ValidatorUtil.loginName('somchai.j'), isNull);
+      expect(ValidatorUtil.loginName('staff_01'), isNull);
+    });
+
+    test('ชื่อผู้ใช้ตัวใหญ่ / มีช่องว่างหน้า-หลัง ยังผ่าน', () {
+      expect(ValidatorUtil.loginName(' Admin1234 '), isNull);
     });
 
     test('ค่าว่าง ได้ข้อความเดียวกับ required', () {
-      expect(ValidatorUtil.email(''), ValidatorUtil.required(''));
+      expect(ValidatorUtil.loginName(''), ValidatorUtil.required(''));
     });
 
-    test('ไม่มี @ ได้ข้อความ error', () {
-      expect(ValidatorUtil.email('usercostbook.com'), isNotNull);
+    test('ชื่อผู้ใช้สั้นกว่า 3 ตัว ได้ข้อความ error', () {
+      expect(ValidatorUtil.loginName('ab'), isNotNull);
     });
 
-    test('ไม่มีจุดหลัง @ ได้ข้อความ error', () {
-      expect(ValidatorUtil.email('user@costbook'), isNotNull);
+    test('ชื่อผู้ใช้มีช่องว่างตรงกลาง ได้ข้อความ error', () {
+      expect(ValidatorUtil.loginName('ad min'), isNotNull);
     });
 
-    test('อีเมลผิดรูปแบบ ได้ข้อความต่างจาก required', () {
-      expect(ValidatorUtil.email('abc'), isNot(ValidatorUtil.required('')));
+    test('ชื่อผู้ใช้ภาษาไทย ได้ข้อความ error', () {
+      expect(ValidatorUtil.loginName('สมชาย'), isNotNull);
+    });
+
+    test('มี @ แต่ไม่มีจุดหลัง @ ได้ข้อความ error', () {
+      expect(ValidatorUtil.loginName('user@costbook'), isNotNull);
+    });
+
+    test('ผิดรูปแบบ ได้ข้อความต่างจาก required', () {
+      expect(ValidatorUtil.loginName('ab'), isNot(ValidatorUtil.required('')));
     });
   });
 

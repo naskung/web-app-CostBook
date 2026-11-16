@@ -117,11 +117,10 @@ extension _LoginPageExt on _LoginPageState {
       label: 'login.email'.tr,
       hint: 'login.email_hint'.tr,
       controller: _emailController,
-      icon: Icons.email_outlined,
-      keyboardType: TextInputType.emailAddress,
+      icon: Icons.person_outline,
       textInputAction: TextInputAction.next,
-      autofillHints: const [AutofillHints.email],
-      validator: ValidatorUtil.email,
+      autofillHints: const [AutofillHints.username],
+      validator: ValidatorUtil.loginName,
     );
   }
 

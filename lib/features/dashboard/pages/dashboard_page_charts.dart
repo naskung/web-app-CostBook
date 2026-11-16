@@ -17,13 +17,11 @@ extension _DashboardPageCharts on DashboardPage {
     );
   }
 
-  // ตัวเลขยอดขายใหญ่ + % เทียบเดือนก่อน แถวบน → กราฟยอดขายสะสมเต็มความกว้าง → ยอดตามหมวด
+  // ตัวเลขยอดขายใหญ่ + % เทียบช่วงก่อน แถวบน → กราฟยอดขายสะสมเต็มความกว้าง → ยอดตามหมวด
   Widget _salesPanel(BuildContext context, DashboardState state, double? height) {
     final dashboard = state.dashboard;
     final textTheme = Theme.of(context).textTheme;
     final sales = dashboard.sales;
-    final now = DateTime.now();
-    final isThisMonth = state.month.year == now.year && state.month.month == now.month;
     final change = PercentUtil.change(current: sales.netSales, previous: dashboard.previous.netSales);
     final details = [
       'dashboard.net_sales_caption'.trParams({
@@ -35,11 +33,9 @@ extension _DashboardPageCharts on DashboardPage {
     final chart = SalesTrendChart(
       days: dashboard.dailySales,
       previousDays: dashboard.previousDailySales,
-      lastDay: isThisMonth ? now.day : dashboard.dailySales.length,
-      monthLabel: DateUtil.shortMonthLabel(state.month),
-      currentLabel: 'dashboard.this_month'.tr,
-      previousLabel: 'dashboard.last_month'.tr,
-      dayLabel: (day) => 'dashboard.day_label'.trParams({'day': '$day'}),
+      lastDay: DateUtil.daysUntil(state.range, DateTime.now()),
+      currentLabel: DateUtil.rangeLabel(state.range),
+      previousLabel: DateUtil.rangeLabel(dashboard.previousRange),
     );
     return DashboardPanel(
       title: 'dashboard.net_sales'.tr,

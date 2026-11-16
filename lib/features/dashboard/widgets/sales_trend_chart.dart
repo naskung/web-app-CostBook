@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
 import 'package:costbook/core/utils/chart_util.dart';
+import 'package:costbook/core/utils/date_util.dart';
 import 'package:costbook/core/utils/money_util.dart';
 import 'package:costbook/features/dashboard/models/dashboard_sales_model.dart';
 import 'package:costbook/shared/widgets/molecules/chart_legend.dart';
@@ -16,19 +17,15 @@ class SalesTrendChart extends StatelessWidget {
     required this.days,
     required this.previousDays,
     required this.lastDay,
-    required this.monthLabel,
     required this.currentLabel,
     required this.previousLabel,
-    required this.dayLabel,
   });
 
   final List<DailySalesModel> days;
   final List<DailySalesModel> previousDays;
   final int lastDay;
-  final String monthLabel;
   final String currentLabel;
   final String previousLabel;
-  final String Function(int day) dayLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +64,7 @@ class SalesTrendChart extends StatelessWidget {
                   fitInsideHorizontally: true,
                   fitInsideVertically: true,
                   maxContentWidth: 220,
-                  getTooltipItems: (spots) => [for (final spot in spots) _tooltipItem(context, spot, spots.first)],
+                  getTooltipItems: (spots) => [for (final spot in spots) _tooltipItem(context, spot)],
                 ),
               ),
             ),
@@ -113,15 +110,24 @@ class SalesTrendChart extends StatelessWidget {
     );
   }
 
-  LineTooltipItem _tooltipItem(BuildContext context, LineBarSpot spot, LineBarSpot first) {
+  LineTooltipItem _tooltipItem(BuildContext context, LineBarSpot spot) {
     final style = Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.onTooltip) ?? const TextStyle();
-    final label = spot.barIndex == 1 ? currentLabel : previousLabel;
-    final header = spot == first ? '${dayLabel(spot.x.toInt() + 1)}\n' : '';
-    return LineTooltipItem('$header$label ${MoneyUtil.format(spot.y)}', style, textAlign: TextAlign.left);
+    final lineDays = spot.barIndex == 1 ? days : previousDays;
+    return LineTooltipItem(
+      '${_dateLabel(lineDays, spot.x.toInt())} ${MoneyUtil.format(spot.y)}',
+      style,
+      textAlign: TextAlign.left,
+    );
+  }
+
+  String _dateLabel(List<DailySalesModel> lineDays, int index) {
+    if (index >= lineDays.length) return '';
+    return DateUtil.shortDateLabel(DateUtil.fromApiDate(lineDays[index].date));
   }
 
   FlTitlesData _titles(BuildContext context, ChartRange range) {
     final style = Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary);
+    final labelStep = ChartUtil.dayLabelStep(math.max(days.length, previousDays.length));
     return FlTitlesData(
       topTitles: const AxisTitles(),
       rightTitles: const AxisTitles(),
@@ -143,9 +149,9 @@ class SalesTrendChart extends StatelessWidget {
           interval: 1,
           reservedSize: AppSizes.chartBottomReserved,
           getTitlesWidget: (value, meta) {
-            final day = value.toInt() + 1;
-            final isShown = day % 7 == 1;
-            return SideTitleWidget(meta: meta, child: Text(isShown ? '$day $monthLabel' : '', style: style));
+            final index = value.toInt();
+            final isShown = index % labelStep == 0;
+            return SideTitleWidget(meta: meta, child: Text(isShown ? _dateLabel(days, index) : '', style: style));
           },
         ),
       ),

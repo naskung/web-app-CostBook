@@ -1,9 +1,9 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart' show DateTimeRange;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:costbook/core/constants/api_constants.dart';
 import 'package:costbook/core/constants/app_status.dart';
-import 'package:costbook/core/utils/date_util.dart';
 import 'package:costbook/core/utils/error_util.dart';
 import 'package:costbook/core/utils/page_util.dart';
 import 'package:costbook/features/transaction/models/transaction_model.dart';
@@ -14,9 +14,9 @@ part 'transaction_event.dart';
 part 'transaction_state.dart';
 
 class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
-  TransactionBloc(this.repository, {required DateTime month}) : super(TransactionState(month: month)) {
+  TransactionBloc(this.repository, {required DateTimeRange range}) : super(TransactionState(range: range)) {
     on<TransactionsRequested>(_onRequested);
-    on<TransactionMonthChanged>(_onMonthChanged);
+    on<TransactionRangeChanged>(_onRangeChanged);
     on<TransactionSaved>(_onSaved);
     on<TransactionDeleted>(_onDeleted);
     on<TransactionsMoreRequested>(_onMoreRequested);
@@ -25,27 +25,27 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
   final TransactionRepository repository;
 
   Future<void> _onRequested(TransactionsRequested event, Emitter<TransactionState> emit) async {
-    _showCachedFirst(emit, state.month);
+    _showCachedFirst(emit, state.range);
     await _load(emit);
   }
 
-  Future<void> _onMonthChanged(TransactionMonthChanged event, Emitter<TransactionState> emit) async {
-    _showCachedFirst(emit, DateUtil.addMonths(state.month, event.monthCount));
+  Future<void> _onRangeChanged(TransactionRangeChanged event, Emitter<TransactionState> emit) async {
+    _showCachedFirst(emit, event.range);
     await _load(emit);
   }
 
-  // เคยโหลดเดือนนี้แล้ว → โชว์ของเดิมทันที (ไม่ขึ้นหน้าโหลด) แล้วค่อยโหลดใหม่เงียบ ๆ / ยังไม่เคย → หน้าโหลด
-  void _showCachedFirst(Emitter<TransactionState> emit, DateTime month) {
-    final transactions = repository.cachedTransactions(month);
-    final summary = repository.cachedSummary(month);
+  // เคยโหลดช่วงนี้แล้ว → โชว์ของเดิมทันที (ไม่ขึ้นหน้าโหลด) แล้วค่อยโหลดใหม่เงียบ ๆ / ยังไม่เคย → หน้าโหลด
+  void _showCachedFirst(Emitter<TransactionState> emit, DateTimeRange range) {
+    final transactions = repository.cachedTransactions(range);
+    final summary = repository.cachedSummary(range);
     if (transactions == null || summary == null) {
-      emit(state.copyWith(status: AppStatus.loading, month: month, moreStatus: AppStatus.initial));
+      emit(state.copyWith(status: AppStatus.loading, range: range, moreStatus: AppStatus.initial));
       return;
     }
     emit(
       state.copyWith(
         status: AppStatus.success,
-        month: month,
+        range: range,
         transactions: transactions,
         summary: summary,
         hasMore: PageUtil.hasMore(transactions.length, ApiConstants.pageSize),
@@ -54,14 +54,14 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     );
   }
 
-  // โหลดรายการ (limit = หน้าแรก หรือเท่าที่เลื่อนไว้แล้วตอนโหลดใหม่หลังบันทึก / ลบ) + สรุปของเดือน
-  // ระหว่างรอผู้ใช้เปลี่ยนเดือนแล้ว → ทิ้งผลของเดือนเก่า
+  // โหลดรายการ (limit = หน้าแรก หรือเท่าที่เลื่อนไว้แล้วตอนโหลดใหม่หลังบันทึก / ลบ) + สรุปของช่วงวันที่
+  // ระหว่างรอผู้ใช้เปลี่ยนช่วงวันที่แล้ว → ทิ้งผลของช่วงเก่า
   Future<void> _load(Emitter<TransactionState> emit, {int limit = ApiConstants.pageSize}) async {
-    final month = state.month;
+    final range = state.range;
     try {
-      final transactions = await repository.getTransactions(month, limit: limit);
-      final summary = await repository.getSummary(month);
-      if (state.month != month) return;
+      final transactions = await repository.getTransactions(range, limit: limit);
+      final summary = await repository.getSummary(range);
+      if (state.range != range) return;
       emit(
         state.copyWith(
           status: AppStatus.success,
@@ -99,14 +99,14 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     }
   }
 
-  // หน้าต่อไป: ต่อท้ายรายการเดิม / กำลังโหลดอยู่ หรือหมดแล้ว → ไม่โหลดซ้ำ / ระหว่างรอเปลี่ยนเดือน → ทิ้งผล
+  // หน้าต่อไป: ต่อท้ายรายการเดิม / กำลังโหลดอยู่ หรือหมดแล้ว → ไม่โหลดซ้ำ / ระหว่างรอเปลี่ยนช่วงวันที่ → ทิ้งผล
   Future<void> _onMoreRequested(TransactionsMoreRequested event, Emitter<TransactionState> emit) async {
     if (state.status != AppStatus.success || !state.hasMore || state.moreStatus == AppStatus.loading) return;
-    final month = state.month;
+    final range = state.range;
     emit(state.copyWith(moreStatus: AppStatus.loading));
     try {
-      final next = await repository.getTransactions(month, offset: state.transactions.length);
-      if (state.month != month) return;
+      final next = await repository.getTransactions(range, offset: state.transactions.length);
+      if (state.range != range) return;
       emit(
         state.copyWith(
           moreStatus: AppStatus.success,
@@ -115,7 +115,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
         ),
       );
     } catch (_) {
-      if (state.month != month) return;
+      if (state.range != range) return;
       emit(state.copyWith(moreStatus: AppStatus.failure));
     }
   }

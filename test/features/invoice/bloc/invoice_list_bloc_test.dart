@@ -1,4 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter/material.dart' show DateTimeRange;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -15,7 +16,8 @@ class MockInvoiceRepository extends Mock implements InvoiceRepository {}
 void main() {
   late MockInvoiceRepository repository;
 
-  final october = DateTime(2026, 10);
+  final october = DateTimeRange(start: DateTime(2026, 10), end: DateTime(2026, 10, 31));
+  final september = DateTimeRange(start: DateTime(2026, 9, 1), end: DateTime(2026, 9, 30));
   const summary = InvoiceSummaryModel(
     id: 'i1',
     invoiceNo: 'INV-2026-0001',
@@ -26,7 +28,7 @@ void main() {
   );
 
   setUpAll(() {
-    registerFallbackValue(DateTime(2026));
+    registerFallbackValue(DateTimeRange(start: DateTime(2026), end: DateTime(2026)));
   });
 
   setUp(() {
@@ -37,42 +39,42 @@ void main() {
     'InvoicesRequested โหลดใบกำกับของเดือน',
     build: () {
       when(() => repository.getInvoices(any())).thenAnswer((_) async => [summary]);
-      return InvoiceListBloc(repository, month: october);
+      return InvoiceListBloc(repository, range: october);
     },
     act: (bloc) => bloc.add(InvoicesRequested()),
     expect:
         () => [
-          InvoiceListState(month: october, status: AppStatus.loading),
-          InvoiceListState(month: october, status: AppStatus.success, invoices: const [summary]),
+          InvoiceListState(range: october, status: AppStatus.loading),
+          InvoiceListState(range: october, status: AppStatus.success, invoices: const [summary]),
         ],
   );
 
   blocTest<InvoiceListBloc, InvoiceListState>(
-    'InvoiceMonthChanged -1 โหลดเดือนก่อน',
+    'InvoiceRangeChanged โหลดช่วงวันที่ใหม่',
     build: () {
       when(() => repository.getInvoices(any())).thenAnswer((_) async => []);
-      return InvoiceListBloc(repository, month: october);
+      return InvoiceListBloc(repository, range: october);
     },
-    act: (bloc) => bloc.add(InvoiceMonthChanged(-1)),
+    act: (bloc) => bloc.add(InvoiceRangeChanged(september)),
     expect:
         () => [
-          InvoiceListState(month: DateTime(2026, 9), status: AppStatus.loading),
-          InvoiceListState(month: DateTime(2026, 9), status: AppStatus.success),
+          InvoiceListState(range: september, status: AppStatus.loading),
+          InvoiceListState(range: september, status: AppStatus.success),
         ],
-    verify: (_) => verify(() => repository.getInvoices(DateTime(2026, 9))).called(1),
+    verify: (_) => verify(() => repository.getInvoices(september)).called(1),
   );
 
   blocTest<InvoiceListBloc, InvoiceListState>(
     'InvoicesRequested ล้มเหลว ได้ failure',
     build: () {
       when(() => repository.getInvoices(any())).thenThrow(ApiException('server_error'));
-      return InvoiceListBloc(repository, month: october);
+      return InvoiceListBloc(repository, range: october);
     },
     act: (bloc) => bloc.add(InvoicesRequested()),
     expect:
         () => [
-          InvoiceListState(month: october, status: AppStatus.loading),
-          InvoiceListState(month: october, status: AppStatus.failure, errorCode: 'server_error'),
+          InvoiceListState(range: october, status: AppStatus.loading),
+          InvoiceListState(range: october, status: AppStatus.failure, errorCode: 'server_error'),
         ],
   );
 
@@ -96,7 +98,7 @@ void main() {
     build: () {
       when(() => repository.getInvoices(any())).thenAnswer((_) async => firstPage);
       when(() => repository.getInvoices(any(), offset: 20)).thenAnswer((_) async => lastPage);
-      return InvoiceListBloc(repository, month: october);
+      return InvoiceListBloc(repository, range: october);
     },
     act: (bloc) async {
       bloc.add(InvoicesRequested());
@@ -107,14 +109,14 @@ void main() {
     expect:
         () => [
           InvoiceListState(
-            month: october,
+            range: october,
             status: AppStatus.success,
             invoices: firstPage,
             hasMore: true,
             moreStatus: AppStatus.loading,
           ),
           InvoiceListState(
-            month: october,
+            range: october,
             status: AppStatus.success,
             invoices: [...firstPage, ...lastPage],
             moreStatus: AppStatus.success,
@@ -124,8 +126,8 @@ void main() {
 
   blocTest<InvoiceListBloc, InvoiceListState>(
     'หมดแล้ว (hasMore = false) / กำลังโหลดอยู่ → ไม่โหลดซ้ำ',
-    build: () => InvoiceListBloc(repository, month: october),
-    seed: () => InvoiceListState(month: october, status: AppStatus.success, invoices: [summary]),
+    build: () => InvoiceListBloc(repository, range: october),
+    seed: () => InvoiceListState(range: october, status: AppStatus.success, invoices: [summary]),
     act: (bloc) => bloc.add(InvoicesMoreRequested()),
     expect: () => <InvoiceListState>[],
     verify: (_) => verifyNever(() => repository.getInvoices(any(), offset: any(named: 'offset'))),
@@ -135,21 +137,21 @@ void main() {
     'โหลดหน้าต่อไปไม่สำเร็จ → moreStatus failure (รายการเดิมยังอยู่ รอกดลองใหม่) / canLoadMore = false',
     build: () {
       when(() => repository.getInvoices(any(), offset: 20)).thenThrow(ApiException('network_error'));
-      return InvoiceListBloc(repository, month: october);
+      return InvoiceListBloc(repository, range: october);
     },
-    seed: () => InvoiceListState(month: october, status: AppStatus.success, invoices: firstPage, hasMore: true),
+    seed: () => InvoiceListState(range: october, status: AppStatus.success, invoices: firstPage, hasMore: true),
     act: (bloc) => bloc.add(InvoicesMoreRequested()),
     expect:
         () => [
           InvoiceListState(
-            month: october,
+            range: october,
             status: AppStatus.success,
             invoices: firstPage,
             hasMore: true,
             moreStatus: AppStatus.loading,
           ),
           InvoiceListState(
-            month: october,
+            range: october,
             status: AppStatus.success,
             invoices: firstPage,
             hasMore: true,
@@ -179,13 +181,13 @@ void main() {
       vat: 7,
       total: 107,
     );
-    final loaded = InvoiceListState(month: october, status: AppStatus.success, invoices: const [summary, other]);
+    final loaded = InvoiceListState(range: october, status: AppStatus.success, invoices: const [summary, other]);
 
     blocTest<InvoiceListBloc, InvoiceListState>(
       'เปลี่ยนเป็นส่งแล้ว บันทึกแล้วแก้แค่แถวนั้น แถวอื่นเหมือนเดิม',
       build: () {
         when(() => repository.updateDelivery('i1', DeliveryStatus.shipped)).thenAnswer((_) async => shippedInvoice);
-        return InvoiceListBloc(repository, month: october);
+        return InvoiceListBloc(repository, range: october);
       },
       seed: () => loaded,
       act: (bloc) => bloc.add(InvoiceDeliveryChanged(invoiceId: 'i1', deliveryStatus: DeliveryStatus.shipped)),
@@ -205,7 +207,7 @@ void main() {
         when(
           () => repository.updateDelivery('i1', DeliveryStatus.received),
         ).thenThrow(ApiException('invoice_already_cancelled'));
-        return InvoiceListBloc(repository, month: october);
+        return InvoiceListBloc(repository, range: october);
       },
       seed: () => loaded,
       act: (bloc) => bloc.add(InvoiceDeliveryChanged(invoiceId: 'i1', deliveryStatus: DeliveryStatus.received)),

@@ -4,8 +4,8 @@ abstract class DashboardEvent {}
 
 class DashboardRequested extends DashboardEvent {}
 
-class DashboardMonthChanged extends DashboardEvent {
-  DashboardMonthChanged(this.monthCount);
+class DashboardRangeChanged extends DashboardEvent {
+  DashboardRangeChanged(this.range);
 
-  final int monthCount;
+  final DateTimeRange range;
 }

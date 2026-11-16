@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart' show DateTimeRange;
+
 import 'package:costbook/core/constants/api_constants.dart';
 import 'package:costbook/core/constants/delivery_status.dart';
 import 'package:costbook/core/network/api_client.dart';
@@ -13,22 +15,22 @@ class InvoiceRepository {
 
   // โหลดทีละหน้า: offset = ข้ามไปกี่ใบ / limit ไม่ส่ง = 1 หน้า (20 ใบ)
   Future<List<InvoiceSummaryModel>> getInvoices(
-    DateTime month, {
+    DateTimeRange range, {
     int offset = 0,
     int limit = ApiConstants.pageSize,
   }) async {
-    return _invoices(await api.get(_listPath(month, offset, limit)));
+    return _invoices(await api.get(_listPath(range, offset, limit)));
   }
 
   // ของที่เคยโหลด (โชว์ก่อนระหว่างโหลดใหม่) / ไม่เคยโหลด = null
-  List<InvoiceSummaryModel>? cachedInvoices(DateTime month) {
-    final data = api.cached(_listPath(month, 0, ApiConstants.pageSize));
+  List<InvoiceSummaryModel>? cachedInvoices(DateTimeRange range) {
+    final data = api.cached(_listPath(range, 0, ApiConstants.pageSize));
     if (data == null) return null;
     return _invoices(data);
   }
 
-  String _listPath(DateTime month, int offset, int limit) {
-    return '/invoices?month=${DateUtil.toApiMonth(month)}&limit=$limit&offset=$offset';
+  String _listPath(DateTimeRange range, int offset, int limit) {
+    return '/invoices?${DateUtil.toApiRange(range)}&limit=$limit&offset=$offset';
   }
 
   List<InvoiceSummaryModel> _invoices(dynamic data) {

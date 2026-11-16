@@ -6,6 +6,7 @@ import 'package:costbook/core/network/api_client.dart';
 import 'package:costbook/core/routes/app_page_transition.dart';
 import 'package:costbook/core/routes/app_routes.dart';
 import 'package:costbook/core/routes/app_shell.dart';
+import 'package:costbook/core/utils/date_util.dart';
 import 'package:costbook/features/assistant/bloc/assistant_bloc.dart';
 import 'package:costbook/features/assistant/repository/ai_repository.dart';
 import 'package:costbook/features/auth/bloc/auth_bloc.dart';
@@ -116,14 +117,12 @@ AssistantBloc _createAssistantBloc(BuildContext context) {
   );
 }
 
-DateTime _thisMonth() {
-  final now = DateTime.now();
-  return DateTime(now.year, now.month);
-}
-
 Widget _dashboardPage(GoRouterState state) {
   return BlocProvider(
-    create: (_) => DashboardBloc(DashboardRepository(ApiClient()), month: _thisMonth())..add(DashboardRequested()),
+    create:
+        (_) =>
+            DashboardBloc(DashboardRepository(ApiClient()), range: DateUtil.monthRange(DateTime.now()))
+              ..add(DashboardRequested()),
     child: const DashboardPage(),
   );
 }
@@ -183,14 +182,19 @@ Widget _stockPage(GoRouterState state) {
 Widget _transactionPage(GoRouterState state) {
   return BlocProvider(
     create:
-        (_) => TransactionBloc(TransactionRepository(ApiClient()), month: _thisMonth())..add(TransactionsRequested()),
+        (_) =>
+            TransactionBloc(TransactionRepository(ApiClient()), range: DateUtil.monthRange(DateTime.now()))
+              ..add(TransactionsRequested()),
     child: const TransactionListPage(),
   );
 }
 
 Widget _invoiceListPage(GoRouterState state) {
   return BlocProvider(
-    create: (_) => InvoiceListBloc(InvoiceRepository(ApiClient()), month: _thisMonth())..add(InvoicesRequested()),
+    create:
+        (_) =>
+            InvoiceListBloc(InvoiceRepository(ApiClient()), range: DateUtil.monthRange(DateTime.now()))
+              ..add(InvoicesRequested()),
     child: const InvoiceListPage(),
   );
 }

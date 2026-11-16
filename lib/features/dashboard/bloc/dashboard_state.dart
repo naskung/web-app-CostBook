@@ -2,20 +2,20 @@ part of 'dashboard_bloc.dart';
 
 class DashboardState extends Equatable {
   const DashboardState({
-    required this.month,
+    required this.range,
     this.status = AppStatus.initial,
     this.dashboard = const DashboardModel(),
     this.errorCode = '',
   });
 
-  final DateTime month;
+  final DateTimeRange range;
   final AppStatus status;
   final DashboardModel dashboard;
   final String errorCode;
 
-  DashboardState copyWith({DateTime? month, AppStatus? status, DashboardModel? dashboard, String? errorCode}) {
+  DashboardState copyWith({DateTimeRange? range, AppStatus? status, DashboardModel? dashboard, String? errorCode}) {
     return DashboardState(
-      month: month ?? this.month,
+      range: range ?? this.range,
       status: status ?? this.status,
       dashboard: dashboard ?? this.dashboard,
       errorCode: errorCode ?? this.errorCode,
@@ -23,5 +23,5 @@ class DashboardState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [month, status, dashboard, errorCode];
+  List<Object?> get props => [range, status, dashboard, errorCode];
 }
