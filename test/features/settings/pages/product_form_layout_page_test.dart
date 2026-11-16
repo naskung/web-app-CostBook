@@ -73,8 +73,8 @@ void main() {
     expect(find.byTooltip('common.delete'.tr), findsNWidgets(2));
   });
 
-  testWidgets('ลากช่อง "วัสดุ" ขึ้นไปไว้ใต้ชื่อสินค้า → โชว์ทันที + บันทึกลำดับใหม่', (tester) async {
-    await pumpPage(tester);
+  // ลาก "วัสดุ" ขึ้นไปไว้ใต้ชื่อสินค้า (เหนือแถว รหัส + หมวดหมู่)
+  Future<void> dragMaterialUnderName(WidgetTester tester) async {
     final handle = find.descendant(
       of: find.widgetWithText(FormLayoutCard, 'วัสดุ'),
       matching: find.byIcon(Icons.drag_indicator),
@@ -95,12 +95,70 @@ void main() {
     }
     await gesture.up();
     await tester.pumpAndSettle();
+  }
 
-    const expected = ['image', 'name', 'f1', 'code_category', 'unit', 'prices', 'sale_stock', 'description', 'f2'];
-    expect(cardOrder(tester), expected);
+  const moved = ['image', 'name', 'f1', 'code_category', 'unit', 'prices', 'sale_stock', 'description', 'f2'];
+
+  ButtonStyleButton saveButton(WidgetTester tester) {
+    return tester.widget<ButtonStyleButton>(
+      find.ancestor(of: find.text('settings.form_layout_save'.tr), matching: find.bySubtype<ButtonStyleButton>()),
+    );
+  }
+
+  testWidgets('ยังไม่ได้ย้าย ปุ่มบันทึก / ยกเลิก กดไม่ได้', (tester) async {
+    await pumpPage(tester);
+    expect(find.text('settings.form_layout_clean'.tr), findsOneWidget);
+    expect(saveButton(tester).onPressed, isNull);
+  });
+
+  testWidgets('ลากย้ายแล้ว โชว์ลำดับใหม่ แต่ยังไม่บันทึกจนกว่าจะกดปุ่มบันทึก', (tester) async {
+    await pumpPage(tester);
+    await dragMaterialUnderName(tester);
+
+    expect(cardOrder(tester), moved);
+    expect(find.text('settings.form_layout_unsaved'.tr), findsOneWidget);
+    verifyNever(() => bloc.add(any(that: isA<ProductFormLayoutSaved>())));
+
+    await tester.tap(find.text('settings.form_layout_save'.tr));
     final event =
         verify(() => bloc.add(captureAny(that: isA<ProductFormLayoutSaved>()))).captured.last as ProductFormLayoutSaved;
-    expect(event.keys, expected);
+    expect(event.keys, moved);
+  });
+
+  testWidgets('ลากย้ายแล้วเปลี่ยนใจ กดยกเลิกการย้าย กลับเป็นลำดับเดิม ไม่บันทึก', (tester) async {
+    await pumpPage(tester);
+    await dragMaterialUnderName(tester);
+    await tester.tap(find.text('settings.form_layout_reset'.tr));
+    await tester.pumpAndSettle();
+
+    expect(cardOrder(tester), layout);
+    expect(find.text('settings.form_layout_clean'.tr), findsOneWidget);
+    verifyNever(() => bloc.add(any(that: isA<ProductFormLayoutSaved>())));
+  });
+
+  testWidgets('ย้ายแล้วยังไม่บันทึก กดกลับ → ถามก่อนออก', (tester) async {
+    await pumpPage(tester);
+    await dragMaterialUnderName(tester);
+    await tester.tap(find.text('settings.form_layout_back'.tr));
+    await tester.pumpAndSettle();
+
+    expect(find.text('settings.form_layout_leave_title'.tr), findsOneWidget);
+    await tester.tap(find.text('common.cancel'.tr));
+    await tester.pumpAndSettle();
+    expect(cardOrder(tester), moved);
+  });
+
+  testWidgets('บันทึกสำเร็จ → แจ้งบันทึกแล้ว ปุ่มกลับเป็นกดไม่ได้', (tester) async {
+    whenListen(
+      bloc,
+      Stream<SettingsState>.fromIterable([
+        loaded.copyWith(formLayout: moved, layoutStatus: AppStatus.loading),
+        loaded.copyWith(formLayout: moved, layoutStatus: AppStatus.success),
+      ]),
+      initialState: loaded,
+    );
+    await pumpPage(tester);
+    expect(find.text('settings.form_layout_saved'.tr), findsOneWidget);
   });
 
   testWidgets('กดแก้ช่องที่ร้านเพิ่ม เปิดหน้าต่างแก้ช่องนั้น', (tester) async {

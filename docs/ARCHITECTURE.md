@@ -544,7 +544,7 @@ token หมดอายุ (7 วัน) / ถูกปฏิเสธ: API ต
 **จัดหน้าฟอร์มสินค้า** (`/settings/product-form`, `ProductFormLayoutPage` — ผู้ใช้ขอ 2026-11-16):
 - เปิดจากปุ่ม "จัดหน้าฟอร์ม" หรือปุ่มดินสอของช่องในหน้าตั้งค่า → เห็นทุกช่องเรียงเหมือนฟอร์มจริง (`FormBlockPreview` วาดหน้าตาช่อง กรอกไม่ได้)
 - ช่องหลัก (`ProductFormBlock`: image, name, code_category, unit, prices, sale_stock, description) ย้ายได้ ลบไม่ได้ / ช่องที่ร้านเพิ่ม ย้าย / แก้ / ลบ ได้
-- ลากที่จับ (`ReorderableDragStartListener` ใน `FormLayoutCard`) → `FormLayoutUtil.moved` → `ProductFormLayoutSaved` → `PUT /product-form-layout` (เลข sort = ตำแหน่ง 1, 2, 3...) — โชว์ลำดับใหม่ทันที บันทึกไม่ได้ → กลับลำดับเดิม + snackbar
+- ลากที่จับ (`ReorderableDragStartListener` ใน `FormLayoutCard`) → `FormLayoutUtil.moved` → เก็บเป็นร่างในหน้า (`_draft`) **ยังไม่บันทึก** (ผู้ใช้ขอปุ่มบันทึก "เผื่อไม่อยากแก้") → แถบล่าง "บันทึกตำแหน่ง" → `ProductFormLayoutSaved` → `PUT /product-form-layout` (เลข sort = ตำแหน่ง 1, 2, 3...) / "ยกเลิกการย้าย" = กลับลำดับที่บันทึกไว้ / ยังไม่ได้ย้าย = ปุ่มกดไม่ได้ / ย้ายแล้วกดกลับ → ถามก่อนออก / บันทึกไม่ได้ → snackbar ร่างยังอยู่ กดบันทึกใหม่ได้
 - `SettingsState.formOrder` = `FormLayoutUtil.order(formLayout, ids ของช่อง)` (ตัดช่องที่ถูกลบ, ช่องใหม่ต่อท้าย, ไม่มีลำดับจาก API = แบบเดิม) → `ProductFormDialog(order: ...)` เรียงช่องตามนี้
 
 ผลของการบันทึก / ลบ แยกเป็น field ของ state: `saveStatus` / `saveErrorCode` (กล่องฟอร์มใช้ — สำเร็จแล้วปิดเอง ไม่สำเร็จแสดง error ในกล่อง) และ `deleteStatus` / `deleteErrorCode` (หน้าใช้ — แสดง snackbar)
