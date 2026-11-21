@@ -9,13 +9,16 @@ import 'package:costbook/core/helpers/image_pick_helper.dart';
 import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
+import 'package:costbook/core/utils/barcode_util.dart';
 import 'package:costbook/core/utils/cost_util.dart';
 import 'package:costbook/core/utils/form_layout_util.dart';
 import 'package:costbook/core/utils/money_util.dart';
 import 'package:costbook/core/utils/validator_util.dart';
 import 'package:costbook/features/category/models/product_category_model.dart';
 import 'package:costbook/features/product/bloc/product_bloc.dart';
+import 'package:costbook/features/product/models/barcode_product_model.dart';
 import 'package:costbook/features/product/models/product_model.dart';
+import 'package:costbook/features/product/widgets/barcode_lookup_note.dart';
 import 'package:costbook/features/product/widgets/custom_field_input.dart';
 import 'package:costbook/features/product/widgets/product_image.dart';
 import 'package:costbook/features/settings/models/product_field_model.dart';
@@ -78,6 +81,9 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   late final Map<String, String> _customValues = {...widget.product.customFields};
   bool _isSubmitted = false;
 
+  // เลขบาร์โค้ดที่ฟอร์มนี้สั่งหาชื่อไป ('' = ยังไม่ได้หา) — ผลของเลขอื่น / ฟอร์มก่อนหน้า ไม่เอามากรอก
+  String _lookedUpCode = '';
+
   // คิดต้นทุนจากราคาที่ซื้อ: ซื้อมาราคาเท่าไหร่ ได้กี่หน่วย → ใส่ต้นทุน/หน่วยให้ (ไม่ได้ส่งไปหลังบ้าน)
   bool _showsPurchase = false;
   final _purchasePriceController = TextEditingController();
@@ -126,6 +132,26 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     final perUnit = _purchasePerUnit;
     if (perUnit > 0) _costController.text = _numberText(MoneyUtil.round2(perUnit));
     setState(() {});
+  }
+
+  void _onCodeScanned(String code) {
+    _codeController.text = code;
+    _lookUpBarcode(code);
+  }
+
+  // ยังไม่มีชื่อสินค้า + เป็นเลขบาร์โค้ดสากล → หาชื่อจากฐานข้อมูลฟรีมากรอกให้ (แก้สินค้าที่มีชื่อแล้ว ไม่หา)
+  void _lookUpBarcode(String text) {
+    final code = text.trim();
+    if (_nameController.text.trim().isNotEmpty || !BarcodeUtil.isGlobalCode(code)) return;
+    setState(() => _lookedUpCode = code);
+    context.read<ProductBloc>().add(ProductBarcodeLookupRequested(code));
+  }
+
+  // กรอกเฉพาะช่องที่ยังว่าง (ระหว่างรอ ผู้ใช้อาจพิมพ์เองไปแล้ว)
+  void _fillFromBarcode(BarcodeProductModel? found) {
+    if (found == null || found.code != _lookedUpCode) return;
+    if (_nameController.text.trim().isEmpty) _nameController.text = found.name;
+    if (_descriptionController.text.trim().isEmpty) _descriptionController.text = found.details;
   }
 
   void _setCustomValue(String fieldId, String value) {
@@ -178,6 +204,16 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    return BlocListener<ProductBloc, ProductState>(
+      listenWhen:
+          (previous, current) =>
+              previous.barcodeStatus != current.barcodeStatus && current.barcodeStatus == AppStatus.success,
+      listener: (context, state) => _fillFromBarcode(state.barcodeProduct),
+      child: _dialog(),
+    );
+  }
+
+  Widget _dialog() {
     return BlocConsumer<ProductBloc, ProductState>(
       listenWhen:
           (previous, current) => previous.saveStatus == AppStatus.loading && current.saveStatus == AppStatus.success,
@@ -255,21 +291,36 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     };
   }
 
+  // สแกนด้วยกล้อง / เครื่องยิงบาร์โค้ด (พิมพ์เลขแล้วกด Enter) → ใส่รหัส + หาชื่อสินค้าให้
   Widget _codeCategoryRow() {
-    return _twoFields(
-      AppTextField(
-        label: 'product.code'.tr,
-        hint: 'product.code_hint'.tr,
-        controller: _codeController,
-        // สแกนบาร์โค้ดด้วยกล้อง → ใส่รหัสลงช่อง
-        suffix: BarcodeScanButton(onScanned: (code) => _codeController.text = code),
-      ),
-      AppDropdown<String>(
-        label: 'product.category'.tr,
-        value: _categoryId,
-        items: {'': 'product.no_category'.tr, for (final category in widget.categories) category.id: category.name},
-        onChanged: (value) => setState(() => _categoryId = value ?? ''),
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _twoFields(
+          AppTextField(
+            label: 'product.code'.tr,
+            hint: 'product.code_hint'.tr,
+            controller: _codeController,
+            onSubmitted: _lookUpBarcode,
+            suffix: BarcodeScanButton(onScanned: _onCodeScanned),
+          ),
+          AppDropdown<String>(
+            label: 'product.category'.tr,
+            value: _categoryId,
+            items: {'': 'product.no_category'.tr, for (final category in widget.categories) category.id: category.name},
+            onChanged: (value) => setState(() => _categoryId = value ?? ''),
+          ),
+        ),
+        BlocBuilder<ProductBloc, ProductState>(
+          buildWhen:
+              (previous, current) =>
+                  previous.barcodeStatus != current.barcodeStatus || previous.barcodeCode != current.barcodeCode,
+          builder: (context, state) {
+            if (_lookedUpCode.isEmpty || state.barcodeCode != _lookedUpCode) return const SizedBox.shrink();
+            return BarcodeLookupNote(status: state.barcodeStatus, errorCode: state.barcodeErrorCode);
+          },
+        ),
+      ],
     );
   }
 

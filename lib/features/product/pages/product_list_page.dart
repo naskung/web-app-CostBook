@@ -15,6 +15,7 @@ import 'package:costbook/core/utils/date_util.dart';
 import 'package:costbook/features/category/models/product_category_model.dart';
 import 'package:costbook/features/product/bloc/product_bloc.dart';
 import 'package:costbook/features/product/models/product_model.dart';
+import 'package:costbook/features/product/widgets/stock_status_badge.dart';
 import 'package:costbook/features/product/widgets/product_form_dialog.dart';
 import 'package:costbook/features/product/widgets/product_mobile_card.dart';
 import 'package:costbook/features/settings/bloc/settings_bloc.dart';

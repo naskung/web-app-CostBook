@@ -299,25 +299,24 @@ extension _DashboardPageCharts on DashboardPage {
                 children: [
                   Expanded(child: Text(item.name, style: textTheme.titleSmall)),
                   const SizedBox(width: AppSizes.spaceSmall),
-                  Flexible(
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: AppBadge(
-                        text: 'dashboard.remaining'.trParams({
-                          'stock': '${item.stock}',
-                          'unit': item.unit,
-                          'min': '${item.minStock}',
-                        }),
-                        color: AppColors.danger,
-                        backgroundColor: AppColors.dangerSoft,
-                      ),
-                    ),
-                  ),
+                  Flexible(child: Align(alignment: Alignment.centerRight, child: _lowStockBadge(item))),
                 ],
               ),
             ),
         ],
       ),
+    );
+  }
+
+  // หมดแล้ว = ป้ายแดง / ใกล้หมด = บอกจำนวนที่เหลือเทียบขั้นต่ำ (สีส้ม)
+  Widget _lowStockBadge(LowStockItemModel item) {
+    if (item.isOutOfStock) {
+      return AppBadge(text: 'product.out_of_stock'.tr, color: AppColors.danger, backgroundColor: AppColors.dangerSoft);
+    }
+    return AppBadge(
+      text: 'dashboard.remaining'.trParams({'stock': '${item.stock}', 'unit': item.unit, 'min': '${item.minStock}'}),
+      color: AppColors.warning,
+      backgroundColor: AppColors.warningSoft,
     );
   }
 

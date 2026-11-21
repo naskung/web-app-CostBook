@@ -49,9 +49,11 @@ class ProductModel extends Equatable {
 
   String get imageUrl => hasImage ? ApiConstants.productImageUrl(id, imageVersion) : '';
 
-  bool get isLowStock => trackStock && stock <= minStock;
-
   bool get isOutOfStock => trackStock && stock <= 0;
+
+  bool get isLowStock => trackStock && !isOutOfStock && stock <= minStock;
+
+  bool get needsRestock => isOutOfStock || isLowStock;
 
   String fieldValue(String fieldId) => customFields[fieldId] ?? '';
 

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:costbook/core/constants/app_status.dart';
 import 'package:costbook/core/helpers/snackbar_helper.dart';
+import 'package:costbook/core/helpers/web_app_helper.dart';
 import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/routes/app_routes.dart';
 import 'package:costbook/core/lang/language_bloc.dart';
@@ -23,6 +24,7 @@ import 'package:costbook/shared/widgets/atoms/app_text_field.dart';
 import 'package:costbook/shared/widgets/molecules/error_view.dart';
 import 'package:costbook/shared/widgets/molecules/notice_banner.dart';
 import 'package:costbook/shared/widgets/molecules/section_card.dart';
+import 'package:costbook/shared/widgets/organisms/install_guide_dialog.dart';
 import 'package:costbook/shared/widgets/organisms/page_content.dart';
 
 part 'settings_page_ext.dart';
@@ -145,6 +147,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 const AiSettingsSection(),
                 const LogoSection(),
                 _languageSection(context),
+                _appSection(context),
               ],
             ],
           );

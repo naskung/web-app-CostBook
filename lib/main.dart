@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:costbook/app.dart';
+import 'package:costbook/core/helpers/web_app_helper.dart';
 import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/lang/language_bloc.dart';
 import 'package:costbook/core/network/api_client.dart';
@@ -13,6 +14,7 @@ Future<void> main() async {
   await AppLang.load(await LanguageBloc.savedCode());
   await AuthRepository(ApiClient()).loadSavedToken();
   ApiClient.onUnauthorized = _goToLoginWhenTokenExpired;
+  WebAppHelper.showShopIcons(0);
   runApp(const App());
 }
 

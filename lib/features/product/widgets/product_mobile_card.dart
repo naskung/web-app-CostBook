@@ -5,6 +5,7 @@ import 'package:costbook/core/theme/app_colors.dart';
 import 'package:costbook/core/theme/app_sizes.dart';
 import 'package:costbook/core/utils/money_util.dart';
 import 'package:costbook/features/product/models/product_model.dart';
+import 'package:costbook/features/product/widgets/stock_status_badge.dart';
 import 'package:costbook/features/product/widgets/product_image.dart';
 import 'package:costbook/shared/widgets/atoms/app_badge.dart';
 
@@ -136,18 +137,18 @@ class ProductMobileCard extends StatelessWidget {
     );
   }
 
-  // คงเหลือ: ใกล้หมด = ตัวเลขสีแดง + ป้าย / ไม่นับสต็อก = บอกว่าไม่นับ
+  // คงเหลือ: หมดแล้ว / ใกล้หมด = ตัวเลขสีแดง + ป้าย / ไม่นับสต็อก = บอกว่าไม่นับ
   Widget _stock(BuildContext context) {
     if (!product.trackStock) return _number(context, 'product.stock'.tr, 'product.no_stock'.tr);
     // 1000 → 1,000 อ่านง่ายบนจอเล็ก
     final amount = '${MoneyUtil.formatShort(product.stock.toDouble())} ${product.unit}'.trim();
-    if (!product.isLowStock) return _number(context, 'product.stock'.tr, amount);
+    if (!product.needsRestock) return _number(context, 'product.stock'.tr, amount);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _number(context, 'product.stock'.tr, amount, color: AppColors.danger),
         const SizedBox(height: AppSizes.spaceXSmall),
-        AppBadge(text: 'product.low'.tr, color: AppColors.danger, backgroundColor: AppColors.dangerSoft),
+        StockStatusBadge(isOutOfStock: product.isOutOfStock, isLowStock: product.isLowStock),
       ],
     );
   }

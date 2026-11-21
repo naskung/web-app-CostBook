@@ -10,4 +10,7 @@ class ApiConstants {
   static String productImageUrl(String id, int version) => '$baseUrl/products/$id/image?v=$version';
 
   static String userAvatarUrl(String id, int version) => '$baseUrl/users/$id/avatar?v=$version';
+
+  // ไอคอนแอป / favicon สี่เหลี่ยมจัตุรัส: โลโก้ร้าน หรือไอคอนเริ่มต้นของ CostBook (size = 32 / 64 / 180 / 192 / 512)
+  static String companyIconUrl(int size, int version) => '$baseUrl/company/icon?size=$size&v=$version';
 }

@@ -19,17 +19,70 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="CostBook">
+  <meta name="theme-color" content="#FD7402">
 
-  <!-- iOS meta tags & icons -->
+  <!-- iPhone / iPad: เปิดจากหน้าจอโฮมแบบเต็มจอ + ชื่อ / ไอคอนใต้ไอคอน -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="costbook">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="CostBook">
+  <link id="apple-icon" rel="apple-touch-icon" href="api/v1/company/icon?size=180">
 
-  <link rel="icon" href="http://localhost:8080/api/v1/company/logo"/>
+  <!-- ไอคอนเริ่มต้นของ CostBook — แอปเปิดแล้วเปลี่ยนเป็นโลโก้ร้านให้ (costbookWebApp.setIcons) -->
+  <link id="favicon" rel="icon" type="image/png" href="favicon.png">
 
   <title>CostBook</title>
   <link rel="manifest" href="manifest.json">
+
+  <script>
+    // ให้ Flutter (lib/core/helpers/web_app_browser_web.dart) เรียกใช้: ติดตั้งแอป / ดู browser / เปลี่ยนไอคอน
+    // browser แจ้งว่า "ติดตั้งได้" (Chrome / Edge / Android) → เก็บไว้ก่อน รอผู้ใช้กดปุ่มในแอปค่อยเปิดหน้าต่างติดตั้ง
+    window.costbookInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', function (event) {
+      event.preventDefault();
+      window.costbookInstallPrompt = event;
+    });
+    window.addEventListener('appinstalled', function () {
+      window.costbookInstallPrompt = null;
+    });
+
+    window.costbookWebApp = {
+      // เปิดจากไอคอนบนหน้าจอ (แบบแอป) อยู่แล้วไหม
+      isInstalled: function () {
+        return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      },
+      canPrompt: function () {
+        return window.costbookInstallPrompt !== null;
+      },
+      // เปิดหน้าต่างติดตั้งของ browser → true = ผู้ใช้กดติดตั้ง
+      prompt: async function () {
+        var event = window.costbookInstallPrompt;
+        if (!event) return false;
+        window.costbookInstallPrompt = null;
+        event.prompt();
+        var choice = await event.userChoice;
+        return choice.outcome === 'accepted';
+      },
+      // ชื่อ browser แบบย่อ ไว้เลือกวิธีเพิ่มไว้ที่หน้าจอ
+      browser: function () {
+        var agent = window.navigator.userAgent;
+        if (/Firefox|FxiOS/.test(agent)) return 'firefox';
+        if (/Edg/.test(agent)) return 'edge';
+        if (/SamsungBrowser/.test(agent)) return 'samsung';
+        if (/Chrome|CriOS|Chromium/.test(agent)) return 'chrome';
+        if (/Safari/.test(agent)) return 'safari';
+        return 'other';
+      },
+      // ใช้โลโก้ร้านเป็น favicon / ไอคอน iPhone — โหลดได้ก่อนค่อยเปลี่ยน (API ล่ม = ใช้ไอคอนเริ่มต้นต่อ)
+      setIcons: function (faviconUrl, appleIconUrl) {
+        var probe = new Image();
+        probe.onload = function () {
+          document.getElementById('favicon').href = faviconUrl;
+          document.getElementById('apple-icon').href = appleIconUrl;
+        };
+        probe.src = faviconUrl;
+      },
+    };
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

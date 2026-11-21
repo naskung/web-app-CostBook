@@ -20,6 +20,8 @@ class LowStockItemModel extends Equatable {
   final int stock;
   final int minStock;
 
+  bool get isOutOfStock => stock <= 0;
+
   factory LowStockItemModel.fromJson(Map<String, dynamic> json) {
     return LowStockItemModel(
       productId: json['product_id'] as String? ?? '',

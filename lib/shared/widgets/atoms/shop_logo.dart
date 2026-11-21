@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:costbook/core/constants/api_constants.dart';
+import 'package:costbook/core/helpers/web_app_helper.dart';
 import 'package:costbook/core/theme/app_colors.dart';
 
 class ShopLogo extends StatelessWidget {
@@ -9,11 +10,14 @@ class ShopLogo extends StatelessWidget {
   final double size;
   final double radius;
 
-  // เปลี่ยน / ลบโลโก้แล้วเรียก ShopLogo.refresh() → โลโก้ทุกที่ (เมนู / หน้า login / ใบกำกับ) โหลดรูปใหม่
+  // เปลี่ยน / ลบโลโก้แล้วเรียก ShopLogo.refresh() → โลโก้ทุกที่ (เมนู / หน้า login / ใบกำกับ / favicon) โหลดรูปใหม่
   // (URL เปลี่ยนตาม version ไม่งั้น Flutter ใช้รูปเก่าที่จำไว้)
   static final ValueNotifier<int> _version = ValueNotifier(0);
 
-  static void refresh() => _version.value++;
+  static void refresh() {
+    _version.value++;
+    WebAppHelper.showShopIcons(_version.value);
+  }
 
   static String urlOf(int version) => '${ApiConstants.companyLogoUrl}?v=$version';
 

@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:costbook/core/constants/app_status.dart';
 import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/theme/app_theme.dart';
 import 'package:costbook/features/product/bloc/product_bloc.dart';
+import 'package:costbook/features/product/models/barcode_product_model.dart';
 import 'package:costbook/features/product/models/product_model.dart';
 import 'package:costbook/features/product/widgets/product_form_dialog.dart';
 import 'package:costbook/features/settings/models/product_field_model.dart';
@@ -27,12 +31,13 @@ void main() {
     WidgetTester tester,
     List<String> order, {
     ProductModel product = const ProductModel(name: ''),
+    Stream<ProductState> states = const Stream<ProductState>.empty(),
   }) async {
     tester.view.physicalSize = const Size(900, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final bloc = MockProductBloc();
-    whenListen(bloc, const Stream<ProductState>.empty(), initialState: const ProductState());
+    whenListen(bloc, states, initialState: const ProductState());
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
@@ -169,5 +174,81 @@ void main() {
     tester.widget<BarcodeScanButton>(button).onScanned('8851234567890');
     await tester.pump();
     expect(textOf(tester, 'product.code'.tr), '8851234567890');
+  });
+
+  group('สแกนบาร์โค้ดแล้วหาชื่อสินค้าให้', () {
+    const code = '8850124003850';
+    const water = BarcodeProductModel(code: code, name: 'Nestle Pure Life', brand: 'Nestlé', quantity: '600 mL');
+
+    BarcodeScanButton scanButton(WidgetTester tester) {
+      return tester.widget<BarcodeScanButton>(
+        find.descendant(
+          of: find.widgetWithText(AppTextField, 'product.code'.tr),
+          matching: find.byType(BarcodeScanButton),
+        ),
+      );
+    }
+
+    testWidgets('สินค้าใหม่ (ยังไม่มีชื่อ) สแกนเลขสากล → สั่งหา เจอแล้วกรอกชื่อ + ยี่ห้อ · ขนาด ในคำอธิบาย', (
+      tester,
+    ) async {
+      final states = StreamController<ProductState>();
+      addTearDown(states.close);
+      final bloc = await pumpForm(tester, const [], states: states.stream);
+
+      scanButton(tester).onScanned(code);
+      await tester.pump();
+      final event = verify(() => bloc.add(captureAny())).captured.last as ProductBarcodeLookupRequested;
+      expect(event.code, code);
+
+      states.add(const ProductState(barcodeCode: code, barcodeStatus: AppStatus.loading));
+      await tester.pump();
+      expect(find.text('product.barcode_searching'.tr), findsOneWidget);
+
+      states.add(const ProductState(barcodeCode: code, barcodeStatus: AppStatus.success, barcodeProduct: water));
+      await tester.pump();
+      expect(textOf(tester, 'product.name'.tr), 'Nestle Pure Life');
+      expect(textOf(tester, 'product.description'.tr), 'Nestlé · 600 mL');
+      expect(find.text('product.barcode_found'.tr), findsOneWidget);
+    });
+
+    testWidgets('ไม่เจอ → ขึ้นบอกให้กรอกเอง ชื่อยังว่าง', (tester) async {
+      final states = StreamController<ProductState>();
+      addTearDown(states.close);
+      await pumpForm(tester, const [], states: states.stream);
+
+      scanButton(tester).onScanned(code);
+      await tester.pump();
+      states.add(
+        const ProductState(barcodeCode: code, barcodeStatus: AppStatus.failure, barcodeErrorCode: 'barcode_not_found'),
+      );
+      await tester.pump();
+      expect(find.text('error.barcode_not_found'.tr), findsOneWidget);
+      expect(textOf(tester, 'product.name'.tr), '');
+    });
+
+    testWidgets('แก้สินค้าที่มีชื่อแล้ว สแกนใหม่ → ใส่รหัสอย่างเดียว ไม่สั่งหา (ไม่ทับชื่อเดิม)', (tester) async {
+      final bloc = await pumpForm(tester, const [], product: const ProductModel(id: 'p1', name: 'น้ำดื่มร้านเรา'));
+      scanButton(tester).onScanned(code);
+      await tester.pump();
+      expect(textOf(tester, 'product.code'.tr), code);
+      verifyNever(() => bloc.add(any(that: isA<ProductBarcodeLookupRequested>())));
+    });
+
+    testWidgets('รหัสที่ร้านตั้งเอง (CF001) ไม่ใช่เลขสากล → ไม่สั่งหา', (tester) async {
+      final bloc = await pumpForm(tester, const []);
+      scanButton(tester).onScanned('CF001');
+      await tester.pump();
+      verifyNever(() => bloc.add(any(that: isA<ProductBarcodeLookupRequested>())));
+    });
+
+    testWidgets('เครื่องยิงบาร์โค้ด (พิมพ์เลขแล้วกด Enter) → สั่งหาเหมือนสแกนด้วยกล้อง', (tester) async {
+      final bloc = await pumpForm(tester, const []);
+      await tester.enterText(find.widgetWithText(AppTextField, 'product.code'.tr), code);
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      final event = verify(() => bloc.add(captureAny())).captured.last as ProductBarcodeLookupRequested;
+      expect(event.code, code);
+    });
   });
 }

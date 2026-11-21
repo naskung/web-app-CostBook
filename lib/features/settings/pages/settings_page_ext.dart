@@ -186,4 +186,21 @@ extension _SettingsPageExt on _SettingsPageState {
       ),
     );
   }
+
+  // แอปบนเครื่องนี้: เพิ่มไว้ที่หน้าจอ (เปิดซ้ำได้หลังกด "ไม่ต้องแนะนำอีก" ที่แถบบนสุด) / เปิดแบบแอปอยู่แล้ว → ดูวิธีของเครื่องอื่น
+  Widget _appSection(BuildContext context) {
+    final isInstalled = WebAppHelper.isInstalled;
+    return SectionCard(
+      title: 'install.settings_title'.tr,
+      subtitle: isInstalled ? 'install.installed'.tr : 'install.banner'.tr,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: OutlinedButton.icon(
+          onPressed: () => InstallGuideDialog.start(context),
+          icon: const Icon(Icons.install_mobile_outlined),
+          label: Text(isInstalled ? 'install.how_to'.tr : 'install.add'.tr),
+        ),
+      ),
+    );
+  }
 }

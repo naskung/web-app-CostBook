@@ -43,6 +43,12 @@ class ProductSaved extends ProductEvent {
   final bool removeImage;
 }
 
+class ProductBarcodeLookupRequested extends ProductEvent {
+  ProductBarcodeLookupRequested(this.code);
+
+  final String code;
+}
+
 class ProductDeleted extends ProductEvent {
   ProductDeleted(this.id);
 

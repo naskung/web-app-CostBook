@@ -18,6 +18,8 @@
 | stock | ประวัติสต็อก (รับเข้า / เบิกออก / ขาย) + กล่องรับเข้า / เบิกออกที่หน้าสินค้าใช้ร่วม | `/stock` |
 | transaction | บันทึกรายรับ-รายจ่าย แยกหมวด และสรุปรายเดือน | `/transactions` |
 | invoice | สร้างใบกำกับภาษี คิด VAT 7% พิมพ์ / ดาวน์โหลด PDF | `/invoices` |
+| product (บาร์โค้ด) | ฟอร์มสินค้า: สแกนกล้อง / เครื่องยิงบาร์โค้ด → หาชื่อ ยี่ห้อ ขนาด จาก Open Food Facts (ฟรี ผ่าน API `/barcodes/{code}`) มากรอกให้ | ฟอร์มใน `/products` |
+| เพิ่มไว้ที่หน้าจอ | แถบแนะนำบนสุดทุกหน้า + หน้าตั้งค่า "แอปบนเครื่องนี้": Chrome / Edge / Android กดติดตั้งได้เลย, iPhone / iPad / Mac Safari / Firefox บอกวิธีทีละขั้น — ไอคอน / favicon = โลโก้ร้าน (ไม่มี = ไอคอน CostBook) | ทุกหน้า |
 | quotation | ออกใบเสนอราคา (ยืนราคาถึงวันไหน) พิมพ์ / ดาวน์โหลด PDF — ไม่ตัดสต็อก ไม่บันทึกรายรับ | `/quotations` |
 | settings | ข้อมูลบริษัท (ชื่อ ที่อยู่ เลขผู้เสียภาษี สาขา) และเปลี่ยนภาษา | `/settings` |
 
@@ -844,6 +846,15 @@ class DialogHelper {
 ```
 
 ---
+
+### แอปบนเครื่อง (เพิ่มไว้ที่หน้าจอ) + ไอคอน (ผู้ใช้ขอ 2026-11-21)
+
+- `web/index.html` มี `window.costbookWebApp` (isInstalled / canPrompt / prompt / browser / setIcons) + เก็บ `beforeinstallprompt` ไว้รอผู้ใช้กด
+- Dart เรียกผ่าน `core/helpers/web_app_helper.dart` เท่านั้น (`dart:js_interop` อยู่ใน `web_app_browser_web.dart`, ตอน `flutter test` ใช้ `web_app_browser_stub.dart` แบบ conditional import)
+- วิธีของแต่ละเครื่อง: `InstallGuide` (core/constants) + `InstallUtil.guideFor(platform, browser)` (core/utils) → ข้อความ `install.guide_<ชื่อ>_title / _steps`
+- แถบแนะนำ `InstallSuggestion` (ใน AppShell) แสดงเมื่อ: ยังไม่ได้เปิดแบบแอป + ไม่เคยกด "ไม่ต้องแนะนำอีก" (SharedPreferences) + เปิดจาก home server (`API_URL=/api/v1` → ไอคอนใน manifest โหลดได้) — ตอนพัฒนา / ลิงก์ให้เพื่อนไม่แสดง
+- กด "เพิ่มไว้ที่หน้าจอ" (`InstallGuideDialog.start`): browser ติดตั้งให้ได้ → หน้าต่างติดตั้งของ browser / ไม่ได้ → dialog วิธีของเครื่องนี้ + วิธีเครื่องอื่น (กดเปิดดู)
+- ไอคอน: `manifest.json` ชี้ `api/v1/company/icon?size=192 / 512`, ไอคอน iPhone `?size=180`, `web/favicon.png` = ไอคอนเริ่มต้น → แอปเปิดแล้ว `WebAppHelper.showShopIcons` เปลี่ยน favicon / ไอคอน iPhone เป็นของร้าน (โหลดได้ก่อนค่อยเปลี่ยน) และเปลี่ยนอีกทุกครั้งที่ `ShopLogo.refresh()`
 
 ## 10. ภาษา (JSON + `.tr`)
 

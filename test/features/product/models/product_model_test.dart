@@ -70,6 +70,26 @@ void main() {
       expect(product.isOutOfStock, false);
     });
 
+    test('เหลือ 0 = หมดแล้ว ไม่ใช่ใกล้หมด (แต่ยังต้องสั่งเพิ่ม)', () {
+      const soldOut = ProductModel(name: 'ชา', stock: 0, minStock: 5);
+      expect([soldOut.isOutOfStock, soldOut.isLowStock, soldOut.needsRestock], [true, false, true]);
+    });
+
+    test('เหลือ 1 ถึงขั้นต่ำ = ใกล้หมด (ยังไม่หมด)', () {
+      const low = ProductModel(name: 'ชา', stock: 1, minStock: 5);
+      expect([low.isOutOfStock, low.isLowStock, low.needsRestock], [false, true, true]);
+    });
+
+    test('เหลือเกินขั้นต่ำ ไม่ต้องสั่งเพิ่ม', () {
+      const plenty = ProductModel(name: 'ชา', stock: 6, minStock: 5);
+      expect([plenty.isOutOfStock, plenty.isLowStock, plenty.needsRestock], [false, false, false]);
+    });
+
+    test('ขั้นต่ำ 0 เหลือ 0 = หมดแล้ว', () {
+      const soldOut = ProductModel(name: 'ชา', stock: 0);
+      expect([soldOut.isOutOfStock, soldOut.isLowStock], [true, false]);
+    });
+
     test('isOutOfStock เป็น false เมื่อไม่นับสต็อก ถึงจะเหลือ 0', () {
       expect(const ProductModel(name: 'ค่าบริการ', stock: 0, trackStock: false).isOutOfStock, false);
     });
@@ -103,7 +123,7 @@ void main() {
 
     test('สินค้าที่ไม่นับสต็อก ไม่เตือนของใกล้หมด', () {
       const service = ProductModel(name: 'ค่าออกแบบ', stock: 0, minStock: 5, trackStock: false);
-      expect(service.isLowStock, false);
+      expect([service.isLowStock, service.needsRestock], [false, false]);
     });
 
     test('fieldValue ไม่มีค่า ได้ข้อความว่าง', () {

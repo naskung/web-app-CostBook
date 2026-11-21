@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:costbook/core/constants/api_constants.dart';
 import 'package:costbook/core/network/api_client.dart';
+import 'package:costbook/features/product/models/barcode_product_model.dart';
 import 'package:costbook/features/product/models/product_counts_model.dart';
 import 'package:costbook/features/product/models/product_model.dart';
 
@@ -87,6 +88,11 @@ class ProductRepository {
     }
     final data = await api.put('/products/${product.id}', product.toJson()) as Map<String, dynamic>;
     return ProductModel.fromJson(data);
+  }
+
+  Future<BarcodeProductModel> lookupBarcode(String code) async {
+    final data = await api.get('/barcodes/$code') as Map<String, dynamic>;
+    return BarcodeProductModel.fromJson(data);
   }
 
   Future<void> deleteProduct(String id) async {

@@ -269,15 +269,15 @@ extension _ProductListPageExt on ProductListPage {
         backgroundColor: AppColors.neutralSoft,
       );
     }
-    // จำนวนอยู่บรรทัดบน ป้ายใกล้หมดอยู่ข้างล่าง → ทุกแถวหน้าตาเหมือนกัน ไม่ตกบรรทัดบ้างไม่ตกบ้าง
+    // จำนวนอยู่บรรทัดบน ป้ายหมดแล้ว / ใกล้หมดอยู่ข้างล่าง → ทุกแถวหน้าตาเหมือนกัน ไม่ตกบรรทัดบ้างไม่ตกบ้าง
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text('${product.stock} ${product.unit}', maxLines: 1, softWrap: false),
-        if (product.isLowStock) ...[
+        if (product.needsRestock) ...[
           const SizedBox(height: AppSizes.spaceXSmall),
-          AppBadge(text: 'product.low'.tr, color: AppColors.danger, backgroundColor: AppColors.dangerSoft),
+          StockStatusBadge(isOutOfStock: product.isOutOfStock, isLowStock: product.isLowStock),
         ],
       ],
     );

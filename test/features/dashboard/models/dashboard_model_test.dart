@@ -144,4 +144,11 @@ void main() {
       expect(empty.hasTrend, false);
     });
   });
+
+  group('LowStockItemModel', () {
+    test('เหลือ 0 = หมดแล้ว / เหลือมากกว่า 0 = ยังไม่หมด (ใกล้หมด)', () {
+      expect(const LowStockItemModel(productId: 'p1', name: 'ชา', stock: 0, minStock: 5).isOutOfStock, true);
+      expect(const LowStockItemModel(productId: 'p1', name: 'ชา', stock: 2, minStock: 5).isOutOfStock, false);
+    });
+  });
 }

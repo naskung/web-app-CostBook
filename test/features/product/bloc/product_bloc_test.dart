@@ -10,6 +10,7 @@ import 'package:costbook/core/network/api_exception.dart';
 import 'package:costbook/features/category/models/product_category_model.dart';
 import 'package:costbook/features/category/repository/category_repository.dart';
 import 'package:costbook/features/product/bloc/product_bloc.dart';
+import 'package:costbook/features/product/models/barcode_product_model.dart';
 import 'package:costbook/features/product/models/product_counts_model.dart';
 import 'package:costbook/features/product/models/product_model.dart';
 import 'package:costbook/features/product/repository/product_repository.dart';
@@ -448,6 +449,67 @@ void main() {
               deleteStatus: AppStatus.failure,
               deleteErrorCode: 'product_in_use',
             ),
+          ],
+    );
+  });
+
+  group('ProductBarcodeLookupRequested', () {
+    const water = BarcodeProductModel(code: '8850124003850', name: 'Nestle Pure Life', brand: 'Nestlé');
+
+    blocTest<ProductBloc, ProductState>(
+      'เจอสินค้า ได้ loading แล้ว success พร้อมชื่อ',
+      build: () {
+        when(() => repository.lookupBarcode('8850124003850')).thenAnswer((_) async => water);
+        return ProductBloc(repository, categoryRepository);
+      },
+      act: (bloc) => bloc.add(ProductBarcodeLookupRequested('8850124003850')),
+      expect:
+          () => [
+            const ProductState(barcodeCode: '8850124003850', barcodeStatus: AppStatus.loading),
+            const ProductState(barcodeCode: '8850124003850', barcodeStatus: AppStatus.success, barcodeProduct: water),
+          ],
+    );
+
+    blocTest<ProductBloc, ProductState>(
+      'ไม่เจอ ได้ failure + error code barcode_not_found',
+      build: () {
+        when(() => repository.lookupBarcode('8850000000001')).thenThrow(ApiException('barcode_not_found'));
+        return ProductBloc(repository, categoryRepository);
+      },
+      act: (bloc) => bloc.add(ProductBarcodeLookupRequested('8850000000001')),
+      expect:
+          () => [
+            const ProductState(barcodeCode: '8850000000001', barcodeStatus: AppStatus.loading),
+            const ProductState(
+              barcodeCode: '8850000000001',
+              barcodeStatus: AppStatus.failure,
+              barcodeErrorCode: 'barcode_not_found',
+            ),
+          ],
+    );
+
+    blocTest<ProductBloc, ProductState>(
+      'สแกนตัวใหม่ระหว่างรอ → ทิ้งผลของตัวเก่า เหลือแต่ผลของตัวล่าสุด',
+      build: () {
+        final slow = Completer<BarcodeProductModel>();
+        when(() => repository.lookupBarcode('1111111111111')).thenAnswer((_) => slow.future);
+        when(() => repository.lookupBarcode('8850124003850')).thenAnswer((_) async {
+          slow.complete(const BarcodeProductModel(code: '1111111111111', name: 'ของเก่า'));
+          return water;
+        });
+        return ProductBloc(repository, categoryRepository);
+      },
+      act: (bloc) async {
+        bloc.add(ProductBarcodeLookupRequested('1111111111111'));
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(ProductBarcodeLookupRequested('8850124003850'));
+      },
+      wait: const Duration(milliseconds: 10),
+      expect:
+          () => [
+            const ProductState(barcodeCode: '1111111111111', barcodeStatus: AppStatus.loading),
+            const ProductState(barcodeCode: '8850124003850', barcodeStatus: AppStatus.loading),
+            const ProductState(barcodeCode: '8850124003850', barcodeStatus: AppStatus.success, barcodeProduct: water),
           ],
     );
   });

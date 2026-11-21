@@ -9,6 +9,7 @@ import 'package:costbook/core/utils/error_util.dart';
 import 'package:costbook/core/utils/page_util.dart';
 import 'package:costbook/features/category/models/product_category_model.dart';
 import 'package:costbook/features/category/repository/category_repository.dart';
+import 'package:costbook/features/product/models/barcode_product_model.dart';
 import 'package:costbook/features/product/models/product_counts_model.dart';
 import 'package:costbook/features/product/models/product_model.dart';
 import 'package:costbook/features/product/repository/product_repository.dart';
@@ -29,6 +30,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     on<ProductKindChanged>(_onKindChanged);
     on<ProductSaved>(_onProductSaved);
     on<ProductDeleted>(_onProductDeleted);
+    on<ProductBarcodeLookupRequested>(_onBarcodeLookupRequested);
   }
 
   final ProductRepository repository;
@@ -228,6 +230,19 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       emit(state.copyWith(counts: await repository.getCounts()));
     } catch (_) {
       // นับใหม่ไม่ได้ → ใช้ตัวเลขเดิมไปก่อน (เปิดหน้าใหม่ก็ถูกเอง)
+    }
+  }
+
+  // สแกนบาร์โค้ดในฟอร์มสินค้า → หาชื่อ / ยี่ห้อ / ขนาดจาก Open Food Facts (ฟรี) / สแกนตัวใหม่ระหว่างรอ → ทิ้งผลของตัวเก่า
+  Future<void> _onBarcodeLookupRequested(ProductBarcodeLookupRequested event, Emitter<ProductState> emit) async {
+    emit(state.copyWith(barcodeCode: event.code, barcodeStatus: AppStatus.loading, barcodeErrorCode: ''));
+    try {
+      final product = await repository.lookupBarcode(event.code);
+      if (state.barcodeCode != event.code) return;
+      emit(state.copyWith(barcodeStatus: AppStatus.success, barcodeProduct: product));
+    } catch (error) {
+      if (state.barcodeCode != event.code) return;
+      emit(state.copyWith(barcodeStatus: AppStatus.failure, barcodeErrorCode: ErrorUtil.codeOf(error)));
     }
   }
 }

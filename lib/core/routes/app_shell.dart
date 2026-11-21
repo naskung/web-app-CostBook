@@ -15,6 +15,7 @@ import 'package:costbook/features/settings/bloc/settings_bloc.dart';
 import 'package:costbook/features/user/bloc/profile_bloc.dart';
 import 'package:costbook/features/user/widgets/user_avatar.dart';
 import 'package:costbook/shared/widgets/organisms/app_side_menu.dart';
+import 'package:costbook/shared/widgets/organisms/install_suggestion.dart';
 import 'package:costbook/shared/widgets/organisms/page_layout.dart';
 
 class AppShell extends StatelessWidget {
@@ -52,7 +53,7 @@ class AppShell extends StatelessWidget {
           onNavigate: (route) => context.go(route),
           onLogout: () => context.read<AuthBloc>().add(LogoutRequested()),
           profile: _menuProfile(profile),
-          child: child,
+          child: Column(children: [const InstallSuggestion(), Expanded(child: child)]),
         ),
         ChatLauncher(bottom: _chatBottom(context)),
       ],

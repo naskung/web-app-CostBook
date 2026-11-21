@@ -68,7 +68,15 @@ void main() {
     expect(find.text('product.kind_material'.tr), findsOneWidget);
     expect(find.text('product.table_price'.tr), findsNothing);
     expect(find.text('product.low'.tr), findsOneWidget);
+    expect(find.text('product.out_of_stock'.tr), findsNothing);
     expect(find.text('ยี่ห้อ R3D · สี ดำ'), findsOneWidget);
+  });
+
+  testWidgets('เหลือ 0 = ป้ายหมดแล้ว ไม่ใช่ป้ายใกล้หมด', (tester) async {
+    const soldOut = ProductModel(name: 'พวงกุญแจ', unit: 'ชิ้น', sellPrice: 59, stock: 0, minStock: 5);
+    await pumpCard(tester, soldOut, onMove: () {});
+    expect(find.text('product.out_of_stock'.tr), findsOneWidget);
+    expect(find.text('product.low'.tr), findsNothing);
   });
 
   testWidgets('ไม่นับสต็อก: บอกว่าไม่นับ และไม่มีปุ่มรับเข้า / เบิกออก', (tester) async {

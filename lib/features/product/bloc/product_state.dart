@@ -19,6 +19,10 @@ class ProductState extends Equatable {
     this.hasMore = false,
     this.moreStatus = AppStatus.initial,
     this.isFiltering = false,
+    this.barcodeCode = '',
+    this.barcodeStatus = AppStatus.initial,
+    this.barcodeProduct,
+    this.barcodeErrorCode = '',
   });
 
   final AppStatus status;
@@ -48,6 +52,12 @@ class ProductState extends Equatable {
   final bool hasMore;
   final AppStatus moreStatus;
   final bool isFiltering;
+
+  // หาชื่อสินค้าจากบาร์โค้ด (ฟอร์มสินค้า): barcodeCode = เลขที่กำลังหา / ผลล่าสุด
+  final String barcodeCode;
+  final AppStatus barcodeStatus;
+  final BarcodeProductModel? barcodeProduct;
+  final String barcodeErrorCode;
 
   // จำนวนสินค้าของแต่ละแท็บ (ทั้งหมด / สินค้าขาย / วัสดุ) นับจากสินค้าทั้งร้าน
   int kindCount(String kind) {
@@ -87,6 +97,10 @@ class ProductState extends Equatable {
     bool? hasMore,
     AppStatus? moreStatus,
     bool? isFiltering,
+    String? barcodeCode,
+    AppStatus? barcodeStatus,
+    BarcodeProductModel? barcodeProduct,
+    String? barcodeErrorCode,
   }) {
     return ProductState(
       status: status ?? this.status,
@@ -106,6 +120,10 @@ class ProductState extends Equatable {
       hasMore: hasMore ?? this.hasMore,
       moreStatus: moreStatus ?? this.moreStatus,
       isFiltering: isFiltering ?? this.isFiltering,
+      barcodeCode: barcodeCode ?? this.barcodeCode,
+      barcodeStatus: barcodeStatus ?? this.barcodeStatus,
+      barcodeProduct: barcodeProduct ?? this.barcodeProduct,
+      barcodeErrorCode: barcodeErrorCode ?? this.barcodeErrorCode,
     );
   }
 
@@ -128,5 +146,9 @@ class ProductState extends Equatable {
     hasMore,
     moreStatus,
     isFiltering,
+    barcodeCode,
+    barcodeStatus,
+    barcodeProduct,
+    barcodeErrorCode,
   ];
 }
