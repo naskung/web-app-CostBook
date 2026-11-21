@@ -31,7 +31,10 @@ extension _ProductListPageExt on ProductListPage {
           constraints: const BoxConstraints(maxWidth: AppSizes.formMaxWidth),
           child: SearchField(
             hint: 'product.search_hint'.tr,
+            value: state.query,
             onChanged: (query) => bloc.add(ProductSearchChanged(query)),
+            // สแกนบาร์โค้ด → ใส่รหัสในช่องค้นหา → หาสินค้ารหัสนั้น
+            suffix: BarcodeScanButton(onScanned: (code) => bloc.add(ProductSearchChanged(code))),
           ),
         ),
       ],
@@ -39,35 +42,57 @@ extension _ProductListPageExt on ProductListPage {
   }
 
   // ตัวกรอง: หมวด (จากเมนู หมวดหมู่สินค้า) + เฉพาะใกล้หมด
+  // มือถือ: ตัวกรองเรียงแถวเดียว ปัดซ้าย-ขวาได้ (ไม่กินที่หลายบรรทัด) / จอใหญ่: ตกบรรทัดได้
   Widget _filters(BuildContext context, ProductState state) {
-    final bloc = context.read<ProductBloc>();
+    final chips = _filterChips(context, state);
+    if (ResponsiveHelper.screenType(context) == ScreenType.mobile) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: AppSizes.spaceSmall),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (var index = 0; index < chips.length; index++) ...[
+                if (index > 0) const SizedBox(width: AppSizes.spaceSmall),
+                chips[index],
+              ],
+            ],
+          ),
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSizes.spaceMedium),
       child: Wrap(
         spacing: AppSizes.spaceSmall,
         runSpacing: AppSizes.spaceSmall,
         crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          ChoiceChip(
-            label: Text('product.all_categories'.tr),
-            selected: state.category.isEmpty,
-            onSelected: (_) => bloc.add(ProductCategoryChanged('')),
-          ),
-          for (final category in state.categories)
-            ChoiceChip(
-              label: Text(category.name),
-              selected: state.category == category.id,
-              onSelected: (_) => bloc.add(ProductCategoryChanged(category.id)),
-            ),
-          FilterChip(
-            avatar: const Icon(Icons.warning_amber_rounded, color: AppColors.warning),
-            label: Text('product.only_low'.trParams({'count': '${state.lowStockCount}'})),
-            selected: state.onlyLow,
-            onSelected: (selected) => bloc.add(ProductLowStockFilterChanged(onlyLow: selected)),
-          ),
-        ],
+        children: chips,
       ),
     );
+  }
+
+  List<Widget> _filterChips(BuildContext context, ProductState state) {
+    final bloc = context.read<ProductBloc>();
+    return [
+      ChoiceChip(
+        label: Text('product.all_categories'.tr),
+        selected: state.category.isEmpty,
+        onSelected: (_) => bloc.add(ProductCategoryChanged('')),
+      ),
+      for (final category in state.categories)
+        ChoiceChip(
+          label: Text(category.name),
+          selected: state.category == category.id,
+          onSelected: (_) => bloc.add(ProductCategoryChanged(category.id)),
+        ),
+      FilterChip(
+        avatar: const Icon(Icons.warning_amber_rounded, color: AppColors.warning),
+        label: Text('product.only_low'.trParams({'count': '${state.lowStockCount}'})),
+        selected: state.onlyLow,
+        onSelected: (selected) => bloc.add(ProductLowStockFilterChanged(onlyLow: selected)),
+      ),
+    ];
   }
 
   Widget? _stateView(BuildContext context, ProductState state) {
@@ -127,7 +152,25 @@ extension _ProductListPageExt on ProductListPage {
             order: settings.formOrder,
           ),
       rows: [for (final product in products) _row(context, product, listFields, settings.fields, state.categories)],
+      mobileRows: [
+        for (final product in products)
+          ProductMobileCard(
+            product: product,
+            fieldTexts: _fieldTexts(product, listFields),
+            menu: _menu(context, product, settings.fields, state.categories),
+            onStockMove: product.trackStock ? () => StockMovementDialog.show(context, productId: product.id) : null,
+          ),
+      ],
     );
+  }
+
+  // มือถือโชว์เฉพาะช่องเพิ่มเติมที่มีค่า เช่น "ยี่ห้อ R3D" (ไม่มีแถว — ยาว ๆ)
+  List<String> _fieldTexts(ProductModel product, List<ProductFieldModel> listFields) {
+    return [
+      for (final field in listFields)
+        if (product.fieldValue(field.id).trim().isNotEmpty)
+          '${field.name} ${_fieldText(field, product.fieldValue(field.id))}',
+    ];
   }
 
   // แท็บ ทั้งหมด / สินค้าขาย / วัสดุ ติดอยู่บนตารางสินค้า
@@ -255,24 +298,28 @@ extension _ProductListPageExt on ProductListPage {
             onPressed: () => StockMovementDialog.show(context, productId: product.id),
             icon: const Icon(Icons.swap_vert_rounded, color: AppColors.primaryDark),
           ),
-        PopupMenuButton<_RowAction>(
-          tooltip: 'common.more'.tr,
-          icon: const Icon(Icons.more_vert),
-          onSelected: (action) => _onRowAction(context, action, product, fields, categories),
-          itemBuilder:
-              (context) => [
-                _menuItem(context, _RowAction.market, Icons.travel_explore, 'market.check_tooltip'.tr),
-                _menuItem(context, _RowAction.edit, Icons.edit_outlined, 'common.edit'.tr),
-                _menuItem(
-                  context,
-                  _RowAction.delete,
-                  Icons.delete_outline,
-                  'common.delete'.tr,
-                  color: AppColors.danger,
-                ),
-              ],
-        ),
+        _menu(context, product, fields, categories),
       ],
+    );
+  }
+
+  // เมนู ⋮: เช็คราคาตลาด / แก้ไข / ลบ (ใช้ทั้งแถวตาราง และการ์ดบนมือถือ)
+  Widget _menu(
+    BuildContext context,
+    ProductModel product,
+    List<ProductFieldModel> fields,
+    List<ProductCategoryModel> categories,
+  ) {
+    return PopupMenuButton<_RowAction>(
+      tooltip: 'common.more'.tr,
+      icon: const Icon(Icons.more_vert),
+      onSelected: (action) => _onRowAction(context, action, product, fields, categories),
+      itemBuilder:
+          (context) => [
+            _menuItem(context, _RowAction.market, Icons.travel_explore, 'market.check_tooltip'.tr),
+            _menuItem(context, _RowAction.edit, Icons.edit_outlined, 'common.edit'.tr),
+            _menuItem(context, _RowAction.delete, Icons.delete_outline, 'common.delete'.tr, color: AppColors.danger),
+          ],
     );
   }
 

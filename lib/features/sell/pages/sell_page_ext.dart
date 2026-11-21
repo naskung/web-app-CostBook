@@ -162,10 +162,11 @@ extension _SellPageExt on _SellPageState {
       onSubmitted: _onCodeSubmitted,
       decoration: InputDecoration(
         hintText: 'sell.search_hint'.tr,
-        prefixIcon: const Icon(Icons.qr_code_scanner),
+        prefixIcon: const Icon(Icons.search),
+        // ยังไม่ได้พิมพ์ = ปุ่มสแกนด้วยกล้อง (ได้รหัส → ใส่บิลเหมือนยิงเครื่องสแกน) / พิมพ์แล้ว = ปุ่มล้าง
         suffixIcon:
             _query.isEmpty
-                ? null
+                ? BarcodeScanButton(onScanned: _onCameraScanned)
                 : IconButton(
                   tooltip: 'common.clear'.tr,
                   onPressed: () {

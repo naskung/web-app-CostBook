@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:costbook/core/constants/app_status.dart';
+import 'package:costbook/core/constants/screen_type.dart';
 import 'package:costbook/core/helpers/dialog_helper.dart';
+import 'package:costbook/core/helpers/responsive_helper.dart';
 import 'package:costbook/core/helpers/snackbar_helper.dart';
 import 'package:costbook/core/lang/app_lang.dart';
 import 'package:costbook/core/routes/app_routes.dart';
@@ -14,6 +16,7 @@ import 'package:costbook/features/category/models/product_category_model.dart';
 import 'package:costbook/features/product/bloc/product_bloc.dart';
 import 'package:costbook/features/product/models/product_model.dart';
 import 'package:costbook/features/product/widgets/product_form_dialog.dart';
+import 'package:costbook/features/product/widgets/product_mobile_card.dart';
 import 'package:costbook/features/settings/bloc/settings_bloc.dart';
 import 'package:costbook/features/settings/models/product_field_model.dart';
 import 'package:costbook/features/stock/bloc/stock_bloc.dart';
@@ -30,6 +33,7 @@ import 'package:costbook/shared/widgets/molecules/load_more_footer.dart';
 import 'package:costbook/shared/widgets/molecules/search_field.dart';
 import 'package:costbook/shared/widgets/organisms/app_data_table.dart';
 import 'package:costbook/shared/widgets/organisms/page_content.dart';
+import 'package:costbook/shared/widgets/organisms/barcode_scan_button.dart';
 import 'package:costbook/shared/widgets/organisms/page_toolbar.dart';
 
 part 'product_list_page_ext.dart';

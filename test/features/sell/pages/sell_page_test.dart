@@ -17,6 +17,7 @@ import 'package:costbook/features/sell/pages/sell_page.dart';
 import 'package:costbook/features/sell/widgets/sell_product_tile.dart';
 import 'package:costbook/features/settings/models/company_model.dart';
 import 'package:costbook/features/settings/repository/settings_repository.dart';
+import 'package:costbook/shared/widgets/organisms/barcode_scan_button.dart';
 
 class MockInvoiceRepository extends Mock implements InvoiceRepository {}
 
@@ -211,5 +212,29 @@ void main() {
     expect(find.text('sell.bill_title'.tr), findsNothing);
     expect(find.text('sell.payment_title'.tr), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  BarcodeScanButton scanButton(WidgetTester tester) => tester.widget<BarcodeScanButton>(find.byType(BarcodeScanButton));
+
+  testWidgets('สแกนด้วยกล้อง: รหัสตรงสินค้า → ใส่บิล 1 ชิ้น / ไม่เจอรหัส → แจ้งไม่พบสินค้า', (tester) async {
+    const coded = ProductModel(
+      id: 'p3',
+      code: '8851234567890',
+      name: 'ที่วางมือถือ',
+      unit: 'ชิ้น',
+      sellPrice: 99,
+      stock: 3,
+    );
+    when(() => productRepository.getProducts()).thenAnswer((_) async => [keychain, coded]);
+    await pumpPage(tester);
+    expect(find.byType(BarcodeScanButton), findsOneWidget);
+
+    scanButton(tester).onScanned('8851234567890');
+    await tester.pumpAndSettle();
+    expect(find.text('sell.bill_count'.trParams({'count': '1'})), findsOneWidget);
+
+    scanButton(tester).onScanned('0000000000000');
+    await tester.pumpAndSettle();
+    expect(find.text('sell.code_not_found'.tr), findsOneWidget);
   });
 }

@@ -11,6 +11,7 @@ import 'package:costbook/features/product/models/product_model.dart';
 import 'package:costbook/features/product/widgets/product_form_dialog.dart';
 import 'package:costbook/features/settings/models/product_field_model.dart';
 import 'package:costbook/shared/widgets/atoms/app_text_field.dart';
+import 'package:costbook/shared/widgets/organisms/barcode_scan_button.dart';
 
 class MockProductBloc extends MockBloc<ProductEvent, ProductState> implements ProductBloc {}
 
@@ -155,5 +156,18 @@ void main() {
     await tester.pump();
     saved = verify(() => bloc.add(captureAny())).captured.last as ProductSaved;
     expect(saved.product.sellPrice, 280);
+  });
+
+  testWidgets('ช่องรหัส / บาร์โค้ดมีปุ่มสแกนด้วยกล้อง สแกนได้แล้วใส่รหัสลงช่อง', (tester) async {
+    await pumpForm(tester, const []);
+    final button = find.descendant(
+      of: find.widgetWithText(AppTextField, 'product.code'.tr),
+      matching: find.byType(BarcodeScanButton),
+    );
+    expect(button, findsOneWidget);
+
+    tester.widget<BarcodeScanButton>(button).onScanned('8851234567890');
+    await tester.pump();
+    expect(textOf(tester, 'product.code'.tr), '8851234567890');
   });
 }

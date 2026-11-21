@@ -11,12 +11,15 @@ import 'package:costbook/features/product/models/product_counts_model.dart';
 import 'package:costbook/features/product/models/product_model.dart';
 import 'package:costbook/features/product/pages/product_list_page.dart';
 import 'package:costbook/features/product/repository/product_repository.dart';
+import 'package:costbook/features/product/widgets/product_mobile_card.dart';
 import 'package:costbook/features/settings/bloc/settings_bloc.dart';
 import 'package:costbook/features/settings/repository/settings_repository.dart';
 import 'package:costbook/features/stock/bloc/stock_bloc.dart';
 import 'package:costbook/features/stock/models/stock_item_model.dart';
 import 'package:costbook/features/stock/repository/stock_repository.dart';
 import 'package:costbook/shared/widgets/atoms/app_badge.dart';
+import 'package:costbook/shared/widgets/molecules/search_field.dart';
+import 'package:costbook/shared/widgets/organisms/barcode_scan_button.dart';
 
 class MockProductRepository extends Mock implements ProductRepository {}
 
@@ -137,5 +140,45 @@ void main() {
       find.byWidgetPredicate((widget) => widget is SingleChildScrollView && widget.scrollDirection == Axis.horizontal),
       findsWidgets,
     );
+  });
+
+  testWidgets('ช่องค้นหามีปุ่มสแกน สแกนได้แล้วรหัสขึ้นในช่อง + ค้นสินค้ารหัสนั้น', (tester) async {
+    await pumpPage(tester);
+    final button = find.descendant(of: find.byType(SearchField), matching: find.byType(BarcodeScanButton));
+    expect(button, findsOneWidget);
+
+    tester.widget<BarcodeScanButton>(button).onScanned('8851234567890');
+    await tester.pump(ProductBloc.searchDelay);
+    await tester.pumpAndSettle();
+
+    final field = tester.widget<TextField>(
+      find.descendant(of: find.byType(SearchField), matching: find.byType(TextField)),
+    );
+    expect(field.controller?.text, '8851234567890');
+    verify(
+      () => productRepository.getProductPage(
+        query: '8851234567890',
+        categoryId: any(named: 'categoryId'),
+        kind: any(named: 'kind'),
+        onlyLow: any(named: 'onlyLow'),
+        offset: any(named: 'offset'),
+        limit: any(named: 'limit'),
+      ),
+    ).called(1);
+  });
+
+  testWidgets('มือถือ: สินค้าเป็นการ์ด (ไม่ใช่ หัวข้อ ... ค่า ทีละบรรทัด) ปุ่มรับเข้า / เบิกออก + เมนู ⋮ ครบ', (
+    tester,
+  ) async {
+    await pumpPage(tester, size: const Size(375, 1400));
+    expect(find.byType(ProductMobileCard), findsNWidgets(3));
+    expect(find.text('product.table_image'.tr), findsNothing);
+    expect(find.byTooltip('stock.move'.tr), findsNWidgets(2));
+    expect(find.byIcon(Icons.more_vert), findsNWidgets(3));
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byIcon(Icons.more_vert).first);
+    await tester.pumpAndSettle();
+    expect(find.text('common.edit'.tr), findsOneWidget);
   });
 }

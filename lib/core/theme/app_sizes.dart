@@ -42,6 +42,7 @@ class AppSizes {
   static const double alertIconBox = 64;
   static const double alertIcon = 32;
   static const double productThumb = 40;
+  static const double productMobileThumb = 64;
   static const double productImagePreview = 112;
   static const double sellTileImageRatio = 1;
   static const double contentMaxWidth = 1200;

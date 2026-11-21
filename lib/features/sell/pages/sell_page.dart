@@ -26,6 +26,7 @@ import 'package:costbook/shared/widgets/atoms/app_loading.dart';
 import 'package:costbook/shared/widgets/molecules/empty_view.dart';
 import 'package:costbook/shared/widgets/molecules/error_view.dart';
 import 'package:costbook/shared/widgets/organisms/app_alert_dialog.dart';
+import 'package:costbook/shared/widgets/organisms/barcode_scan_button.dart';
 
 part 'sell_page_ext.dart';
 
@@ -65,6 +66,11 @@ class _SellPageState extends State<SellPage> {
     _searchController.clear();
     setState(() => _query = '');
     _searchFocus.requestFocus();
+  }
+
+  // สแกนด้วยกล้อง: ใส่บิลเหมือนยิงเครื่องสแกน แต่ไม่ดึงเคอร์เซอร์กลับช่องค้นหา (มือถือจะได้ไม่เด้งคีย์บอร์ด)
+  void _onCameraScanned(String code) {
+    context.read<InvoiceFormBloc>().add(InvoiceCodeScanned(code));
   }
 
   // รับเงิน: หน้าต่างรับเงิน (ได้เงินที่รับมา) → ออกเอกสารขาย / กดยกเลิก = ไม่ขาย

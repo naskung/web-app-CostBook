@@ -22,6 +22,7 @@ import 'package:costbook/features/settings/models/product_field_model.dart';
 import 'package:costbook/shared/widgets/atoms/app_dropdown.dart';
 import 'package:costbook/shared/widgets/atoms/app_image_box.dart';
 import 'package:costbook/shared/widgets/atoms/app_text_field.dart';
+import 'package:costbook/shared/widgets/organisms/barcode_scan_button.dart';
 import 'package:costbook/shared/widgets/organisms/form_dialog.dart';
 
 class ProductFormDialog extends StatefulWidget {
@@ -256,7 +257,13 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
 
   Widget _codeCategoryRow() {
     return _twoFields(
-      AppTextField(label: 'product.code'.tr, hint: 'product.code_hint'.tr, controller: _codeController),
+      AppTextField(
+        label: 'product.code'.tr,
+        hint: 'product.code_hint'.tr,
+        controller: _codeController,
+        // สแกนบาร์โค้ดด้วยกล้อง → ใส่รหัสลงช่อง
+        suffix: BarcodeScanButton(onScanned: (code) => _codeController.text = code),
+      ),
       AppDropdown<String>(
         label: 'product.category'.tr,
         value: _categoryId,

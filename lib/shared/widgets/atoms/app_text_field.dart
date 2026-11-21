@@ -20,6 +20,7 @@ class AppTextField extends StatefulWidget {
     this.readOnly = false,
     this.maxLines = 1,
     this.suffixText,
+    this.suffix,
   });
 
   final String label;
@@ -37,6 +38,8 @@ class AppTextField extends StatefulWidget {
   final bool readOnly;
   final int maxLines;
   final String? suffixText;
+  // ปุ่ม / ไอคอนท้ายช่อง เช่น ปุ่มสแกนบาร์โค้ด (ช่องรหัสผ่านใช้ที่นี้เป็นปุ่มซ่อน / แสดงรหัส)
+  final Widget? suffix;
 
   @override
   State<AppTextField> createState() => _AppTextFieldState();
@@ -72,7 +75,7 @@ class _AppTextFieldState extends State<AppTextField> {
             decoration: InputDecoration(
               hintText: widget.hint,
               prefixIcon: widget.icon == null ? null : Icon(widget.icon),
-              suffixIcon: _passwordToggle(),
+              suffixIcon: _passwordToggle() ?? widget.suffix,
               suffixText: widget.suffixText,
             ),
           ),

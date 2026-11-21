@@ -44,7 +44,7 @@ extension _StockPageExt on StockPage {
             Text(movement.productName),
             _typeBadge(movement),
             Text(
-              '${movement.isIn ? '+' : '-'}${movement.quantity} ${movement.unit}',
+              _quantityText(movement),
               style: Theme.of(
                 context,
               ).textTheme.titleSmall?.copyWith(color: movement.isIn ? AppColors.success : AppColors.danger),
@@ -53,6 +53,97 @@ extension _StockPageExt on StockPage {
             Text(_noteText(movement), style: Theme.of(context).textTheme.bodySmall),
           ],
       ],
+      mobileRows: [for (final movement in movements) _mobileRow(context, movement)],
+    );
+  }
+
+  String _quantityText(MovementModel movement) {
+    return '${movement.isIn ? '+' : '-'}${movement.quantity} ${movement.unit}'.trim();
+  }
+
+  // มือถือ: ชื่อสินค้า + เวลา ซ้าย / จำนวน (+ เขียว, - แดง) + ป้ายประเภท ขวา / หมายเหตุ + กำไร ข้างล่าง (มีค่าเท่านั้น)
+  Widget _mobileRow(BuildContext context, MovementModel movement) {
+    final textTheme = Theme.of(context).textTheme;
+    final note = _noteText(movement);
+    final sign = movement.isIn ? '+' : '-';
+    final quantity = '$sign${MoneyUtil.formatShort(movement.quantity.toDouble())} ${movement.unit}'.trim();
+    return Padding(
+      padding: const EdgeInsets.all(AppSizes.spaceMedium),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      movement.productName,
+                      style: textTheme.titleSmall,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppSizes.spaceXSmall),
+                    Text(_timeText(movement.createdAt), style: textTheme.bodySmall),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSizes.spaceSmall),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    quantity,
+                    style: textTheme.titleMedium?.copyWith(
+                      color: movement.isIn ? AppColors.success : AppColors.danger,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: AppSizes.spaceXSmall),
+                  _typeBadge(movement),
+                ],
+              ),
+            ],
+          ),
+          if (note.isNotEmpty) ...[
+            const SizedBox(height: AppSizes.spaceSmall),
+            Text(note, style: textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
+          ],
+          if (movement.hasProfit) ...[const SizedBox(height: AppSizes.spaceSmall), _mobileProfit(context, movement)],
+        ],
+      ),
+    );
+  }
+
+  // กำไรของแถวที่ขาย บนมือถือ: กล่องเทาอ่อน "กำไร +20.00  ขาย 59.00 · ทุน 39.00"
+  Widget _mobileProfit(BuildContext context, MovementModel movement) {
+    final textTheme = Theme.of(context).textTheme;
+    final color = movement.profit < 0 ? AppColors.danger : AppColors.success;
+    final sign = movement.profit > 0 ? '+' : '';
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.spaceSmall + AppSizes.spaceXSmall,
+        vertical: AppSizes.spaceSmall,
+      ),
+      decoration: BoxDecoration(color: AppColors.surfaceMuted, borderRadius: BorderRadius.circular(AppSizes.radius)),
+      child: Wrap(
+        spacing: AppSizes.spaceSmall,
+        runSpacing: AppSizes.spaceXSmall,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text('stock.profit'.tr, style: textTheme.bodySmall),
+          Text('$sign${MoneyUtil.format(movement.profit)}', style: textTheme.titleSmall?.copyWith(color: color)),
+          Text(
+            'stock.profit_detail'.trParams({
+              'sale': MoneyUtil.format(movement.saleAmount),
+              'cost': MoneyUtil.format(movement.costAmount),
+            }),
+            style: textTheme.bodySmall,
+          ),
+        ],
+      ),
     );
   }
 

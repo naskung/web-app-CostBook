@@ -92,6 +92,11 @@ void main() {
   testWidgets('มือถือ 375 แสดงเป็นการ์ด มีกำไรไม่ล้นจอ', (tester) async {
     await pumpPage(tester, size: const Size(375, 800));
     expect(find.text('+31.77'), findsOneWidget);
+    expect(find.text('-1 ชิ้น'), findsOneWidget);
+    expect(find.text('+10'), findsOneWidget);
+    expect(find.text('stock.from_invoice_out'.trParams({'no': 'RC-2026-0004'})), findsNWidgets(2));
+    // มือถือไม่มีหัวข้อทีละบรรทัดแบบตาราง
+    expect(find.text('stock.history_time'.tr), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

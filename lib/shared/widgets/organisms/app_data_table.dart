@@ -28,7 +28,14 @@ class AppDataColumn {
 }
 
 class AppDataTable extends StatelessWidget {
-  const AppDataTable({super.key, required this.columns, required this.rows, this.onRowTap, this.header});
+  const AppDataTable({
+    super.key,
+    required this.columns,
+    required this.rows,
+    this.onRowTap,
+    this.header,
+    this.mobileRows,
+  });
 
   final List<AppDataColumn> columns;
   final List<List<Widget>> rows;
@@ -36,6 +43,10 @@ class AppDataTable extends StatelessWidget {
 
   // ส่วนบนสุดในการ์ด เหนือหัวตาราง เช่น แท็บ (AppTabs)
   final Widget? header;
+
+  // มือถือ: การ์ดที่หน้านั้นออกแบบเอง (1 ตัวต่อ 1 แถว เรียงเหมือน rows)
+  // ไม่ใส่ = การ์ดแบบ "หัวข้อ ... ค่า" ทุกคอลัมน์
+  final List<Widget>? mobileRows;
 
   @override
   Widget build(BuildContext context) {
@@ -136,10 +147,11 @@ class AppDataTable extends StatelessWidget {
   }
 
   List<Widget> _cardRows(BuildContext context) {
+    final cards = mobileRows ?? [for (final cells in rows) _card(context, cells)];
     return [
-      for (var index = 0; index < rows.length; index++) ...[
+      for (var index = 0; index < cards.length; index++) ...[
         if (index > 0) const Divider(height: 1),
-        _tappable(index, _card(context, rows[index])),
+        _tappable(index, cards[index]),
       ],
     ];
   }
