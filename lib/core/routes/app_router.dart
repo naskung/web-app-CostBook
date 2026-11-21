@@ -34,6 +34,13 @@ import 'package:costbook/features/market/repository/market_repository.dart';
 import 'package:costbook/features/product/bloc/product_bloc.dart';
 import 'package:costbook/features/product/pages/product_list_page.dart';
 import 'package:costbook/features/product/repository/product_repository.dart';
+import 'package:costbook/features/quotation/bloc/quotation_detail_bloc.dart';
+import 'package:costbook/features/quotation/bloc/quotation_form_bloc.dart';
+import 'package:costbook/features/quotation/bloc/quotation_list_bloc.dart';
+import 'package:costbook/features/quotation/pages/quotation_detail_page.dart';
+import 'package:costbook/features/quotation/pages/quotation_form_page.dart';
+import 'package:costbook/features/quotation/pages/quotation_list_page.dart';
+import 'package:costbook/features/quotation/repository/quotation_repository.dart';
 import 'package:costbook/features/settings/bloc/settings_bloc.dart';
 import 'package:costbook/features/settings/pages/product_form_layout_page.dart';
 import 'package:costbook/features/settings/pages/settings_page.dart';
@@ -89,6 +96,9 @@ final appRouter = GoRouter(
         _menuRoute(AppRoutes.invoices, _invoiceListPage),
         _menuRoute(AppRoutes.invoiceCreate, _invoiceFormPage),
         _menuRoute(AppRoutes.invoiceDetail, _invoiceDetailPage),
+        _menuRoute(AppRoutes.quotations, _quotationListPage),
+        _menuRoute(AppRoutes.quotationCreate, _quotationFormPage),
+        _menuRoute(AppRoutes.quotationDetail, _quotationDetailPage),
         _menuRoute(AppRoutes.settings, _settingsPage),
         _menuRoute(AppRoutes.productFormLayout, _productFormLayoutPage),
         _menuRoute(AppRoutes.profile, _profilePage),
@@ -214,6 +224,39 @@ Widget _invoiceDetailPage(GoRouterState state) {
     create:
         (_) => InvoiceDetailBloc(InvoiceRepository(ApiClient()), invoiceId: invoiceId)..add(InvoiceDetailRequested()),
     child: const InvoiceDetailPage(),
+  );
+}
+
+Widget _quotationListPage(GoRouterState state) {
+  return BlocProvider(
+    create:
+        (_) =>
+            QuotationListBloc(QuotationRepository(ApiClient()), range: DateUtil.monthRange(DateTime.now()))
+              ..add(QuotationsRequested()),
+    child: const QuotationListPage(),
+  );
+}
+
+Widget _quotationFormPage(GoRouterState state) {
+  return BlocProvider(
+    create:
+        (_) => QuotationFormBloc(
+          QuotationRepository(ApiClient()),
+          ProductRepository(ApiClient()),
+          SettingsRepository(ApiClient()),
+        )..add(QuotationFormOpened()),
+    child: const QuotationFormPage(),
+  );
+}
+
+Widget _quotationDetailPage(GoRouterState state) {
+  final quotationId = state.pathParameters['id'] ?? '';
+  return BlocProvider(
+    create:
+        (_) =>
+            QuotationDetailBloc(QuotationRepository(ApiClient()), quotationId: quotationId)
+              ..add(QuotationDetailRequested()),
+    child: const QuotationDetailPage(),
   );
 }
 

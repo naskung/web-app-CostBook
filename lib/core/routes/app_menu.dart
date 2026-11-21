@@ -60,6 +60,7 @@ class AppMenu {
       labelKey: 'menu.transactions',
     ),
     AppMenuItem(route: AppRoutes.invoices, icon: Icons.receipt_long_outlined, labelKey: 'menu.invoices'),
+    AppMenuItem(route: AppRoutes.quotations, icon: Icons.request_quote_outlined, labelKey: 'menu.quotations'),
     AppMenuItem(route: AppRoutes.settings, icon: Icons.settings_outlined, labelKey: 'menu.settings'),
   ];
 

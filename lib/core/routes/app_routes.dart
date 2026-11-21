@@ -12,6 +12,9 @@ class AppRoutes {
   static const String invoices = '/invoices';
   static const String invoiceCreate = '/invoices/create';
   static const String invoiceDetail = '/invoices/:id';
+  static const String quotations = '/quotations';
+  static const String quotationCreate = '/quotations/create';
+  static const String quotationDetail = '/quotations/:id';
   static const String settings = '/settings';
   static const String productFormLayout = '/settings/product-form';
   static const String market = '/products/:id/market';
@@ -20,6 +23,8 @@ class AppRoutes {
   static const String users = '/profile/users';
 
   static String invoiceDetailPath(String id) => '/invoices/$id';
+
+  static String quotationDetailPath(String id) => '/quotations/$id';
 
   static String marketPath(String productId) => '/products/$productId/market';
 }

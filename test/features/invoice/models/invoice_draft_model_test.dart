@@ -78,4 +78,35 @@ void main() {
       ]);
     });
   });
+
+  group('InvoiceDraftItemModel รายการในใบ', () {
+    const product = ProductModel(id: 'p1', name: 'กาแฟเย็น', unit: 'แก้ว', sellPrice: 45, stock: 0);
+
+    test('addTo สินค้าใหม่ ต่อท้าย 1 ชิ้นตามราคาขาย', () {
+      final items = InvoiceDraftItemModel.addTo(const [tea], product);
+      expect(items.map((item) => item.productId), ['p2', 'p1']);
+      expect([items.last.quantity, items.last.unitPrice], [1, 45]);
+    });
+
+    test('addTo สินค้าที่มีอยู่แล้ว เพิ่มจำนวนอีก 1 ราคาเดิมไม่เปลี่ยน', () {
+      final items = InvoiceDraftItemModel.addTo(const [coffee, tea], product);
+      expect(items.length, 2);
+      expect([items.first.quantity, items.first.unitPrice], [4, 45]);
+    });
+
+    test('updateIn แก้จำนวน + ราคาเฉพาะบรรทัดนั้น', () {
+      final items = InvoiceDraftItemModel.updateIn(const [coffee, tea], 'p2', quantity: 5, unitPrice: 40);
+      expect(items.first, coffee);
+      expect([items.last.quantity, items.last.unitPrice], [5, 40]);
+    });
+
+    test('updateIn สินค้าที่ไม่มีในใบ รายการเหมือนเดิม', () {
+      final items = InvoiceDraftItemModel.updateIn(const [coffee], 'p9', quantity: 5, unitPrice: 40);
+      expect(items, [coffee]);
+    });
+
+    test('removeFrom ลบเฉพาะสินค้านั้น', () {
+      expect(InvoiceDraftItemModel.removeFrom(const [coffee, tea], 'p1'), [tea]);
+    });
+  });
 }

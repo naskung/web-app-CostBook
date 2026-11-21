@@ -18,6 +18,7 @@
 | stock | ประวัติสต็อก (รับเข้า / เบิกออก / ขาย) + กล่องรับเข้า / เบิกออกที่หน้าสินค้าใช้ร่วม | `/stock` |
 | transaction | บันทึกรายรับ-รายจ่าย แยกหมวด และสรุปรายเดือน | `/transactions` |
 | invoice | สร้างใบกำกับภาษี คิด VAT 7% พิมพ์ / ดาวน์โหลด PDF | `/invoices` |
+| quotation | ออกใบเสนอราคา (ยืนราคาถึงวันไหน) พิมพ์ / ดาวน์โหลด PDF — ไม่ตัดสต็อก ไม่บันทึกรายรับ | `/quotations` |
 | settings | ข้อมูลบริษัท (ชื่อ ที่อยู่ เลขผู้เสียภาษี สาขา) และเปลี่ยนภาษา | `/settings` |
 
 Backend อยู่ที่ repo `../api-Costbook` — ระหว่างที่ API ยังไม่เสร็จ ให้ repository คืนข้อมูลตัวอย่างไปก่อน (ใส่ `// TODO: ต่อ API`)
@@ -111,6 +112,11 @@ web-app-CostBook/
 │       ├── invoice/         bloc 3 ตัว: invoice_list / invoice_form / invoice_detail
 │       │                    pages: invoice_list_page, invoice_form_page (+ _ext), invoice_detail_page
 │       │                    widgets: invoice_item_row.dart (บรรทัดสินค้าในฟอร์ม), invoice_paper.dart (กระดาษใบกำกับ A4)
+│       │                    ใช้ร่วมกับ quotation: document_paper.dart (ส่วนต่าง ๆ ของกระดาษ A4: หัว / ลูกค้า / ตาราง / ยอด / ลายเซ็น / ตรายกเลิก),
+│       │                    document_customer_fields.dart (ช่องลูกค้า), draft_items_editor.dart (เลือกสินค้า + บรรทัด), document_totals_summary.dart (ยอด + ส่วนลด)
+│       │                    InvoiceDraftItemModel.addTo / updateIn / removeFrom = เพิ่ม / แก้ / ลบบรรทัด ใช้ทั้ง 2 form bloc
+│       ├── quotation/       ใบเสนอราคา: bloc 3 ตัว quotation_list / quotation_form / quotation_detail
+│       │                    pages: quotation_list_page (+ _ext), quotation_form_page (+ _ext), quotation_detail_page / widgets: quotation_paper.dart
 │       ├── user/            ผู้ใช้ที่ login อยู่ + โปรไฟล์ + จัดการผู้ใช้ (เจ้าของร้าน): ProfileBloc (shell), UserListBloc
 │       │                    pages: profile_page, user_list_page (+ _ext)
 │       │                    widgets: user_avatar (รูป / ตัวอักษรย่อ), role_badge, profile_photo_card, profile_info_section, password_section,
@@ -370,9 +376,14 @@ class AppRoutes {
   static const String invoices = '/invoices';
   static const String invoiceCreate = '/invoices/create';
   static const String invoiceDetail = '/invoices/:id';
+  static const String quotations = '/quotations';
+  static const String quotationCreate = '/quotations/create';
+  static const String quotationDetail = '/quotations/:id';
   static const String settings = '/settings';
 
   static String invoiceDetailPath(String id) => '/invoices/$id';
+
+  static String quotationDetailPath(String id) => '/quotations/$id';
 }
 ```
 
@@ -498,6 +509,7 @@ token หมดอายุ (7 วัน) / ถูกปฏิเสธ: API ต
 
 **หน้า login กับระบบจำรหัสของ browser**: `AutofillGroup(onDisposeAction: cancel)` + เรียก `TextInput.finishAutofillContext()` ตอน login สำเร็จก่อน `context.go` → Chrome ถามบันทึกรหัสครั้งเดียวตอน login (ถ้ารอส่งตอนปิดหน้า Chrome จะเดาจากการเปลี่ยนหน้า แล้วถามตอนเปลี่ยนหน้า)
 | เอกสารขาย | `/invoices`, `/invoices/create`, `/invoices/:id` | `InvoiceListBloc`, `InvoiceFormBloc`, `InvoiceDetailBloc` | ออกใบสำเร็จ → ไปหน้าดูใบ (`AppRoutes.invoiceDetailPath(id)`), ร้านจด VAT ได้ใบกำกับภาษี ไม่จด ได้ใบเสร็จรับเงิน / ร้านเปิด `trackDelivery` → รายการ + หน้าดูใบมีสถานะการส่งสินค้า (`DeliveryStatusMenu` กดเลือก รอส่ง / ส่งสินค้าแล้ว / รับสินค้าแล้ว) ใบที่ยกเลิกแล้วไม่มี |
+| ใบเสนอราคา | `/quotations`, `/quotations/create`, `/quotations/:id` | `QuotationListBloc`, `QuotationFormBloc`, `QuotationDetailBloc` | ออกใบสำเร็จ → ไปหน้าดูใบ (`AppRoutes.quotationDetailPath(id)`) / ต้องมีชื่อลูกค้า, ยืนราคาเริ่มต้น 30 วัน (เลือกวันที่ออกเลยวันยืนราคา → เลื่อนให้อีก 30 วัน) / สินค้าหมดสต็อกก็ใส่ได้ ไม่โชว์สต็อกในบรรทัด (`showStock: false`) / VAT ตามรูปแบบร้าน / ยกเลิกได้ (เปลี่ยนสถานะอย่างเดียว) |
 | ตั้งค่า | `/settings` | `SettingsBloc` (จาก shell) + `LanguageBloc` + `AssistantBloc` (key AI) | ข้อมูลร้าน, รูปแบบร้าน, ช่องข้อมูลเพิ่มเติมของสินค้า, key ของ Claude, โลโก้, ภาษา — ร้านจด VAT ต้องกรอกเลขผู้เสียภาษีก่อนออกใบกำกับ / **โลโก้** (`LogoSection`): เลือก / เปลี่ยนรูป (`ImagePickHelper` ย่อให้, เกิน 1 MB เตือนไม่ส่ง) → `LogoUploaded` → `PUT /company/logo` / ลบ (ถามยืนยัน) → `LogoRemoved` → `DELETE` แล้วโหลดข้อมูลร้านใหม่ (`logoStatus` / `logoErrorCode`) — สำเร็จแล้วเรียก `ShopLogo.refresh()`: URL โลโก้มี `?v=<เลข>` เปลี่ยนเลข → โลโก้ทุกที่ (เมนู / หน้า login / ใบกำกับ) โหลดรูปใหม่ทันที ไม่ใช้รูปเก่าที่ Flutter จำไว้ (favicon บนแท็บ browser เปลี่ยนเมื่อ refresh) |
 
 | โปรไฟล์ | `/profile` | `ProfileBloc` (จาก shell) | เปิดจากแถวผู้ใช้ด้านล่างเมนู (เหนือออกจากระบบ) / รูปโปรไฟล์ (เพิ่ม / เปลี่ยน / ลบ แบบเดียวกับโลโก้), ชื่อ-นามสกุล (อีเมลแก้ไม่ได้), เปลี่ยนรหัสผ่าน (ต้องใส่รหัสเดิม, ใหม่ ≥ 6 ตัว + ยืนยันให้ตรง) / เจ้าของร้านมีการ์ด "จัดการผู้ใช้" |

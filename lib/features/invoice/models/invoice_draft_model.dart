@@ -55,6 +55,31 @@ class InvoiceDraftItemModel extends Equatable {
     return {'product_id': productId, 'quantity': quantity, 'unit_price': unitPrice};
   }
 
+  static List<InvoiceDraftItemModel> addTo(List<InvoiceDraftItemModel> items, ProductModel product) {
+    for (final item in items) {
+      if (item.productId == product.id) {
+        return updateIn(items, product.id, quantity: item.quantity + 1, unitPrice: item.unitPrice);
+      }
+    }
+    return [...items, InvoiceDraftItemModel.fromProduct(product)];
+  }
+
+  static List<InvoiceDraftItemModel> updateIn(
+    List<InvoiceDraftItemModel> items,
+    String productId, {
+    required int quantity,
+    required double unitPrice,
+  }) {
+    return [
+      for (final item in items)
+        if (item.productId == productId) item.copyWith(quantity: quantity, unitPrice: unitPrice) else item,
+    ];
+  }
+
+  static List<InvoiceDraftItemModel> removeFrom(List<InvoiceDraftItemModel> items, String productId) {
+    return items.where((item) => item.productId != productId).toList();
+  }
+
   @override
   List<Object?> get props => [productId, name, unit, stock, trackStock, quantity, unitPrice];
 }

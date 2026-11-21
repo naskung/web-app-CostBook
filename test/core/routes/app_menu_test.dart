@@ -11,7 +11,7 @@ void main() {
 
   final productGroup = itemOf(AppRoutes.products);
 
-  test('มีเมนูหลัก 7 อัน ตามลำดับ (สินค้า + สต็อกรวมเป็นกลุ่มเดียว / ผู้ช่วย AI เป็นปุ่มลอย ไม่ใช่เมนู)', () {
+  test('มีเมนูหลัก 8 อัน ตามลำดับ (สินค้า + สต็อกรวมเป็นกลุ่มเดียว / ผู้ช่วย AI เป็นปุ่มลอย ไม่ใช่เมนู)', () {
     final routes = AppMenu.items.map((item) => item.route).toList();
     expect(routes, [
       AppRoutes.dashboard,
@@ -20,8 +20,15 @@ void main() {
       AppRoutes.cost,
       AppRoutes.transactions,
       AppRoutes.invoices,
+      AppRoutes.quotations,
       AppRoutes.settings,
     ]);
+  });
+
+  test('อยู่หน้าออกใบเสนอราคา / ดูใบเสนอราคา เลือกเมนูใบเสนอราคา ไม่ใช่เอกสารขาย', () {
+    expect(itemOf(AppRoutes.quotations).isSelected('/quotations/create'), true);
+    expect(itemOf(AppRoutes.quotations).isSelected('/quotations/q1'), true);
+    expect(itemOf(AppRoutes.invoices).isSelected('/quotations/q1'), false);
   });
 
   test('กลุ่มสินค้ามีเมนูย่อย รายการสินค้า / ประวัติสต็อก / หมวดหมู่สินค้า', () {

@@ -9,9 +9,16 @@ import 'package:costbook/shared/widgets/atoms/app_text_field.dart';
 import 'package:costbook/shared/widgets/atoms/money_text.dart';
 
 class InvoiceItemRow extends StatefulWidget {
-  const InvoiceItemRow({super.key, required this.item, required this.onChanged, required this.onRemove});
+  const InvoiceItemRow({
+    super.key,
+    required this.item,
+    required this.onChanged,
+    required this.onRemove,
+    this.showStock = true,
+  });
 
   final InvoiceDraftItemModel item;
+  final bool showStock;
   final void Function(int quantity, double unitPrice) onChanged;
   final VoidCallback onRemove;
 
@@ -42,6 +49,8 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
     widget.onChanged(int.tryParse(_quantityController.text.trim()) ?? 0, MoneyUtil.parse(_priceController.text));
   }
 
+  bool get _isOverStock => widget.showStock && widget.item.isOverStock;
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -50,7 +59,7 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
       padding: const EdgeInsets.all(AppSizes.spaceMedium),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppSizes.radius),
-        border: Border.all(color: widget.item.isOverStock ? AppColors.danger : AppColors.border),
+        border: Border.all(color: _isOverStock ? AppColors.danger : AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -58,12 +67,13 @@ class _InvoiceItemRowState extends State<InvoiceItemRow> {
           Row(
             children: [
               Expanded(child: Text(widget.item.name, style: textTheme.titleSmall)),
-              Text(
-                _stockText(),
-                style: textTheme.bodySmall?.copyWith(
-                  color: widget.item.isOverStock ? AppColors.danger : AppColors.textSecondary,
+              if (widget.showStock)
+                Text(
+                  _stockText(),
+                  style: textTheme.bodySmall?.copyWith(
+                    color: _isOverStock ? AppColors.danger : AppColors.textSecondary,
+                  ),
                 ),
-              ),
               IconButton(
                 tooltip: 'common.delete'.tr,
                 onPressed: widget.onRemove,

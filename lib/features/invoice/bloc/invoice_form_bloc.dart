@@ -82,32 +82,21 @@ class InvoiceFormBloc extends Bloc<InvoiceFormEvent, InvoiceFormState> {
       emit(state.copyWith(outOfStockCount: state.outOfStockCount + 1));
       return;
     }
-    final existing = state.items.where((item) => item.productId == product.id).toList();
-    if (existing.isNotEmpty) {
-      final item = existing.first;
-      _replaceItem(emit, item.copyWith(quantity: item.quantity + 1));
-      return;
-    }
-    final items = [...state.items, InvoiceDraftItemModel.fromProduct(product)];
-    emit(state.copyWith(items: items, submitStatus: AppStatus.initial));
+    emit(state.copyWith(items: InvoiceDraftItemModel.addTo(state.items, product), submitStatus: AppStatus.initial));
   }
 
   void _onItemChanged(InvoiceItemChanged event, Emitter<InvoiceFormState> emit) {
-    final existing = state.items.where((item) => item.productId == event.productId).toList();
-    if (existing.isEmpty) return;
-    _replaceItem(emit, existing.first.copyWith(quantity: event.quantity, unitPrice: event.unitPrice));
-  }
-
-  void _replaceItem(Emitter<InvoiceFormState> emit, InvoiceDraftItemModel changed) {
-    final items = [
-      for (final item in state.items)
-        if (item.productId == changed.productId) changed else item,
-    ];
+    final items = InvoiceDraftItemModel.updateIn(
+      state.items,
+      event.productId,
+      quantity: event.quantity,
+      unitPrice: event.unitPrice,
+    );
     emit(state.copyWith(items: items, submitStatus: AppStatus.initial));
   }
 
   void _onItemRemoved(InvoiceItemRemoved event, Emitter<InvoiceFormState> emit) {
-    final items = state.items.where((item) => item.productId != event.productId).toList();
+    final items = InvoiceDraftItemModel.removeFrom(state.items, event.productId);
     emit(state.copyWith(items: items, submitStatus: AppStatus.initial));
   }
 
